@@ -45,7 +45,7 @@ export function SiteHeader() {
           className="flex items-center gap-2 font-display text-sm tracking-[0.14em] text-fg uppercase sm:text-lg sm:tracking-[0.16em]"
         >
           <HermesNote size="mark" />
-          Trismegistus
+          Atman Music
         </a>
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
           {LINKS.map((link) => (

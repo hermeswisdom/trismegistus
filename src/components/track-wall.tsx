@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Pause, Play, Dices } from "lucide-react";
+import { AtmanWord } from "@/components/atman-word";
 import { HermesNote } from "@/components/hermes-note";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
@@ -43,7 +44,7 @@ export function TrackWall() {
             {entered ? (
               <HermesNote playing={playing} align="start" />
             ) : (
-              <span className="hermes-word">TRISMEGISTUS</span>
+              <AtmanWord align="start" />
             )}
           </h1>
           {current ? (

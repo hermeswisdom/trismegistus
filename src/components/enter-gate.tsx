@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { AtmanWord } from "@/components/atman-word";
 import { CoverMosaic } from "@/components/cover-mosaic";
 import { MatrixRain } from "@/components/matrix-rain";
 import { usePlayer } from "@/lib/player-store";
@@ -31,7 +32,7 @@ export function EnterGate() {
         <p className="relative z-30 mb-6 text-xs font-medium tracking-[0.42em] text-accent uppercase">
           Esoteric music
         </p>
-        <h1 className="hermes-word">TRISMEGISTUS</h1>
+        <AtmanWord as="h1" />
         <p className="relative z-30 mt-3 max-w-sm text-lead font-light text-muted">
           Esoteric Vibrations. The full SoundCloud catalog. The wall is the record.
         </p>

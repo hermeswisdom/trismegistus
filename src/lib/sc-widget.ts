@@ -10,6 +10,9 @@ export type SCWidget = {
   getDuration: (cb: (ms: number) => void) => void;
   getVolume: (cb: (vol: number) => void) => void;
   setVolume: (vol: number) => void;
+  getCurrentSound: (
+    cb: (sound: { id?: number; waveform_url?: string } | null) => void,
+  ) => void;
 };
 
 type SCApi = {

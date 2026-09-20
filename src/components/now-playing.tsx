@@ -13,6 +13,7 @@ import {
   setLiveSoundId,
   setLiveWidget,
 } from "@/lib/sc-widget";
+import { hydrateWaveform } from "@/lib/waveform";
 import { cn } from "@/lib/utils";
 
 export function NowPlaying() {
@@ -46,6 +47,7 @@ export function NowPlaying() {
         if (cancelled || !iframeRef.current) return;
         const widget = SC.Widget(iframeRef.current);
         setLiveWidget(widget, featured?.soundId ?? null);
+        const pullWave = () => hydrateWaveform(widget);
         widget.bind(SC.Widget.Events.READY, () => {
           const state = usePlayer.getState();
           const track = getTrack(state.currentId);
@@ -55,14 +57,28 @@ export function NowPlaying() {
             widget.load(track.permalink, { auto_play: state.playing });
             return;
           }
+          pullWave();
           if (state.playing) widget.play();
         });
-        widget.bind(SC.Widget.Events.PLAY, () => setPlaying(true));
+        widget.bind(SC.Widget.Events.PLAY, () => {
+          setPlaying(true);
+          pullWave();
+        });
         widget.bind(SC.Widget.Events.PAUSE, () => setPlaying(false));
         widget.bind(SC.Widget.Events.FINISH, () => {
           setPlaying(false);
           usePlayer.getState().playNext();
         });
+        widget.bind(SC.Widget.Events.PLAY_PROGRESS, (raw) => {
+          const pos = ((raw as { currentPosition?: number }).currentPosition ?? 0) / 1000;
+          const dur = usePlayer.getState().duration;
+          if (dur > 0) {
+            setTiming(pos, dur);
+            return;
+          }
+          widget.getDuration((ms) => setTiming(pos, ms / 1000));
+        });
+        pullWave();
       })
       .catch(() => {
         /* iframe still plays without the API */

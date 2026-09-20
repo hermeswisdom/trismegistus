@@ -106,7 +106,7 @@ export function ShareButton({
 
 export async function shareTrack(track: Track) {
   const url = track.permalink;
-  const title = `${track.title} — Trismegistus`;
+  const title = `${track.title} — Atman Music`;
   const text = `${track.title} · Esoteric Vibrations`;
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {

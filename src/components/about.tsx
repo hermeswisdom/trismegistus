@@ -17,7 +17,7 @@ export function About() {
               and of course music that moves the soul, often inspired by the moment.
             </p>
             <p>
-              TRISMEGISTUS records as Esoteric Vibrations. The covers are the current.
+              ATMAN MUSIC records as Esoteric Vibrations. The covers are the current.
               There is no press photo. If a voice appears that was not invited, it
               stays.
             </p>
@@ -33,7 +33,7 @@ export function About() {
             </div>
             <div>
               <dt className="text-xs tracking-[0.2em] text-subtle uppercase">Epithet</dt>
-              <dd className="mt-1 text-fg">Thrice-great</dd>
+              <dd className="mt-1 text-fg">The Self</dd>
             </div>
             <div>
               <dt className="text-xs tracking-[0.2em] text-subtle uppercase">Press</dt>

@@ -1,3 +1,4 @@
+import { AtmanWord } from "@/components/atman-word";
 import { MatrixRain } from "@/components/matrix-rain";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ export function HermesNote({
         playing && "hermes-lockup-playing",
       )}
     >
-      <span className="hermes-word">TRISMEGISTUS</span>
+      <AtmanWord align={align} />
       <span className="hermes-fall">
         <MatrixRain playing={playing} active={active} />
       </span>

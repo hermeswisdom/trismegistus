@@ -13,7 +13,7 @@ export function Hero() {
         <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
           Esoteric Vibrations · 2026
         </p>
-        <h2 className="mt-5 font-display text-display italic text-fg">TRISMEGISTUS</h2>
+        <h2 className="mt-5 font-display text-display italic text-fg">ATMAN MUSIC</h2>
         <p className="mt-6 max-w-md text-lead font-light text-fg/80">
           The full SoundCloud catalog. Every cover. Every tablet.
         </p>

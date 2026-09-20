@@ -3,7 +3,7 @@ import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Trismegistus";
+const APP_NAME = "Atman Music";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Trismegistus — Esoteric Vibrations. Esoteric music. The full SoundCloud catalog. All the cover art.",
+          "Atman Music — Esoteric Vibrations. Esoteric music. The full SoundCloud catalog. All the cover art.",
       },
       { name: "theme-color", content: "#09080e" },
     ],
