@@ -157,34 +157,6 @@
     width: 0.95rem;
     overflow: hidden;
   }
-
-  .mark-drift {
-    animation-name: mark-drift;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-  }
-
-  .mark-drift-tile {
-    animation-name: mark-drift-tile;
-  }
-}
-
-@keyframes mark-drift {
-  from {
-    transform: translate3d(100vw, 0, 0);
-  }
-  to {
-    transform: translate3d(-110%, 0, 0);
-  }
-}
-
-@keyframes mark-drift-tile {
-  from {
-    transform: translate3d(105%, 0, 0);
-  }
-  to {
-    transform: translate3d(-110%, 0, 0);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -194,14 +166,5 @@
 
   .grain {
     display: none;
-  }
-
-  .mark-drift {
-    animation: none;
-    transform: none;
-    left: 0.75rem;
-    max-width: calc(100% - 1.5rem);
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }

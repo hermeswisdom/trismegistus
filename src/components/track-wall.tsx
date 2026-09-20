@@ -3,16 +3,9 @@ import { Pause, Play, Dices } from "lucide-react";
 import { HermesNote } from "@/components/hermes-note";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
-import { TileMarkDrift } from "@/components/mark-drift";
+import { ReadButton } from "@/components/read-button";
 import { useMarksFeed } from "@/lib/marks-feed";
-import {
-  ROOMS,
-  TRACKS,
-  tracksInRoom,
-  unassignedTracks,
-  type StyleRoom,
-  type Track,
-} from "@/lib/rooms";
+import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { useWheelSpin } from "@/lib/wheel-spin";
 import { cn } from "@/lib/utils";
@@ -26,7 +19,6 @@ export function TrackWall() {
   const requestSpin = useWheelSpin((s) => s.requestSpin);
   const hydrateMarks = useMarksFeed((s) => s.hydrate);
   const current = TRACKS.find((t) => t.id === currentId) ?? TRACKS[0];
-  const loose = unassignedTracks();
 
   useEffect(() => {
     void hydrateMarks();
@@ -45,7 +37,7 @@ export function TrackWall() {
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/55 to-bg/30" />
         <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-32 pt-28 sm:px-8">
           <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
-            Esoteric music · {ROOMS.length} genres
+            Esoteric music · {TRACKS.length} tablets
           </p>
           <h1 className="mt-4">
             {entered ? (
@@ -54,10 +46,11 @@ export function TrackWall() {
               <span className="hermes-word">TRISMEGISTUS</span>
             )}
           </h1>
-          <p className="mt-5 max-w-md text-lead font-light text-fg/85">
-            {TRACKS.length} tablets. Each style is a room. The cover is the
-            current.
-          </p>
+          {current ? (
+            <p className="mt-5 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85">
+              {getMeaning(current.id)}
+            </p>
+          ) : null}
           {current ? (
             <div className="mt-10 flex flex-wrap items-center gap-2">
               <button
@@ -73,7 +66,7 @@ export function TrackWall() {
                 ) : (
                   <>
                     <Play className="ml-px size-3.5" fill="currentColor" />
-                    Play {current.title}
+                    Play <span className="hidden sm:inline">{current.title}</span>
                   </>
                 )}
               </button>
@@ -91,6 +84,7 @@ export function TrackWall() {
                 <Dices className="size-3.5" />
                 Random
               </button>
+              <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
               <ShareButton track={current} className="bg-elevated" />
               <MarkButton trackId={current.id} className="bg-elevated" />
@@ -105,84 +99,19 @@ export function TrackWall() {
             The wall
           </p>
           <h2 className="mt-3 font-display text-section text-fg">
-            Hip-hop. Dance. Soul. Filed by the sound.
+            No genre. The lyric keeps the secret.
           </h2>
+          <p className="mt-4 max-w-lg text-sm leading-relaxed text-muted">
+            Open a tablet and read the meaning. The filing is the verse, not the
+            style.
+          </p>
         </div>
 
-        <nav
-          className="sticky top-16 z-20 border-y border-border bg-bg/90"
-          aria-label="Genres"
-        >
-          <ul className="mx-auto flex max-w-6xl flex-wrap gap-1 px-5 py-2 sm:px-8">
-            {ROOMS.map((room) => (
-              <li key={room.id} className="shrink-0">
-                <a
-                  href={`#genre-${room.id}`}
-                  className="block px-3 py-2.5 text-xs font-medium tracking-[0.18em] text-muted uppercase transition-colors duration-150 hover:text-accent"
-                >
-                  {room.style}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {ROOMS.map((room) => (
-          <GenreBlock key={room.id} room={room} />
-        ))}
-        {loose.length > 0 ? (
-          <GenreBlock
-            room={{
-              id: "loose",
-              name: "Unfiled",
-              numeral: "—",
-              style: "Other",
-              epithet: "Still finding the room",
-              note: "Tablets not yet seated in a style.",
-              backdrop: loose[0].image,
-              trackIds: loose.map((t) => t.id),
-            }}
-          />
-        ) : null}
-      </div>
-    </section>
-  );
-}
-
-function GenreBlock({ room }: { room: StyleRoom }) {
-  const currentId = usePlayer((s) => s.currentId);
-  const playing = usePlayer((s) => s.playing);
-  const play = usePlayer((s) => s.play);
-  const pause = usePlayer((s) => s.pause);
-  const tracks = tracksInRoom(room);
-
-  return (
-    <section
-      id={`genre-${room.id}`}
-      className="border-t border-border scroll-mt-32"
-    >
-      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 sm:px-8 sm:py-16 lg:grid-cols-[minmax(0,18rem)_1fr] lg:gap-16">
-        <header className="lg:sticky lg:top-36 lg:self-start">
-          <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
-            {room.numeral} · {room.style}
-          </p>
-          <h3 className="mt-3 font-display text-section text-fg">{room.name}</h3>
-          <p className="mt-3 text-xs tracking-[0.16em] text-muted uppercase">
-            {room.epithet}
-          </p>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed text-fg/80">
-            {room.note}
-          </p>
-          <p className="mt-5 text-xs tracking-[0.2em] text-subtle uppercase">
-            {tracks.length} tablets
-          </p>
-        </header>
-        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3">
-          {tracks.map((track) => (
-            <GenreTile
+        <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border sm:grid-cols-3 lg:grid-cols-4">
+          {TRACKS.map((track) => (
+            <TabletTile
               key={track.id}
               track={track}
-              styleLabel={room.style}
               active={track.id === currentId}
               isPlaying={track.id === currentId && playing}
               onToggle={() =>
@@ -196,15 +125,13 @@ function GenreBlock({ room }: { room: StyleRoom }) {
   );
 }
 
-function GenreTile({
+function TabletTile({
   track,
-  styleLabel,
   active,
   isPlaying,
   onToggle,
 }: {
   track: Track;
-  styleLabel: string;
   active: boolean;
   isPlaying: boolean;
   onToggle: () => void;
@@ -231,29 +158,27 @@ function GenreTile({
         {active ? (
           <span className="absolute inset-0 ring-2 ring-accent ring-inset" />
         ) : null}
-        <TileMarkDrift trackId={track.id} />
         <span className="absolute inset-x-0 bottom-0 z-[6] p-3 sm:p-4">
-          <span className="block text-xs tracking-[0.2em] text-accent uppercase">
-            {styleLabel}
-          </span>
-          <span className="mt-1 block truncate font-display text-lg leading-tight text-fg sm:text-xl">
+          <span className="block truncate font-display text-lg leading-tight text-fg sm:text-xl">
             {track.title}
+          </span>
+          <span
+            className={cn(
+              "mt-2 line-clamp-3 text-xs leading-relaxed text-fg/80 transition-opacity duration-200",
+              active
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
+            )}
+          >
+            {getMeaning(track.id)}
           </span>
         </span>
       </button>
-      <div className="absolute top-2 right-2 z-10 flex">
-        <HeartButton
-          id={track.id}
-          className="size-11 bg-bg/55 text-fg"
-        />
-        <ShareButton
-          track={track}
-          className="size-11 bg-bg/55 text-fg"
-        />
-        <MarkButton
-          trackId={track.id}
-          className="size-11 bg-bg/55 text-fg"
-        />
+      <div className="absolute top-2 right-2 z-10 hidden sm:flex">
+        <ReadButton trackId={track.id} className="size-11 bg-bg/55 text-fg" />
+        <HeartButton id={track.id} className="size-11 bg-bg/55 text-fg" />
+        <ShareButton track={track} className="size-11 bg-bg/55 text-fg" />
+        <MarkButton trackId={track.id} className="size-11 bg-bg/55 text-fg" />
       </div>
     </li>
   );

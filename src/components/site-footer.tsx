@@ -12,14 +12,24 @@ export function SiteFooter() {
             Esoteric music. {TRACKS.length} covers. Esoteric Vibrations.
           </p>
         </div>
-        <a
-          href={SOUNDCLOUD_PROFILE}
-          target="_blank"
-          rel="noreferrer"
-          className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
-        >
-          SoundCloud · esoteric_vibrations
-        </a>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <a
+            href={SOUNDCLOUD_PROFILE}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
+          >
+            SoundCloud · esoteric_vibrations
+          </a>
+          <a
+            href="https://x.com/Hermes10wisdom"
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
+          >
+            X · Hermes10wisdom
+          </a>
+        </div>
       </div>
     </footer>
   );

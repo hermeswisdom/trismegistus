@@ -3,7 +3,7 @@ import { About } from "@/components/about";
 import { EnterGate } from "@/components/enter-gate";
 import { Leaderboard } from "@/components/leaderboard";
 import { MarksSheet } from "@/components/marks-sheet";
-import { ScreenMarkDrift } from "@/components/mark-drift";
+import { MeaningSheet } from "@/components/meaning-sheet";
 import { NowPlaying } from "@/components/now-playing";
 import { Signal } from "@/components/signal";
 import { SiteFooter } from "@/components/site-footer";
@@ -28,8 +28,8 @@ function Home() {
       </main>
       <SiteFooter />
       <NowPlaying />
-      <ScreenMarkDrift />
       <MarksSheet />
+      <MeaningSheet />
     </>
   );
 }

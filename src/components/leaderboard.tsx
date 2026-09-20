@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { getPlayLeaderboard } from "@/lib/plays";
 import { usePlayBoard } from "@/lib/play-board";
-import { getTrack, roomForTrack } from "@/lib/rooms";
+import { getMeaning, getTrack } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { cn } from "@/lib/utils";
 
@@ -47,7 +47,6 @@ export function Leaderboard() {
             {rows.map((row, index) => {
               const track = getTrack(row.trackId);
               if (!track) return null;
-              const room = roomForTrack(track.id);
               const active = track.id === currentId;
               const isPlaying = active && playing;
               return (
@@ -74,8 +73,8 @@ export function Leaderboard() {
                       <span className="block truncate font-display text-lg leading-tight text-fg sm:text-xl">
                         {track.title}
                       </span>
-                      <span className="mt-1 block text-xs tracking-[0.18em] text-subtle uppercase">
-                        {room?.style ?? "Esoteric"}
+                      <span className="mt-1 block truncate text-xs leading-relaxed text-subtle">
+                        {getMeaning(track.id)}
                       </span>
                     </span>
                     <span className="shrink-0 text-right">

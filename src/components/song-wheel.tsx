@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { TRACKS, randomTrack, roomForTrack, type Track } from "@/lib/rooms";
+import { TRACKS, getMeaning, randomTrack, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { useWheelSpin } from "@/lib/wheel-spin";
 
@@ -107,7 +107,7 @@ export function SongWheel() {
     spin();
   }, [nonce]);
 
-  const room = landed ? roomForTrack(landed.id) : undefined;
+  const meaning = landed ? getMeaning(landed.id) : undefined;
 
   return (
     <section id="wheel" className="border-t border-border">
@@ -126,8 +126,8 @@ export function SongWheel() {
           {landed ? (
             <p className="mt-8 font-display text-2xl italic text-fg">
               {landed.title}
-              <span className="mt-2 block text-xs tracking-[0.2em] text-accent not-italic uppercase">
-                {room?.style ?? "Esoteric"}
+              <span className="mt-2 block line-clamp-4 whitespace-pre-line text-sm font-sans font-light tracking-normal text-muted not-italic normal-case">
+                {meaning}
               </span>
             </p>
           ) : (

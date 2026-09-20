@@ -2,7 +2,8 @@ import { useEffect, useRef } from "react";
 import { Pause, Play, SkipForward, Dices } from "lucide-react";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
-import { FEATURED_ID, embedSrc, getTrack, roomForTrack } from "@/lib/rooms";
+import { ReadButton } from "@/components/read-button";
+import { FEATURED_ID, embedSrc, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
 import { usePlayer } from "@/lib/player-store";
 import { useWheelSpin } from "@/lib/wheel-spin";
@@ -12,7 +13,7 @@ import {
   setLiveSoundId,
   setLiveWidget,
 } from "@/lib/sc-widget";
-import { cn, formatElapsed } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export function NowPlaying() {
   const entered = usePlayer((s) => s.entered);
@@ -30,7 +31,6 @@ export function NowPlaying() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const current = getTrack(currentId);
   const featured = getTrack(FEATURED_ID);
-  const room = roomForTrack(currentId);
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
 
   useEffect(() => {
@@ -127,14 +127,23 @@ export function NowPlaying() {
           <p className="truncate font-display text-base italic text-fg sm:text-lg">
             {current.title}
           </p>
-          <p className="truncate text-xs tracking-wider text-subtle uppercase">
-            {room?.name ?? current.recorded} · {formatElapsed(elapsed)}
-            {duration > 0 ? ` / ${formatElapsed(duration)}` : ""}
+          <p className="truncate text-xs tracking-wider text-subtle">
+            {getMeaning(current.id)}
           </p>
         </div>
+        <ReadButton
+          trackId={current.id}
+          className="hidden text-muted hover:text-fg sm:flex"
+        />
         <HeartButton id={current.id} className="text-muted hover:text-fg" />
-        <ShareButton track={current} className="text-muted hover:text-fg" />
-        <MarkButton trackId={current.id} className="text-muted hover:text-fg" />
+        <ShareButton
+          track={current}
+          className="hidden text-muted hover:text-fg sm:flex"
+        />
+        <MarkButton
+          trackId={current.id}
+          className="hidden text-muted hover:text-fg sm:flex"
+        />
         <button
           type="button"
           onClick={() => {
@@ -144,7 +153,7 @@ export function NowPlaying() {
             });
             requestSpin();
           }}
-          className="flex size-11 shrink-0 items-center justify-center text-muted transition-colors duration-150 hover:text-fg"
+          className="hidden size-11 shrink-0 items-center justify-center text-muted transition-colors duration-150 hover:text-fg sm:flex"
           aria-label="Random song"
         >
           <Dices className="size-4" />
