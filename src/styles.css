@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #09080e;
+  --color-surface: #15131c;
+  --color-elevated: #1e1b28;
+  --color-fg: #f4efe4;
+  --color-muted: #a39b8c;
+  --color-subtle: #6e675c;
+  --color-accent: #d6e24a;
+  --color-border: rgb(244 239 228 / 12%);
+  --color-ring: rgb(214 226 74 / 55%);
+
+  --font-display: "Syne", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: clamp(3.5rem, 14vw, 9rem);
+  --text-display--line-height: 0.86;
+  --text-display--font-weight: 700;
+  --text-display--letter-spacing: -0.05em;
+
+  --text-section: clamp(1.85rem, 4.5vw, 3.25rem);
+  --text-section--line-height: 1.05;
+  --text-section--font-weight: 700;
+  --text-section--letter-spacing: -0.03em;
+
+  --text-lead: clamp(1.125rem, 2vw, 1.35rem);
+  --text-lead--line-height: 1.55;
+
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+
+  --shadow-border: 0 0 0 1px rgb(244 239 228 / 10%);
+  --shadow-border-hover: 0 0 0 1px rgb(214 226 74 / 45%);
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    font-family: var(--font-display);
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  img {
+    outline: 1px solid rgb(244 239 228 / 10%);
+    outline-offset: -1px;
+  }
+}
+
+@layer utilities {
+  .grain {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+
+  .hairline {
+    box-shadow: var(--shadow-border);
+  }
+
+  .hairline-hover:hover {
+    box-shadow: var(--shadow-border-hover);
+  }
+
+  .hermes-lockup {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+
+  .hermes-lockup-start {
+    justify-content: flex-start;
+  }
+
+  .hermes-word {
+    position: relative;
+    z-index: 1;
+    font-family: var(--font-display);
+    font-size: clamp(1.7rem, 8vw, 5.6rem);
+    font-weight: 700;
+    letter-spacing: -0.045em;
+    line-height: 0.86;
+    color: var(--color-fg);
+    text-shadow: 0 0 32px rgb(214 226 74 / 28%);
+    white-space: nowrap;
+  }
+
+  .hermes-fall {
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+    inset: -5.5rem -0.75rem -1.75rem;
+    mask-image: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 0%) 0%,
+      rgb(0 0 0 / 85%) 18%,
+      rgb(0 0 0) 48%,
+      rgb(0 0 0 / 55%) 78%,
+      rgb(0 0 0 / 0%) 100%
+    );
+  }
+
+  .hermes-fall-screen {
+    position: absolute;
+    z-index: 20;
+    inset: 0 0 auto;
+    height: 74%;
+    width: 100%;
+    mask-image: linear-gradient(
+      to bottom,
+      rgb(0 0 0 / 55%) 0%,
+      rgb(0 0 0) 18%,
+      rgb(0 0 0) 62%,
+      rgb(0 0 0 / 0%) 100%
+    );
+  }
+
+  .hermes-mark {
+    position: relative;
+    display: inline-block;
+    height: 1.5rem;
+    width: 0.95rem;
+    overflow: hidden;
+  }
+
+  .mark-drift {
+    animation-name: mark-drift;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .mark-drift-tile {
+    animation-name: mark-drift-tile;
+  }
+}
+
+@keyframes mark-drift {
+  from {
+    transform: translate3d(100vw, 0, 0);
+  }
+  to {
+    transform: translate3d(-110%, 0, 0);
+  }
+}
+
+@keyframes mark-drift-tile {
+  from {
+    transform: translate3d(105%, 0, 0);
+  }
+  to {
+    transform: translate3d(-110%, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .grain {
+    display: none;
+  }
+
+  .mark-drift {
+    animation: none;
+    transform: none;
+    left: 0.75rem;
+    max-width: calc(100% - 1.5rem);
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

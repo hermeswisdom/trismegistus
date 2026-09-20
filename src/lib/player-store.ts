@@ -1,0 +1,104 @@
+import { create } from "zustand";
+import { FEATURED_ID, getTrack, nextTrack } from "@/lib/rooms";
+import { usePlayBoard } from "@/lib/play-board";
+import { recordPlay } from "@/lib/plays";
+import { getLiveSoundId, getLiveWidget, setLiveSoundId } from "@/lib/sc-widget";
+
+type PlayerState = {
+  entered: boolean;
+  currentId: string;
+  playing: boolean;
+  elapsed: number;
+  duration: number;
+  enter: () => void;
+  play: (id?: string) => void;
+  pause: () => void;
+  toggle: () => void;
+  playNext: () => void;
+  seek: (ratio: number) => void;
+  setPlaying: (value: boolean) => void;
+  setTiming: (elapsed: number, duration: number) => void;
+};
+
+function startWidget(nextId: string, prevId: string) {
+  const widget = getLiveWidget();
+  const track = getTrack(nextId);
+  if (!widget || !track) return;
+  if (nextId === prevId && getLiveSoundId() === track.soundId) {
+    widget.play();
+    return;
+  }
+  setLiveSoundId(track.soundId);
+  widget.load(track.permalink, { auto_play: true });
+}
+
+const countedAt = new Map<string, number>();
+
+function countPlay(id: string) {
+  const now = Date.now();
+  if ((countedAt.get(id) ?? 0) > now - 8000) return;
+  countedAt.set(id, now);
+  void recordPlay({ data: id })
+    .then((rows) => {
+      if (rows) usePlayBoard.getState().setRows(rows);
+    })
+    .catch(() => {
+      /* board still loads on its own */
+    });
+}
+
+export const usePlayer = create<PlayerState>((set, get) => ({
+  entered: false,
+  currentId: FEATURED_ID,
+  playing: false,
+  elapsed: 0,
+  duration: 0,
+
+  enter: () => {
+    set({ entered: true });
+  },
+
+  play: (id) => {
+    const nextId = id ?? get().currentId;
+    const track = getTrack(nextId);
+    if (!track) return;
+    const prevId = get().currentId;
+    const wasPlaying = get().playing;
+    const reset = nextId !== prevId;
+    set({
+      currentId: nextId,
+      playing: true,
+      elapsed: reset ? 0 : get().elapsed,
+      duration: reset ? 0 : get().duration,
+    });
+    startWidget(nextId, prevId);
+    if (reset || !wasPlaying) countPlay(nextId);
+  },
+
+  pause: () => {
+    getLiveWidget()?.pause();
+    set({ playing: false });
+  },
+
+  toggle: () => {
+    if (get().playing) get().pause();
+    else get().play();
+  },
+
+  playNext: () => {
+    const next = nextTrack(get().currentId);
+    if (next) get().play(next);
+  },
+
+  seek: (ratio) => {
+    const { duration } = get();
+    if (duration <= 0) return;
+    const next = Math.min(1, Math.max(0, ratio)) * duration;
+    getLiveWidget()?.seekTo(next * 1000);
+    set({ elapsed: next });
+  },
+
+  setPlaying: (value) => set({ playing: value }),
+
+  setTiming: (elapsed, duration) => set({ elapsed, duration }),
+}));
