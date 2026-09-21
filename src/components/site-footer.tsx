@@ -2,7 +2,7 @@ import { SOUNDCLOUD_PROFILE, TRACKS } from "@/lib/rooms";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border pb-36">
+    <footer className="border-t border-border pb-[calc(9.5rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 sm:flex-row sm:items-end sm:justify-between sm:px-8">
         <div>
           <p className="font-display text-xl tracking-[0.16em] text-fg uppercase sm:text-2xl">

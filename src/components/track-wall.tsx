@@ -12,6 +12,7 @@ import { useMarksFeed } from "@/lib/marks-feed";
 import { usePlayBoard } from "@/lib/play-board";
 import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
+import { primePlayback } from "@/lib/sc-widget";
 import { useWheelSpin } from "@/lib/wheel-spin";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,7 @@ export function TrackWall() {
 
   return (
     <section id="top" className="relative">
-      <div className="relative isolate min-h-dvh overflow-hidden">
+      <div className="relative isolate min-h-dvh overflow-x-clip overflow-hidden">
         {current ? (
           <img
             src={current.image}
@@ -43,7 +44,7 @@ export function TrackWall() {
           />
         ) : null}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/55 to-bg/30" />
-        <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-32 pt-28 sm:px-8">
+        <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-[calc(10.5rem+env(safe-area-inset-bottom))] pt-[calc(6.5rem+env(safe-area-inset-top))] sm:px-8 sm:pb-32">
           <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
             Esoteric music · {TRACKS.length} tablets
             {isDaily ? " · Today's tablet" : ""}
@@ -61,11 +62,12 @@ export function TrackWall() {
             </p>
           ) : null}
           {current ? (
-            <div className="mt-10 flex flex-wrap items-center gap-2">
+            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10">
               <button
                 type="button"
+                onPointerDown={primePlayback}
                 onClick={() => (playing ? pause() : play(current.id))}
-                className="inline-flex h-12 w-fit items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
+                className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
               >
                 {playing ? (
                   <>
@@ -81,6 +83,7 @@ export function TrackWall() {
               </button>
               <button
                 type="button"
+                onPointerDown={primePlayback}
                 onClick={() => {
                   document.getElementById("wheel")?.scrollIntoView({
                     behavior: "smooth",
@@ -88,14 +91,14 @@ export function TrackWall() {
                   });
                   requestSpin();
                 }}
-                className="inline-flex h-12 w-fit items-center gap-2 bg-elevated px-5 text-xs font-medium tracking-[0.2em] text-fg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
+                className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-elevated px-5 text-xs font-medium tracking-[0.2em] text-fg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
               >
                 <Dices className="size-3.5" />
                 Random
               </button>
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
-              <ShareButton track={current} className="bg-elevated" />
+              <ShareButton track={current} className="hidden bg-elevated sm:flex" />
               <MarkButton trackId={current.id} className="bg-elevated" />
             </div>
           ) : null}
@@ -105,7 +108,7 @@ export function TrackWall() {
       <DailyRite />
 
       <div id="work" className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
+        <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-16">
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
             The wall
           </p>
@@ -123,7 +126,7 @@ export function TrackWall() {
           ) : null}
         </div>
 
-        <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border lg:grid-cols-3 xl:grid-cols-4">
           {TRACKS.map((track) => (
             <TabletTile
               key={track.id}
@@ -182,27 +185,27 @@ function TabletTile({
             Today
           </span>
         ) : null}
-        <span className="absolute inset-x-0 bottom-0 z-[6] p-3 sm:p-4">
-          <span className="block truncate font-display text-lg leading-tight text-fg sm:text-xl">
+        <span className="absolute inset-x-0 bottom-0 z-[6] p-2.5 sm:p-4">
+          <span className="block truncate font-display text-base leading-tight text-fg sm:text-xl">
             {track.title}
           </span>
           <span
             className={cn(
-              "mt-2 line-clamp-3 text-xs leading-relaxed text-fg/80 transition-opacity duration-200",
+              "mt-1.5 line-clamp-2 text-[0.7rem] leading-relaxed text-fg/80 transition-opacity duration-200 sm:mt-2 sm:line-clamp-3 sm:text-xs",
               active
                 ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100",
+                : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100",
             )}
           >
             {getMeaning(track.id)}
           </span>
         </span>
       </button>
-      <div className="absolute top-2 right-2 z-10 hidden sm:flex">
-        <ReadButton trackId={track.id} className="size-11 bg-bg/55 text-fg" />
-        <HeartButton id={track.id} className="size-11 bg-bg/55 text-fg" />
-        <ShareButton track={track} className="size-11 bg-bg/55 text-fg" />
-        <MarkButton trackId={track.id} className="size-11 bg-bg/55 text-fg" />
+      <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
+        <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
+        <HeartButton id={track.id} className="hidden size-11 bg-bg/55 text-fg sm:flex" />
+        <ShareButton track={track} className="hidden size-11 bg-bg/55 text-fg sm:flex" />
+        <MarkButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
       </div>
     </li>
   );

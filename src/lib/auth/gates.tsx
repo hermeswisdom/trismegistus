@@ -71,7 +71,7 @@ export function SignInButtons() {
           key={p.providerId}
           type="button"
           onClick={() => signIn(p.providerId, { callbackURL: "/" })}
-          className="w-full cursor-pointer rounded-md border border-neutral-300 px-4 py-2 hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-900"
+          className="inline-flex h-12 w-full touch-manipulation items-center justify-center border border-border bg-elevated px-4 text-xs font-medium tracking-[0.18em] text-fg uppercase transition-opacity duration-150 hover:opacity-90"
         >
           Continue with {p.label}
         </button>
@@ -105,14 +105,16 @@ export function UserButton() {
         <img
           src={user.profileImageUrl}
           alt=""
-          className="h-8 w-8 rounded-full object-cover"
+          className="size-8 rounded-full object-cover"
         />
       ) : (
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-black/10 text-sm font-medium dark:bg-white/20">
+        <span className="grid size-8 place-items-center rounded-full bg-elevated text-xs font-medium text-accent">
           {label.charAt(0).toUpperCase()}
         </span>
       )}
-      <span className="text-sm font-medium">{label}</span>
+      <span className="max-w-28 truncate text-xs font-medium tracking-[0.12em] text-fg uppercase sm:max-w-40">
+        {label}
+      </span>
       {authEnabled && !gateSession && (
         <button
           type="button"
@@ -122,9 +124,9 @@ export function UserButton() {
             // Success navigates away; on failure re-enable so it can be retried.
             void signOut().catch(() => setSigningOut(false));
           }}
-          className="cursor-pointer text-sm underline-offset-4 opacity-70 hover:underline disabled:cursor-wait disabled:no-underline"
+          className="min-h-11 touch-manipulation text-xs tracking-[0.16em] text-subtle uppercase underline-offset-4 hover:text-accent hover:underline disabled:cursor-wait disabled:no-underline"
         >
-          {signingOut ? "Signing out…" : "Sign out"}
+          {signingOut ? "Leaving…" : "Sign out"}
         </button>
       )}
     </div>

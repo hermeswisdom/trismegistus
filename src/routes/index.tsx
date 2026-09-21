@@ -79,7 +79,7 @@ function Home() {
       <MarksBoardSync />
       <EnterGate />
       <SiteHeader />
-      <main>
+      <main id="wall-main" tabIndex={-1} className="outline-none">
         <TrackWall />
         <SongWheel />
         <Leaderboard />

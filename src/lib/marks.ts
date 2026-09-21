@@ -7,6 +7,7 @@ export type TrackMark = {
   author: string;
   body: string;
   createdAt: string;
+  userId?: string | null;
 };
 
 const KNOWN = new Set(TRACKS.map((track) => track.id));
@@ -26,13 +27,15 @@ async function readMarks(trackId: string): Promise<TrackMark[]> {
       author: string;
       body: string;
       createdAt: string;
+      userId: string | null;
     }>`
       select
         id,
         track_id as "trackId",
         author,
         body,
-        created_at::text as "createdAt"
+        created_at::text as "createdAt",
+        user_id as "userId"
       from track_marks
       where track_id = ${trackId}
       order by created_at desc
@@ -54,13 +57,15 @@ async function readAllMarks(): Promise<TrackMark[]> {
       author: string;
       body: string;
       createdAt: string;
+      userId: string | null;
     }>`
       select
         id,
         track_id as "trackId",
         author,
         body,
-        created_at::text as "createdAt"
+        created_at::text as "createdAt",
+        user_id as "userId"
       from track_marks
       order by created_at desc
       limit 400
@@ -89,12 +94,25 @@ export const addTrackMark = createServerFn({ method: "POST" })
     if (!KNOWN.has(data.trackId) || !data.author || !data.body) {
       return readMarks(data.trackId);
     }
+    let userId: string | null = null;
+    let author = data.author;
+    try {
+      const { getSessionUser } = await import("@/lib/auth/verify.server");
+      const session = await getSessionUser();
+      if (session?.id) {
+        userId = session.id;
+        const named = session.email?.split("@")[0];
+        if (named && !author) author = clean(named, 40);
+      }
+    } catch {
+      /* anonymous marks still land */
+    }
     try {
       const { getSql } = await import("@/lib/db");
       const sql = await getSql();
       await sql`
-        insert into track_marks (track_id, author, body)
-        values (${data.trackId}, ${data.author}, ${data.body})
+        insert into track_marks (track_id, author, body, user_id)
+        values (${data.trackId}, ${author}, ${data.body}, ${userId})
       `;
     } catch {
       /* page still serves if the store is down */

@@ -1,8 +1,22 @@
 import { create } from "zustand";
+import { readFirstSpinDone, shouldRunFirstSpin } from "@/lib/first-spin";
 import { FEATURED_ID, getTrack, nextTrack } from "@/lib/rooms";
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
-import { getLiveSoundId, getLiveWidget, setLiveSoundId } from "@/lib/sc-widget";
+import {
+  getLiveSoundId,
+  getLiveWidget,
+  primePlayback,
+  setLiveSoundId,
+} from "@/lib/sc-widget";
+import { shouldAutoSpinOnEnter } from "@/lib/wheel-rite";
+import { useWheelSpin } from "@/lib/wheel-spin";
+
+function pageHasDeepLink() {
+  if (typeof window === "undefined") return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.has("daily") || params.has("tablet");
+}
 
 type PlayerState = {
   entered: boolean;
@@ -55,7 +69,28 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   duration: 0,
 
   enter: () => {
+    const first = shouldAutoSpinOnEnter(get().entered);
+    if (!first && get().entered) return;
     set({ entered: true });
+    primePlayback();
+    get().play();
+    if (
+      first &&
+      shouldRunFirstSpin({
+        alreadyDone: readFirstSpinDone(),
+        hasDeepLink: pageHasDeepLink(),
+      })
+    ) {
+      useWheelSpin.getState().requestSpin();
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          document.getElementById("wheel")?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 280);
+      }
+    }
   },
 
   play: (id) => {
@@ -72,7 +107,9 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       duration: reset ? 0 : get().duration,
     });
     startWidget(nextId, prevId);
-    if (reset || !wasPlaying) countPlay(nextId);
+    if (reset || !wasPlaying) {
+      countPlay(nextId);
+    }
   },
 
   pause: () => {
