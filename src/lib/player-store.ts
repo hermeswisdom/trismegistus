@@ -39,8 +39,8 @@ function countPlay(id: string) {
   if ((countedAt.get(id) ?? 0) > now - 8000) return;
   countedAt.set(id, now);
   void recordPlay({ data: id })
-    .then((rows) => {
-      if (rows) usePlayBoard.getState().setRows(rows);
+    .then((board) => {
+      if (board) usePlayBoard.getState().setBoard(board.rows, board.recent);
     })
     .catch(() => {
       /* board still loads on its own */

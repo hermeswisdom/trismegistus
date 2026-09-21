@@ -1,4 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearch } from "@tanstack/react-router";
+import {
+  readFirstSpinDone,
+  shouldRunFirstSpin,
+  writeFirstSpinDone,
+} from "@/lib/first-spin";
 import { TRACKS, getMeaning, randomTrack, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { useWheelSpin } from "@/lib/wheel-spin";
@@ -54,13 +60,17 @@ function prefersReducedMotion() {
 export function SongWheel() {
   const play = usePlayer((s) => s.play);
   const currentId = usePlayer((s) => s.currentId);
+  const entered = usePlayer((s) => s.entered);
   const nonce = useWheelSpin((s) => s.nonce);
+  const requestSpin = useWheelSpin((s) => s.requestSpin);
+  const search = useSearch({ from: "/" });
   const [segments, setSegments] = useState<Track[]>(() => TRACKS.slice(0, SEGMENTS));
   const [angle, setAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [landed, setLanded] = useState<Track | null>(null);
   const spinRef = useRef<{ winIndex: number; winner: Track } | null>(null);
   const spinningRef = useRef(false);
+  const firstSpinRef = useRef(false);
 
   useEffect(() => {
     spinningRef.current = spinning;
@@ -106,6 +116,23 @@ export function SongWheel() {
     if (nonce === 0) return;
     spin();
   }, [nonce]);
+
+  useEffect(() => {
+    if (!entered || firstSpinRef.current) return;
+    const hasDeepLink = Boolean(search.daily || search.tablet);
+    if (
+      !shouldRunFirstSpin({
+        alreadyDone: readFirstSpinDone(),
+        hasDeepLink,
+      })
+    ) {
+      return;
+    }
+    firstSpinRef.current = true;
+    writeFirstSpinDone();
+    const id = window.setTimeout(() => requestSpin(), 480);
+    return () => window.clearTimeout(id);
+  }, [entered, requestSpin, search.daily, search.tablet]);
 
   const meaning = landed ? getMeaning(landed.id) : undefined;
 
