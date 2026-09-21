@@ -1,8 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HermesNote } from "@/components/hermes-note";
 import { LoginForm } from "@/components/login-form";
+import { getAuthDoors } from "@/lib/auth/doors";
 
 export const Route = createFileRoute("/login")({
+  loader: async () => {
+    try {
+      return await getAuthDoors();
+    } catch {
+      return { oauthEnabled: false };
+    }
+  },
   component: LoginPage,
   head: () => ({
     meta: [{ title: "Keep a name — Atman Music" }],
@@ -10,6 +18,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginPage() {
+  const { oauthEnabled } = Route.useLoaderData();
   return (
     <main className="min-h-dvh bg-bg px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8">
       <div className="mx-auto flex min-h-dvh max-w-6xl flex-col justify-center py-12">
@@ -31,7 +40,7 @@ function LoginPage() {
           the marks you leave and the days you return.
         </p>
         <div className="mt-10">
-          <LoginForm />
+          <LoginForm oauthEnabled={oauthEnabled} />
         </div>
       </div>
     </main>
