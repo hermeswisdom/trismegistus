@@ -135,6 +135,49 @@ try {
     throw new Error("Enter/Spin did not start SoundCloud playback");
   }
 
+  const faceAfterSpin = await page.locator("[data-player-current]").getAttribute("data-player-face");
+  if (faceAfterSpin !== "pause" && faceAfterSpin !== "pending") {
+    throw new Error(`dock did not show Pause/pending after Enter: face=${faceAfterSpin}`);
+  }
+  await page.locator("[data-player-current]").getByRole("button", { name: /^pause$/i }).waitFor({ timeout: 3000 });
+
+  const glow = await page.evaluate(() => {
+    const el = document.querySelector("[data-atman]");
+    return {
+      mode: el?.getAttribute("data-atman") ?? null,
+      hasCore: Boolean(el),
+    };
+  });
+  if (!glow.hasCore || glow.mode === "idle") {
+    throw new Error(`ATMAN did not leave idle after play: ${JSON.stringify(glow)}`);
+  }
+
+  const rain = await page.evaluate(() => {
+    const canvases = [...document.querySelectorAll("[data-rain]")];
+    const hero = document.querySelector("#top");
+    const heroBox = hero?.getBoundingClientRect();
+    return canvases
+      .filter((el) => {
+        const style = getComputedStyle(el);
+        if (style.visibility === "hidden" || style.display === "none") return false;
+        return el.getAttribute("data-rain-paused") !== "true";
+      })
+      .map((el) => {
+        const box = el.getBoundingClientRect();
+        return {
+          cols: Number(el.getAttribute("data-rain-cols") || 0),
+          phone: el.getAttribute("data-rain-phone"),
+          height: Math.round(box.height),
+          overflowY: heroBox ? box.bottom > heroBox.bottom + 12 : null,
+          overflowX: heroBox ? box.right > heroBox.right + 12 : null,
+        };
+      });
+  });
+  const flooding = rain.filter((row) => row.overflowY || row.overflowX || row.cols > 12);
+  if (flooding.length) {
+    throw new Error(`notes rain not contained on phone: ${JSON.stringify({ rain, flooding })}`);
+  }
+
   const playBtn = page.locator("[data-player-current]").getByRole("button", {
     name: /^(play|pause|retry play)$/i,
   });
@@ -148,6 +191,11 @@ try {
     .getByRole("button", { name: /^(play|retry play)$/i })
     .tap();
   await page.locator("[data-player-playing='true']").waitFor({ timeout: 4000 });
+  await page.locator("[data-player-current]").getByRole("button", { name: /^pause$/i }).waitFor({ timeout: 2000 });
+  const faceAfterPlay = await page.locator("[data-player-current]").getAttribute("data-player-face");
+  if (faceAfterPlay !== "pause" && faceAfterPlay !== "pending") {
+    throw new Error(`Play tap did not show Pause: face=${faceAfterPlay}`);
+  }
 
   const cover = page.locator(`#work button[data-tablet-id]:not([data-tablet-id="${landedId}"])`).first();
   await cover.scrollIntoViewIfNeeded();

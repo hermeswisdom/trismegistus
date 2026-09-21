@@ -150,6 +150,8 @@
     position: relative;
     display: flex;
     justify-content: center;
+    isolation: isolate;
+    overflow: visible;
   }
 
   .hermes-lockup-start {
@@ -158,14 +160,14 @@
 
   .hermes-word {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0.28rem;
     line-height: 0.86;
     max-width: 100%;
-    overflow: hidden;
+    overflow: visible;
   }
 
   .hermes-word-start,
@@ -182,6 +184,8 @@
     font-weight: 700;
     letter-spacing: -0.055em;
     line-height: 0.82;
+    transform-origin: center bottom;
+    will-change: transform;
     background-image:
       url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.96  0 0 0 0 0.45  0 0 0 0.85 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>"),
       linear-gradient(
@@ -203,8 +207,7 @@
     filter:
       drop-shadow(0 0 4px rgb(255 248 220 / 70%))
       drop-shadow(0 0 14px rgb(214 226 74 / 75%))
-      drop-shadow(0 0 38px rgb(214 226 74 / 42%))
-      drop-shadow(0 0 72px rgb(214 226 74 / 22%));
+      drop-shadow(0 0 38px rgb(214 226 74 / 42%));
     animation: atman-breathe 5.4s ease-in-out infinite;
   }
 
@@ -254,37 +257,16 @@
 
   .hermes-lockup-playing .atman-core:not(.is-live) {
     animation-duration: 2.8s;
-    filter:
-      drop-shadow(0 0 6px rgb(255 248 220 / 90%))
-      drop-shadow(0 0 18px rgb(214 226 74 / 90%))
-      drop-shadow(0 0 48px rgb(214 226 74 / 55%))
-      drop-shadow(0 0 90px rgb(214 226 74 / 28%));
   }
 
   .atman-core.is-live {
-    animation: none;
-    transition: --atman-level 70ms linear;
-    transform: scale(calc(1 + var(--atman-level) * 0.06));
-    transform-origin: center bottom;
-    filter:
-      drop-shadow(
-        0 0 calc(4px + var(--atman-level) * 12px)
-        rgb(255 248 220 / calc(0.4 + var(--atman-level) * 0.55))
-      )
-      drop-shadow(
-        0 0 calc(14px + var(--atman-level) * 32px)
-        rgb(214 226 74 / calc(0.32 + var(--atman-level) * 0.58))
-      )
-      drop-shadow(
-        0 0 calc(36px + var(--atman-level) * 70px)
-        rgb(214 226 74 / calc(0.12 + var(--atman-level) * 0.42))
-      );
+    animation-duration: 3.6s;
   }
 
   .atman-core.is-live::before {
-    animation: none;
-    opacity: calc(0.3 + var(--atman-level) * 0.85);
-    transform: scale(calc(0.9 + var(--atman-level) * 0.32));
+    animation-duration: 2.4s;
+    opacity: calc(0.42 + var(--atman-level, 0) * 0.58);
+    transform: scale(calc(0.94 + var(--atman-level, 0) * 0.22));
   }
 
   .atman-meter {
@@ -314,19 +296,9 @@
     0%,
     100% {
       background-position: 0 0, 50% 0%;
-      filter:
-        drop-shadow(0 0 4px rgb(255 248 220 / 55%))
-        drop-shadow(0 0 12px rgb(214 226 74 / 55%))
-        drop-shadow(0 0 32px rgb(214 226 74 / 28%))
-        drop-shadow(0 0 64px rgb(214 226 74 / 14%));
     }
     50% {
       background-position: 28px 16px, 50% 70%;
-      filter:
-        drop-shadow(0 0 8px rgb(255 248 220 / 95%))
-        drop-shadow(0 0 22px rgb(214 226 74 / 90%))
-        drop-shadow(0 0 52px rgb(214 226 74 / 50%))
-        drop-shadow(0 0 96px rgb(214 226 74 / 28%));
     }
   }
 
@@ -345,14 +317,15 @@
   .hermes-fall {
     pointer-events: none;
     position: absolute;
-    z-index: 2;
-    inset: -5.5rem -0.75rem -1.75rem;
+    z-index: 1;
+    inset: -1.1rem -0.35rem 0;
+    overflow: hidden;
+    contain: paint;
     mask-image: linear-gradient(
       to bottom,
       rgb(0 0 0 / 0%) 0%,
-      rgb(0 0 0 / 85%) 18%,
-      rgb(0 0 0) 48%,
-      rgb(0 0 0 / 55%) 78%,
+      rgb(0 0 0 / 80%) 16%,
+      rgb(0 0 0 / 70%) 58%,
       rgb(0 0 0 / 0%) 100%
     );
   }
@@ -360,14 +333,17 @@
   .hermes-fall-screen {
     position: absolute;
     z-index: 20;
-    inset: 0 0 auto;
-    height: 74%;
-    width: 100%;
+    inset: 8% 8% auto;
+    height: min(42%, 16.5rem);
+    width: auto;
+    max-height: 18rem;
+    overflow: hidden;
+    contain: paint;
     mask-image: linear-gradient(
       to bottom,
-      rgb(0 0 0 / 55%) 0%,
-      rgb(0 0 0) 18%,
-      rgb(0 0 0) 62%,
+      rgb(0 0 0 / 35%) 0%,
+      rgb(0 0 0 / 80%) 22%,
+      rgb(0 0 0 / 55%) 68%,
       rgb(0 0 0 / 0%) 100%
     );
   }
@@ -378,6 +354,7 @@
     height: 1.5rem;
     width: 0.95rem;
     overflow: hidden;
+    contain: paint;
   }
 
   .mark-pulse-in {
@@ -399,6 +376,24 @@
 @media (max-width: 860px) {
   .atman-core {
     font-size: clamp(2.1rem, min(11svh, 11vh), 4.4rem);
+    filter:
+      drop-shadow(0 0 3px rgb(255 248 220 / 65%))
+      drop-shadow(0 0 12px rgb(214 226 74 / 60%));
+  }
+
+  .atman-core::before {
+    filter: blur(14px);
+  }
+
+  .hermes-fall {
+    inset: -0.45rem 0 0;
+    max-height: 8.5rem;
+  }
+
+  .hermes-fall-screen {
+    inset: 12% 10% auto;
+    height: min(36%, 13.5rem);
+    max-height: 14rem;
   }
 
   .enter-gate {
@@ -421,7 +416,8 @@
     animation: none;
   }
 
-  .atman-core.is-live {
+  .atman-core.is-live,
+  .atman-core.is-live::before {
     transform: none;
   }
 

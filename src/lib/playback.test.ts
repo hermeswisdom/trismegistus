@@ -5,7 +5,11 @@ import {
   PLAY_PENDING_COPY,
   embedNeedsRewrite,
   planPlayback,
+  playControlAria,
+  playControlFace,
+  playControlShowsPause,
   resolvePlayTap,
+  shouldRewriteEmbed,
   soundcloudPlayerSrc,
 } from "./playback.ts";
 
@@ -15,6 +19,7 @@ const surface = {
   hasIframe: false,
   liveSoundId: null as string | null,
   unlocked: false,
+  heardPlay: false,
 };
 
 const playCmd = {
@@ -61,20 +66,36 @@ describe("planPlayback", () => {
     assert.equal(plan.expectPlayEvent, true);
   });
 
-  it("force-embeds on retry so a failed mobile play can start from a new gesture", () => {
+  it("does not reload a ready widget on a normal play tap", () => {
+    const ready = {
+      ...surface,
+      hasIframe: true,
+      hasWidget: true,
+      widgetReady: true,
+      heardPlay: true,
+      liveSoundId: "111",
+    };
+    const plan = planPlayback({ ...playCmd, forceEmbed: true }, ready);
+    assert.equal(plan.iframeSoundId, null);
+    assert.equal(plan.widgetOp, "play");
+    assert.equal(shouldRewriteEmbed({ ...playCmd, forceEmbed: true }, ready), false);
+  });
+
+  it("rewrites the iframe on a blocked retry so iOS can take a fresh gesture", () => {
     const plan = planPlayback(
-      { ...playCmd, forceEmbed: true },
+      { ...playCmd, forceEmbed: true, retry: true },
       {
         ...surface,
         hasIframe: true,
         hasWidget: true,
         widgetReady: true,
+        heardPlay: false,
         liveSoundId: "111",
       },
     );
     assert.equal(plan.iframeSoundId, "111");
     assert.equal(plan.iframeAutoplay, true);
-    assert.equal(plan.widgetOp, "play");
+    assert.equal(plan.widgetOp, null);
   });
 
   it("pauses the widget without touching the iframe", () => {
@@ -134,5 +155,22 @@ describe("resolvePlayTap", () => {
   it("pauses only a confirmed playing tablet", () => {
     assert.equal(resolvePlayTap({ ...base, playing: true }), "pause");
     assert.equal(resolvePlayTap(base), "play");
+  });
+});
+
+describe("playControlFace", () => {
+  const rest = { playing: false, playPending: false, playError: null as string | null };
+
+  it("shows Pause as soon as play is pending or live", () => {
+    assert.equal(playControlFace({ ...rest, playPending: true, playing: true }), "pending");
+    assert.equal(playControlShowsPause(playControlFace({ ...rest, playPending: true, playing: true })), true);
+    assert.equal(playControlAria(playControlFace({ ...rest, playPending: true, playing: true })), "Pause");
+    assert.equal(playControlFace({ ...rest, playing: true }), "pause");
+  });
+
+  it("keeps retry copy when the tablet did not sound", () => {
+    assert.equal(playControlFace({ ...rest, playError: PLAY_BLOCKED_COPY }), "retry");
+    assert.equal(playControlAria(playControlFace({ ...rest, playError: PLAY_BLOCKED_COPY })), "Retry play");
+    assert.equal(playControlFace(rest), "play");
   });
 });

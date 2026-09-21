@@ -13,6 +13,7 @@ import { usePlayBoard } from "@/lib/play-board";
 import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
+import { playControlFace, playControlShowsPause } from "@/lib/playback";
 import { cn } from "@/lib/utils";
 
 export function TrackWall() {
@@ -28,6 +29,8 @@ export function TrackWall() {
   const dailyId = dailyTrackId();
   const current = TRACKS.find((t) => t.id === currentId) ?? TRACKS[0];
   const isDaily = current?.id === dailyId;
+  const face = playControlFace({ playing, playPending, playError });
+  const showPause = playControlShowsPause(face);
 
   useEffect(() => {
     void hydrateMarks();
@@ -69,15 +72,15 @@ export function TrackWall() {
                 onClick={() => toggleTrack(current.id)}
                 className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
               >
-                {playing && !playPending && !playError ? (
+                {showPause ? (
                   <>
                     <Pause className="size-3.5" fill="currentColor" />
-                    Pause
+                    {face === "pending" ? "Sounding" : "Pause"}
                   </>
                 ) : (
                   <>
                     <Play className="ml-px size-3.5" fill="currentColor" />
-                    {playPending ? "Sounding" : playError ? "Try again" : "Play"}{" "}
+                    {face === "retry" ? "Try again" : "Play"}{" "}
                     <span className="hidden sm:inline">{current.title}</span>
                   </>
                 )}

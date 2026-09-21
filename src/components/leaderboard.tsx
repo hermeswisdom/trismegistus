@@ -4,6 +4,7 @@ import { usePlayBoard } from "@/lib/play-board";
 import { getMeaning, getTrack } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
+import { playControlFace, playControlShowsPause } from "@/lib/playback";
 import { cn } from "@/lib/utils";
 
 const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
@@ -47,7 +48,11 @@ export function Leaderboard() {
               const track = getTrack(row.trackId);
               if (!track) return null;
               const active = track.id === currentId;
-              const isPlaying = active && playing && !playPending && !playError;
+              const isPlaying = active && playControlShowsPause(playControlFace({
+                playing,
+                playPending,
+                playError,
+              }));
               const crowned = index === 0;
               return (
                 <li key={track.id}>
