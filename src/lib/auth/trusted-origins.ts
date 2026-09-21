@@ -1,9 +1,12 @@
 /**
  * Origins Better Auth accepts on credentialed POSTs (email sign-up / sign-in).
  *
- * Production sets `BETTER_AUTH_URL` to the canonical host. Without extra
- * entries, a direct hit on www or a Vercel Production alias is FORBIDDEN
- * (`Invalid origin`). This list is explicit — never `*.vercel.app`.
+ * Better Auth matches Origin with exact string equality against
+ * `URL.origin` (no trailing slash). If `BETTER_AUTH_URL` is stored as
+ * `https://atmanmusic.app/`, a raw allowlist entry will never match
+ * `Origin: https://atmanmusic.app`. Always strip slashes when adding.
+ *
+ * Production hosts below are always trusted — not `*.vercel.app`.
  */
 
 export const LOCAL_DEV_ORIGINS = [
@@ -24,8 +27,22 @@ export type TrustedOriginInput = {
   previewHosts?: readonly string[];
 };
 
-function normalizeOrigin(value: string): string | null {
-  const trimmed = value.trim();
+/** Trim and drop trailing slashes (`https://atmanmusic.app/` → `https://atmanmusic.app`). */
+export function stripTrailingSlashes(value: string): string {
+  return value.trim().replace(/\/+$/, "");
+}
+
+/** Canonical Better Auth `baseURL` (empty / whitespace → unset). */
+export function normalizeBaseURL(
+  value: string | undefined,
+): string | undefined {
+  if (!value?.trim()) return undefined;
+  return stripTrailingSlashes(value) || undefined;
+}
+
+/** Browser-style origin, or null if the value is not an http(s) URL. */
+export function normalizeOrigin(value: string): string | null {
+  const trimmed = stripTrailingSlashes(value);
   if (!trimmed) return null;
   try {
     const url = new URL(trimmed);
@@ -59,9 +76,10 @@ function pushUnique(out: string[], seen: Set<string>, value: string): void {
 /**
  * Build the Better Auth `trustedOrigins` list.
  *
- * Deployed (`BETTER_AUTH_URL` set): canonical URL + known Production hosts +
- * optional `BETTER_AUTH_TRUSTED_ORIGINS` + loopback.
- * Preview (no explicit URL): grok-sandbox wildcards + loopback.
+ * Always: Production hosts + loopback.
+ * If `BETTER_AUTH_URL` is set: that origin (slash-stripped) too.
+ * If unset: grok-sandbox preview wildcards.
+ * Optional `BETTER_AUTH_TRUSTED_ORIGINS` adds more.
  */
 export function resolveTrustedOrigins(input: TrustedOriginInput): string[] {
   const seen = new Set<string>();
@@ -70,13 +88,18 @@ export function resolveTrustedOrigins(input: TrustedOriginInput): string[] {
   const addOrigin = (value: string | undefined) => {
     if (!value) return;
     const origin = normalizeOrigin(value);
-    if (origin) pushUnique(out, seen, origin);
+    if (origin) {
+      pushUnique(out, seen, origin);
+      return;
+    }
+    const stripped = normalizeBaseURL(value);
+    if (stripped) pushUnique(out, seen, stripped);
   };
 
-  if (input.betterAuthUrl) {
-    addOrigin(input.betterAuthUrl);
-    for (const origin of PRODUCTION_ORIGINS) addOrigin(origin);
-  } else {
+  addOrigin(input.betterAuthUrl);
+  for (const origin of PRODUCTION_ORIGINS) addOrigin(origin);
+
+  if (!input.betterAuthUrl) {
     for (const host of input.previewHosts ?? []) {
       pushUnique(out, seen, host);
       pushUnique(out, seen, `https://${host}`);
