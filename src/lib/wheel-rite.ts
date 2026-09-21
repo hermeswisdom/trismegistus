@@ -4,6 +4,40 @@ export const WHEEL_SPIN_MS = 4200;
 export const WHEEL_SPIN_REDUCED_MS = 900;
 export const WHEEL_EASING = "cubic-bezier(0.12, 0.7, 0.08, 1)";
 
+/**
+ * Each tablet is a 30° wedge centered on `index * slice`, not starting there.
+ * The old path used `[index * slice, (index + 1) * slice)`, so a rest of
+ * `k * slice` put the pointer on the seam between two covers.
+ */
+export function sliceWedge(index: number, segments = WHEEL_SEGMENTS) {
+  const slice = 360 / segments;
+  const center = index * slice;
+  return { start: center - slice / 2, end: center + slice / 2, center, slice };
+}
+
+export function normalizeDegrees(deg: number) {
+  const m = ((deg % 360) + 360) % 360;
+  return m === 0 ? 0 : m;
+}
+
+/**
+ * Slice whose center sits under the top pointer after a clockwise CSS rotate.
+ * SVG 0° is 12 o'clock; rotate(θ) moves SVG angle −θ onto the pointer.
+ */
+export function sliceUnderPointer(rotationDeg: number, segments = WHEEL_SEGMENTS) {
+  const slice = 360 / segments;
+  const atPointer = normalizeDegrees(-rotationDeg);
+  return Math.round(atPointer / slice) % segments;
+}
+
+/**
+ * SoundCloud play is armed on the disc rest, never when the spin is begun.
+ * Enter / Spin still pick a winner immediately; the widget waits for land.
+ */
+export function wheelPlayOn(event: "begin" | "land") {
+  return event === "land";
+}
+
 const INTERACTIVE = new Set(["INPUT", "TEXTAREA", "SELECT", "BUTTON", "A"]);
 
 export type WheelSpinPlan = {
@@ -22,6 +56,8 @@ export function landingRotation(
 ) {
   const slice = 360 / segments;
   const base = Math.ceil(currentAngle / 360) * 360;
+  // Wedges are centered on `index * slice` (see sliceWedge). Resting on
+  // this angle puts the pointer on the tablet's midline, not a cover seam.
   const landing = ((segments - winIndex) % segments) * slice;
   return base + turns * 360 + landing;
 }

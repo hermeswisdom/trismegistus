@@ -5,10 +5,11 @@ import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
 import {
   WHEEL_SEGMENTS,
-  WHEEL_SLICE,
   buildWheelSegments,
   planWheelSpin,
   runWheelSpin,
+  sliceUnderPointer,
+  sliceWedge,
   wheelRiteCopy,
   wheelTransform,
 } from "@/lib/wheel-rite";
@@ -27,8 +28,7 @@ function polar(deg: number, radius: number) {
 }
 
 function wedgePath(index: number) {
-  const a0 = index * WHEEL_SLICE;
-  const a1 = (index + 1) * WHEEL_SLICE;
+  const { start: a0, end: a1 } = sliceWedge(index);
   const [x0, y0] = polar(a0, R);
   const [x1, y1] = polar(a1, R);
   return `M ${CX} ${CY} L ${x0} ${y0} A ${R} ${R} 0 0 1 ${x1} ${y1} Z`;
@@ -49,7 +49,7 @@ export function SongWheel() {
   const winnerId = useWheelSpin((s) => s.winnerId);
   const busy = useWheelSpin((s) => s.busy);
   const landedId = useWheelSpin((s) => s.landedId);
-  const finish = useWheelSpin((s) => s.finish);
+  const landSpin = usePlayer((s) => s.landSpin);
   const search = useSearch({ from: "/" });
   const [segments, setSegments] = useState<Track[]>(() => TRACKS.slice(0, WHEEL_SEGMENTS));
   const [angle, setAngle] = useState(0);
@@ -106,7 +106,7 @@ export function SongWheel() {
       setAngle(plan.to);
       setSpinning(false);
       setLanded(winner);
-      finish(winner.id);
+      landSpin(winner.id);
     };
 
     const start = () => {
@@ -132,7 +132,7 @@ export function SongWheel() {
       runner.cancel();
       window.clearTimeout(watchdog);
     };
-  }, [nonce, winnerId, finish]);
+  }, [nonce, winnerId, landSpin]);
 
   function onSpin() {
     noteUserGesture();
@@ -197,6 +197,7 @@ export function SongWheel() {
                 ref={discRef}
                 data-wheel-disc=""
                 data-wheel-spinning={spinning ? "true" : "false"}
+                data-wheel-pointer-slice={spinning ? undefined : String(sliceUnderPointer(angle))}
                 className="wheel-disc pointer-events-none size-full rounded-full border border-border bg-elevated"
                 style={{ transform: wheelTransform(angle) }}
               >

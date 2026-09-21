@@ -11,6 +11,7 @@ import {
   noteUserGesture,
   subscribePlayback,
 } from "@/lib/sc-widget";
+import { wheelPlayOn } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
 
 function pageHasDeepLink() {
@@ -35,6 +36,7 @@ type PlayerState = {
   playNext: () => void;
   retryPlay: () => void;
   spinTablet: (opts?: { force?: boolean; markEntered?: boolean }) => void;
+  landSpin: (id: string) => void;
   seek: (ratio: number) => void;
   setPlaying: (value: boolean) => void;
   setTiming: (elapsed: number, duration: number) => void;
@@ -151,7 +153,24 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     if (!useWheelSpin.getState().begin(winner.id, { force: opts?.force ?? true })) {
       return;
     }
-    get().play(winner.id, { forceEmbed: true, markEntered: opts?.markEntered });
+    // Keep the rite silent until the pointer rests on the winner.
+    // Play is committed in `landSpin` after the disc animation finishes.
+    if (wheelPlayOn("begin")) {
+      get().play(winner.id, { forceEmbed: true, markEntered: opts?.markEntered });
+      return;
+    }
+    if (get().playing || get().playPending) {
+      get().pause();
+    }
+  },
+
+  landSpin: (id) => {
+    useWheelSpin.getState().finish(id);
+    if (useWheelSpin.getState().busy) return;
+    if (useWheelSpin.getState().landedId !== id) return;
+    if (wheelPlayOn("land")) {
+      get().play(id, { forceEmbed: true });
+    }
   },
 
   play: (id, opts) => {
