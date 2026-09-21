@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { AtmanWord } from "@/components/atman-word";
 import { CoverMosaic } from "@/components/cover-mosaic";
@@ -8,16 +8,33 @@ import { usePlayer } from "@/lib/player-store";
 import { loadSoundCloudApi, primePlayback } from "@/lib/sc-widget";
 import { isRiteKey } from "@/lib/wheel-rite";
 
+function releaseGateFocus() {
+  const wall = document.getElementById("wall-main");
+  const active = document.activeElement;
+  if (active instanceof HTMLElement) active.blur();
+  wall?.focus({ preventScroll: true });
+}
+
 export function EnterGate() {
   const entered = usePlayer((s) => s.entered);
   const enter = usePlayer((s) => s.enter);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const [sealed, setSealed] = useState(false);
 
   useEffect(() => {
     void loadSoundCloudApi().catch(() => {
       /* widget loads later from the dock */
     });
   }, []);
+
+  useLayoutEffect(() => {
+    if (!entered) {
+      setSealed(false);
+      return;
+    }
+    releaseGateFocus();
+    setSealed(true);
+  }, [entered]);
 
   useEffect(() => {
     if (entered) return;
@@ -32,22 +49,19 @@ export function EnterGate() {
 
   function cross() {
     buttonRef.current?.blur();
-    const active = document.activeElement;
-    if (active instanceof HTMLElement) active.blur();
+    releaseGateFocus();
     enter();
-    window.requestAnimationFrame(() => {
-      document.getElementById("wall-main")?.focus({ preventScroll: true });
-    });
   }
 
   return (
     <div
+      data-enter-gate=""
       className={
-        "fixed inset-0 z-50 flex flex-col overflow-hidden bg-bg transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] " +
+        "enter-gate fixed top-0 left-0 z-50 flex flex-col overflow-hidden bg-bg transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] " +
         (entered ? "pointer-events-none invisible opacity-0" : "visible opacity-100")
       }
-      aria-hidden={entered}
-      inert={entered ? true : undefined}
+      aria-hidden={sealed ? true : undefined}
+      inert={sealed ? true : undefined}
       onPointerDown={primePlayback}
     >
       <CoverMosaic className="absolute inset-0 size-full opacity-70" />
@@ -66,7 +80,7 @@ export function EnterGate() {
         </p>
       </div>
 
-      <div className="relative z-30 shrink-0 px-6 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+      <div className="relative z-30 mt-auto shrink-0 px-6 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
         <button
           ref={buttonRef}
           type="button"

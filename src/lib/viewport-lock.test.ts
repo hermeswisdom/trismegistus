@@ -1,10 +1,30 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  PHONE_LAYOUT_MAX,
+  PHONE_SCREEN_MAX,
+  PHONE_VIEWPORT_BOOT,
+  bootPhoneViewport,
+  phoneCssSize,
   resolvePhoneViewport,
   shouldUsePhoneChrome,
   viewportContent,
 } from "./viewport-lock.ts";
+
+describe("phoneCssSize", () => {
+  it("keeps a 390×844 phone as 390", () => {
+    assert.deepEqual(phoneCssSize(390, 844), { width: 390, height: 844 });
+  });
+
+  it("halves a 2× CSS-pixel phone screen", () => {
+    assert.deepEqual(phoneCssSize(780, 1688), { width: 390, height: 844 });
+  });
+
+  it("leaves a tablet and a desktop alone", () => {
+    assert.equal(phoneCssSize(768, 1024), null);
+    assert.equal(phoneCssSize(1440, 900), null);
+  });
+});
 
 describe("resolvePhoneViewport", () => {
   it("forces device width when a phone screen is laid out at 2x", () => {
@@ -29,15 +49,24 @@ describe("resolvePhoneViewport", () => {
     );
   });
 
-  it("no-ops when layout already matches the phone", () => {
+  it("keeps a numeric phone width even when layout already matches", () => {
     assert.equal(
       resolvePhoneViewport({
         screenWidth: 390,
         screenHeight: 844,
         layoutWidth: 390,
       }),
-      null,
+      390,
     );
+  });
+});
+
+describe("bootPhoneViewport", () => {
+  it("writes width=390 and a gate height for iPhone 12 Pro", () => {
+    const boot = bootPhoneViewport({ screenWidth: 390, screenHeight: 844 });
+    assert.equal(boot?.width, 390);
+    assert.equal(boot?.height, 844);
+    assert.match(boot?.content ?? "", /width=390/);
   });
 });
 
@@ -72,5 +101,17 @@ describe("viewportContent", () => {
     assert.match(viewportContent(390), /width=390/);
     assert.match(viewportContent(), /width=device-width/);
     assert.match(viewportContent(), /viewport-fit=cover/);
+  });
+});
+
+describe("PHONE_VIEWPORT_BOOT", () => {
+  it("inlines the phone caps so the first paint does not wait for React", () => {
+    assert.match(PHONE_VIEWPORT_BOOT, new RegExp(String(PHONE_SCREEN_MAX)));
+    assert.match(PHONE_VIEWPORT_BOOT, new RegExp(String(PHONE_LAYOUT_MAX)));
+    assert.match(PHONE_VIEWPORT_BOOT, /width="\+Math\.round\(short\)/);
+    assert.match(PHONE_VIEWPORT_BOOT, /--phone-h/);
+    assert.match(PHONE_VIEWPORT_BOOT, /is-phone/);
+    assert.doesNotMatch(PHONE_VIEWPORT_BOOT, /removeChild/);
+    assert.doesNotThrow(() => new Function(PHONE_VIEWPORT_BOOT));
   });
 });

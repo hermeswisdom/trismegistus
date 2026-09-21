@@ -1,8 +1,8 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { applyPhoneViewport } from "@/lib/viewport-lock";
 
 export function ViewportLock() {
-  useEffect(() => {
+  useLayoutEffect(() => {
     applyPhoneViewport();
     const onResize = () => applyPhoneViewport();
     window.addEventListener("resize", onResize);
