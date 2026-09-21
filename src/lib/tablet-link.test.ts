@@ -1,5 +1,8 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   SITE_ORIGIN,
   parseHomeSearch,
@@ -13,6 +16,15 @@ describe("SITE_ORIGIN", () => {
     assert.equal(SITE_ORIGIN.includes("trismegistus-three"), false);
     assert.equal(SITE_ORIGIN.includes("vercel.app"), false);
     assert.equal(SITE_ORIGIN.includes("atmanmusic.com"), false);
+  });
+
+  it("notes that .com was skipped rather than pending DNS", () => {
+    const source = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "tablet-link.ts"),
+      "utf8",
+    );
+    assert.match(source, /skipped|optional/i);
+    assert.equal(source.includes("pending DNS"), false);
   });
 });
 

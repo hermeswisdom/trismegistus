@@ -25,6 +25,7 @@ export declare function grokExtensionsHeadTags(projectId?: string): string[];
 export type OgSite = {
   title?: string;
   description?: string;
+  site_name?: string;
   type?: string;
   card?: string;
   image?: string;
@@ -49,6 +50,9 @@ export declare function customOgAssetPath(cwd?: string): string;
 export declare function resolveOgCardAsset(site?: OgSite, cwd?: string): string;
 export declare function ogServiceUrl(): string;
 export declare function titleFromDocument(html: string): string;
+export declare function shareMetaContent(html: string, key: string): string;
+export declare function isGenericOgCardUrl(url: string | null | undefined): boolean;
+export declare function isPageSpecificOgImage(url: string | null | undefined): boolean;
 export declare function resolveOgTitle(
   site?: OgSite,
   appName?: string,

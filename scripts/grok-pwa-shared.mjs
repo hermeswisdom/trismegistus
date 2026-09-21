@@ -297,6 +297,73 @@ export function titleFromDocument(html) {
   return match ? unescapeHtml(match[1]).trim() : "";
 }
 
+function metaAttr(tag, name) {
+  const match = String(tag).match(
+    new RegExp(`\\b${name}\\s*=\\s*["']([^"']*)["']`, "i"),
+  );
+  return match ? unescapeHtml(match[1]) : "";
+}
+
+/** First content value for a share meta `property` or `name`. */
+export function shareMetaContent(html, key) {
+  const want = String(key ?? "").toLowerCase();
+  if (!want) return "";
+  const tags = String(html ?? "").match(/<meta\b[^>]*>/gi) ?? [];
+  for (const tag of tags) {
+    const name = (metaAttr(tag, "property") || metaAttr(tag, "name")).toLowerCase();
+    if (name === want) return metaAttr(tag, "content");
+  }
+  return "";
+}
+
+function metaKeysFromTag(tag) {
+  return [...String(tag).matchAll(/\b(?:property|name)\s*=\s*["']([^"']+)["']/gi)].map(
+    (match) => String(match[1]).toLowerCase(),
+  );
+}
+
+function grokTagKeys(tags) {
+  const keys = new Set();
+  for (const tag of tags) {
+    for (const key of metaKeysFromTag(tag)) keys.add(key);
+  }
+  return keys;
+}
+
+function hostLooksLikeGrokMe(hostHeader) {
+  const host = String(hostHeader ?? "")
+    .split(",")[0]
+    .trim()
+    .split(":")[0]
+    .toLowerCase();
+  return host === "grok.me" || host.endsWith(".grok.me");
+}
+
+/** Generic platform cards: `/og.jpg`, `/og.png`, or the og.grok.me placeholder. */
+export function isGenericOgCardUrl(url) {
+  const raw = String(url ?? "").trim();
+  if (!raw) return true;
+  if (/og\.grok\.me/i.test(raw)) return true;
+  let path = raw.split("?")[0] ?? "";
+  try {
+    if (/^https?:\/\//i.test(raw)) path = new URL(raw).pathname;
+  } catch {
+    /* keep the pre-query path */
+  }
+  const normalized = path.toLowerCase();
+  return normalized === "/og.jpg" || normalized === "/og.png";
+}
+
+/**
+ * App-authored catalog covers (e.g. /images/tracks/fragile-god.jpg), not the
+ * brand /og.jpg card. Used so custom domains keep tablet art instead of the
+ * grok injector overwriting it.
+ */
+export function isPageSpecificOgImage(url) {
+  const raw = String(url ?? "").trim();
+  return Boolean(raw) && !isGenericOgCardUrl(raw);
+}
+
 export function resolveOgTitle(
   site = {},
   appName = DEFAULT_APP_NAME,
@@ -346,6 +413,10 @@ export function grokOgHeadTags({
     `<meta name="twitter:card" content="summary_large_image">`,
     `<meta property="og:title" content="${escapeHtml(title)}">`,
   ];
+  const siteName = String(site.site_name ?? "").trim();
+  if (siteName) {
+    tags.push(`<meta property="og:site_name" content="${escapeHtml(siteName)}">`);
+  }
   const description = String(site.description ?? "").trim();
   if (description) {
     tags.push(`<meta property="og:description" content="${escapeHtml(description)}">`);
@@ -364,6 +435,7 @@ export function grokOgHeadTags({
     tags.push(`<meta property="og:image" content="${escapeHtml(image)}">`);
     tags.push(`<meta property="og:image:width" content="1200">`);
     tags.push(`<meta property="og:image:height" content="630">`);
+    tags.push(`<meta name="twitter:image" content="${escapeHtml(image)}">`);
     const banner = String(site.banner ?? "").trim();
     if (banner) {
       const bannerUrl = `https://${publicHost}${banner.startsWith("/") ? banner : `/${banner}`}`;
@@ -436,26 +508,31 @@ export function injectGrokPwaHead(html, ctx = {}) {
     host,
     documentTitle,
   );
-  const ogTags = grokOgHeadTags({ host, appName, site, documentTitle, cwd });
+  let ogTags = grokOgHeadTags({ host, appName, site, documentTitle, cwd });
   // Vercel system hosts are not valid og:image origins, so the injector
   // emits no image. Keep app-authored cover-art metas (home / tablet deep
   // links) instead of stripping them and leaving the unfurl imageless.
-  const grokEmitsImage = ogTags.some((tag) => /property="og:image"/i.test(tag));
-  const keep = grokEmitsImage
-    ? []
-    : [
-        "og:image",
-        "og:image:width",
-        "og:image:height",
-        "og:image:alt",
-        "og:url",
-        "og:description",
-        "og:type",
-        "og:site_name",
-        "twitter:title",
-        "twitter:description",
-        "twitter:image",
-      ];
+  // Production custom domains (atmanmusic.app) *can* emit /og.jpg — still
+  // keep a page-specific catalog cover so tablet/daily unfurls are not the
+  // generic brand card. Published grok.me hosts keep platform overwrite.
+  const publishedGrokMe =
+    hostLooksLikeGrokMe(host) || hostLooksLikeGrokMe(process.env?.VITE_PUBLIC_HOSTNAME);
+  const keepAppCover =
+    !publishedGrokMe && isPageSpecificOgImage(shareMetaContent(html, "og:image"));
+  if (keepAppCover) {
+    ogTags = ogTags.filter((tag) => {
+      const keys = metaKeysFromTag(tag);
+      return !keys.some(
+        (key) =>
+          key === "og:image" ||
+          key === "og:image:width" ||
+          key === "og:image:height" ||
+          key === "twitter:image",
+      );
+    });
+  }
+  const grokKeys = grokTagKeys(ogTags);
+  const keep = [...SHARE_META_KEYS].filter((key) => !grokKeys.has(key));
   let next = stripShareMetaTags(html, keep);
 
   const missing = grokPwaHeadTags(appName)
