@@ -1,5 +1,5 @@
-/** Working Vercel Production alias. Custom domain atmanmusic.com is not live yet. */
-export const SITE_ORIGIN = "https://trismegistus-smlc-1397.vercel.app";
+/** Canonical production origin. Custom domain atmanmusic.com is still pending DNS. */
+export const SITE_ORIGIN = "https://atmanmusic.app";
 
 export function tabletPagePath(opts: {
   daily?: boolean;
