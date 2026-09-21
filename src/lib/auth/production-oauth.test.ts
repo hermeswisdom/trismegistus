@@ -7,7 +7,7 @@ describe("productionGrokAuthConfigured", () => {
     assert.equal(productionGrokAuthConfigured({}), false);
     assert.equal(
       productionGrokAuthConfigured({
-        BETTER_AUTH_URL: "https://trismegistus-three.vercel.app",
+        BETTER_AUTH_URL: "https://trismegistus-smlc-1397.vercel.app",
         VERCEL: "1",
       }),
       false,

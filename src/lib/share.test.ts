@@ -5,24 +5,28 @@ import {
   homeOgCopy,
   tabletSharePayload,
 } from "./share.ts";
+import { SITE_ORIGIN } from "./tablet-link.ts";
 
 const TRACK = { title: "Fragile God", slug: "fragile-god" };
 
 describe("tabletSharePayload", () => {
   it("shares the wall URL, not SoundCloud, under Atman Music", () => {
     const payload = tabletSharePayload(TRACK, {
-      origin: "https://trismegistus-three.vercel.app",
+      origin: SITE_ORIGIN,
       meaning: "They come in robes.\nSecond line.",
     });
     assert.equal(payload.title, "Fragile God — Atman Music");
-    assert.equal(
-      payload.url,
-      "https://trismegistus-three.vercel.app/?tablet=fragile-god",
-    );
+    assert.equal(payload.url, `${SITE_ORIGIN}/?tablet=fragile-god`);
     assert.match(payload.text, /Fragile God on Atman Music/);
     assert.match(payload.text, /They come in robes/);
     assert.equal(payload.text.includes("Esoteric Vibrations"), false);
     assert.equal(payload.url.includes("soundcloud.com"), false);
+  });
+
+  it("falls back to the live Production alias when origin is omitted", () => {
+    const payload = tabletSharePayload(TRACK);
+    assert.equal(payload.url, `${SITE_ORIGIN}/?tablet=fragile-god`);
+    assert.equal(payload.url.includes("trismegistus-three"), false);
   });
 
   it("names today's tablet in the share", () => {

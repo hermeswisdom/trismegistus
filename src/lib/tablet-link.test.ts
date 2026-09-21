@@ -1,10 +1,18 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  SITE_ORIGIN,
   parseHomeSearch,
   tabletPagePath,
   tabletPageUrl,
 } from "./tablet-link.ts";
+
+describe("SITE_ORIGIN", () => {
+  it("is the live Production alias, not the retired three tip", () => {
+    assert.equal(SITE_ORIGIN, "https://trismegistus-smlc-1397.vercel.app");
+    assert.equal(SITE_ORIGIN.includes("trismegistus-three"), false);
+  });
+});
 
 describe("tabletPagePath", () => {
   it("builds daily and tablet deep links", () => {
@@ -20,6 +28,14 @@ describe("tabletPageUrl", () => {
       tabletPageUrl({ daily: true, origin: "https://example.test/" }),
       "https://example.test/?daily=1",
     );
+  });
+
+  it("defaults OG / share URLs to the live Production alias", () => {
+    assert.equal(
+      tabletPageUrl({ tablet: "fragile-god" }),
+      "https://trismegistus-smlc-1397.vercel.app/?tablet=fragile-god",
+    );
+    assert.equal(tabletPageUrl({}), "https://trismegistus-smlc-1397.vercel.app/");
   });
 });
 
