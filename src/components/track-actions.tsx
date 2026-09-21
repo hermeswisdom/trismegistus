@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Heart, Share2 } from "lucide-react";
 import { useHearts } from "@/lib/hearts";
 import type { Track } from "@/lib/rooms";
+import { tabletPageUrl } from "@/lib/tablet-link";
 import { cn } from "@/lib/utils";
 
 const swap =
@@ -104,10 +105,11 @@ export function ShareButton({
   );
 }
 
-export async function shareTrack(track: Track) {
-  const url = track.permalink;
-  const title = `${track.title} — Atman Music`;
-  const text = `${track.title} · Esoteric Vibrations`;
+export async function shareUrl(
+  url: string,
+  title: string,
+  text: string,
+): Promise<boolean> {
   if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
     try {
       await navigator.share({ title, text, url });
@@ -137,4 +139,33 @@ export async function shareTrack(track: Track) {
       return false;
     }
   }
+}
+
+export async function shareTrack(track: Track) {
+  return shareUrl(
+    track.permalink,
+    `${track.title} — Atman Music`,
+    `${track.title} · Esoteric Vibrations`,
+  );
+}
+
+export async function shareTabletPage(
+  track: Track,
+  opts: { daily?: boolean; origin?: string } = {},
+) {
+  const origin =
+    opts.origin ??
+    (typeof window !== "undefined" ? window.location.origin : undefined);
+  const url = tabletPageUrl({
+    daily: opts.daily,
+    tablet: opts.daily ? undefined : track.slug,
+    origin,
+  });
+  return shareUrl(
+    url,
+    opts.daily
+      ? `Today's tablet — ${track.title} — Atman Music`
+      : `${track.title} — Atman Music`,
+    `${track.title} · Esoteric Vibrations`,
+  );
 }

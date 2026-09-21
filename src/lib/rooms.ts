@@ -63,6 +63,14 @@ export function getTrack(id: string) {
   return TRACKS.find((t) => t.id === id);
 }
 
+export function getTrackBySlug(slug: string) {
+  return TRACKS.find((t) => t.slug === slug);
+}
+
+export function getTrackByIdOrSlug(value: string) {
+  return getTrack(value) ?? getTrackBySlug(value);
+}
+
 export { getMeaning };
 
 export function getRoom(id: string) {

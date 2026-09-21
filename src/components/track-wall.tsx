@@ -1,11 +1,15 @@
 import { useEffect } from "react";
 import { Pause, Play, Dices } from "lucide-react";
 import { AtmanWord } from "@/components/atman-word";
+import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
+import { MarksPulse } from "@/components/marks-pulse";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
+import { dailyTrackId } from "@/lib/daily-catalog";
 import { useMarksFeed } from "@/lib/marks-feed";
+import { usePlayBoard } from "@/lib/play-board";
 import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { useWheelSpin } from "@/lib/wheel-spin";
@@ -19,7 +23,10 @@ export function TrackWall() {
   const pause = usePlayer((s) => s.pause);
   const requestSpin = useWheelSpin((s) => s.requestSpin);
   const hydrateMarks = useMarksFeed((s) => s.hydrate);
+  const recent = usePlayBoard((s) => s.recent);
+  const dailyId = dailyTrackId();
   const current = TRACKS.find((t) => t.id === currentId) ?? TRACKS[0];
+  const isDaily = current?.id === dailyId;
 
   useEffect(() => {
     void hydrateMarks();
@@ -39,6 +46,7 @@ export function TrackWall() {
         <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-32 pt-28 sm:px-8">
           <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
             Esoteric music · {TRACKS.length} tablets
+            {isDaily ? " · Today's tablet" : ""}
           </p>
           <h1 className="mt-4">
             {entered ? (
@@ -94,6 +102,8 @@ export function TrackWall() {
         </div>
       </div>
 
+      <DailyRite />
+
       <div id="work" className="border-t border-border">
         <div className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
@@ -106,6 +116,11 @@ export function TrackWall() {
             Open a tablet and read the meaning. The filing is the verse, not the
             style.
           </p>
+          {recent.length > 0 ? (
+            <div className="mt-8 max-w-2xl">
+              <MarksPulse recent={recent} compact />
+            </div>
+          ) : null}
         </div>
 
         <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border sm:grid-cols-3 lg:grid-cols-4">
@@ -115,6 +130,7 @@ export function TrackWall() {
               track={track}
               active={track.id === currentId}
               isPlaying={track.id === currentId && playing}
+              isDaily={track.id === dailyId}
               onToggle={() =>
                 track.id === currentId && playing ? pause() : play(track.id)
               }
@@ -130,11 +146,13 @@ function TabletTile({
   track,
   active,
   isPlaying,
+  isDaily,
   onToggle,
 }: {
   track: Track;
   active: boolean;
   isPlaying: boolean;
+  isDaily: boolean;
   onToggle: () => void;
 }) {
   return (
@@ -158,6 +176,11 @@ function TabletTile({
         />
         {active ? (
           <span className="absolute inset-0 ring-2 ring-accent ring-inset" />
+        ) : null}
+        {isDaily ? (
+          <span className="absolute top-2 left-2 z-10 bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
+            Today
+          </span>
         ) : null}
         <span className="absolute inset-x-0 bottom-0 z-[6] p-3 sm:p-4">
           <span className="block truncate font-display text-lg leading-tight text-fg sm:text-xl">
