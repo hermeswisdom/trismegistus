@@ -26,12 +26,11 @@ describe("tabletPageUrl", () => {
 describe("parseHomeSearch", () => {
   it("accepts daily=1 and a tablet slug", () => {
     assert.deepEqual(parseHomeSearch({ daily: "1", tablet: "fragile-god" }), {
-      daily: true,
+      daily: 1,
       tablet: "fragile-god",
     });
-    assert.deepEqual(parseHomeSearch({ daily: "0" }), {
-      daily: false,
-      tablet: undefined,
-    });
+    assert.deepEqual(parseHomeSearch({ daily: true }), { daily: 1 });
+    assert.deepEqual(parseHomeSearch({ daily: "0" }), {});
+    assert.deepEqual(parseHomeSearch({}), {});
   });
 });

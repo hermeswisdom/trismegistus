@@ -21,14 +21,18 @@ export function tabletPageUrl(opts: {
 }
 
 export function parseHomeSearch(search: Record<string, unknown>): {
-  daily: boolean;
-  tablet: string | undefined;
+  daily?: 1;
+  tablet?: string;
 } {
   const raw = search.daily;
-  const daily = raw === true || raw === 1 || raw === "1";
+  const daily =
+    raw === true || raw === 1 || raw === "1" || raw === "true" ? 1 : undefined;
   const tablet =
     typeof search.tablet === "string" && search.tablet.trim()
       ? search.tablet.trim().slice(0, 80)
       : undefined;
-  return { daily, tablet };
+  return {
+    ...(daily ? { daily } : {}),
+    ...(tablet ? { tablet } : {}),
+  };
 }

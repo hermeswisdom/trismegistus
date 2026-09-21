@@ -19,12 +19,12 @@ export function dailyTrack(at?: Date): Track {
 }
 
 export function focusedTrackFromSearch(search: {
-  daily?: boolean;
+  daily?: boolean | 1 | "1";
   tablet?: string;
   at?: Date;
 }): FocusedTablet {
   return resolveFocusedTablet({
-    daily: search.daily,
+    daily: Boolean(search.daily),
     tablet: search.tablet,
     ids: catalogIds(),
     dateKey: londonDateKey(search.at),
