@@ -5,13 +5,15 @@ import { AtmanWord } from "@/components/atman-word";
 import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
 import { MarksPulse } from "@/components/marks-pulse";
-import { HeartButton, ShareButton } from "@/components/track-actions";
+import { HeartButton, ShareButton, ShareDayButton } from "@/components/track-actions";
+import { FavoritesShelf } from "@/components/favorites-shelf";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
 import { dailyTrackId } from "@/lib/daily-catalog";
 import { useHearts } from "@/lib/hearts";
+import { savedTablets } from "@/lib/saved-tablets";
 import { useMarksFeed } from "@/lib/marks-feed";
-import { usePlayBoard } from "@/lib/play-board";
+import { usePlayBoard, selectRoomPulse } from "@/lib/play-board";
 import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
@@ -27,7 +29,7 @@ export function TrackWall() {
   const toggleTrack = usePlayer((s) => s.toggleTrack);
   const spinTablet = usePlayer((s) => s.spinTablet);
   const hydrateMarks = useMarksFeed((s) => s.hydrate);
-  const recent = usePlayBoard((s) => s.recent);
+  const recent = usePlayBoard(selectRoomPulse);
   const hearts = useHearts((s) => s.ids);
   const [savedOnly, setSavedOnly] = useState(false);
   const dailyId = dailyTrackId();
@@ -35,7 +37,7 @@ export function TrackWall() {
   const isDaily = current?.id === dailyId;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
-  const saved = TRACKS.filter((track) => hearts[track.id]);
+  const saved = savedTablets(TRACKS, hearts);
   const tiles = savedOnly ? saved : TRACKS;
 
   useEffect(() => {
@@ -108,14 +110,26 @@ export function TrackWall() {
               </button>
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
-              <ShareButton track={current} className="bg-elevated" />
-              <MarkButton trackId={current.id} className="bg-elevated" />
+              {isDaily ? (
+                <ShareDayButton track={current} className="h-12" />
+              ) : (
+                <ShareButton track={current} className="bg-elevated" />
+              )}
+              <MarkButton trackId={current.id} className="bg-elevated" labeled />
             </div>
           ) : null}
         </div>
       </div>
 
       <DailyRite />
+
+      <FavoritesShelf
+        saved={saved}
+        currentId={currentId}
+        playing={playing}
+        dailyId={dailyId}
+        onToggle={toggleTrack}
+      />
 
       <div id="work" className="border-t border-border">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-16">
@@ -226,7 +240,13 @@ function TabletTile({
       <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
         <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
         <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
-        <ShareButton track={track} className="hidden size-11 bg-bg/55 text-fg sm:flex" />
+        <ShareButton
+          track={track}
+          className={cn(
+            "size-10 bg-bg/55 text-fg sm:flex sm:size-11",
+            isDaily ? "flex" : "hidden",
+          )}
+        />
         <MarkButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
       </div>
     </li>

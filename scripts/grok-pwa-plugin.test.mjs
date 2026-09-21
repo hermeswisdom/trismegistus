@@ -18,6 +18,8 @@ import {
   resolveOgCardAsset,
   snapshotOgIdentity,
   stripInstallParams,
+  titleFromDocument,
+  unescapeHtml,
 } from "./grok-pwa-shared.mjs";
 import { renderInstallPage } from "./grok-pwa-plugin.mjs";
 
@@ -413,6 +415,48 @@ test("atmanmusic.app home keeps brand og.jpg with site_name and og:url", () => {
     assert.match(out, /property="og:url" content="https:\/\/atmanmusic\.app\/"/);
     assert.match(out, /property="og:title" content="Atman Music"/);
     assert.equal(out.split('property="og:image"').length - 1, 1);
+  } finally {
+    if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
+    else process.env.VITE_PUBLIC_HOSTNAME = prev;
+  }
+});
+
+test("daily title &#x27; is not double-escaped in og:title", () => {
+  const prev = process.env.VITE_PUBLIC_HOSTNAME;
+  delete process.env.VITE_PUBLIC_HOSTNAME;
+  try {
+    assert.equal(unescapeHtml("Today&#x27;s tablet"), "Today's tablet");
+    assert.equal(
+      titleFromDocument(
+        "<title>Today&#x27;s tablet — Fragile God — Atman Music</title>",
+      ),
+      "Today's tablet — Fragile God — Atman Music",
+    );
+    const html = atmanShareHead({
+      title: "Today&#x27;s tablet — Fragile God — Atman Music",
+      image: "https://atmanmusic.app/images/tracks/fragile-god.jpg",
+      url: "https://atmanmusic.app/?daily=1",
+    });
+    const out = injectGrokPwaHead(html, {
+      host: "atmanmusic.app",
+      site: { card: "custom", site_name: "Atman Music" },
+      cwd: mkdtempSync(join(tmpdir(), "grok-og-atman-daily-apos-")),
+    });
+    assert.match(
+      out,
+      /property="og:title" content="Today&#39;s tablet — Fragile God — Atman Music"/,
+    );
+    assert.doesNotMatch(out, /Today&amp;#x27;/);
+    assert.doesNotMatch(out, /Today&amp;#39;/);
+    assert.match(
+      out,
+      /property="og:image" content="https:\/\/atmanmusic\.app\/images\/tracks\/fragile-god\.jpg"/,
+    );
+    assert.match(
+      out,
+      /property="og:url" content="https:\/\/atmanmusic\.app\/\?daily=1"/,
+    );
+    assert.match(out, /property="og:site_name" content="Atman Music"/);
   } finally {
     if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
     else process.env.VITE_PUBLIC_HOSTNAME = prev;

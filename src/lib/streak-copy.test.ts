@@ -31,4 +31,21 @@ describe("wallStreakCopy", () => {
     assert.equal(copy.kicker, "Rite · II");
     assert.match(copy.detail, /keep the days/);
   });
+
+  it("counts down while today's tablet is sounding", () => {
+    const first = wallStreakCopy({
+      count: 0,
+      todayMarked: false,
+      listeningDaily: true,
+      elapsed: 12,
+    });
+    assert.match(first.detail, /18s to write the day/);
+    const keep = wallStreakCopy({
+      count: 2,
+      todayMarked: false,
+      listeningDaily: true,
+      elapsed: 21.2,
+    });
+    assert.equal(keep.detail, "9s to keep the days.");
+  });
 });

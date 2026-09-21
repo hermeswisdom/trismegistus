@@ -1,6 +1,6 @@
 import { Crown } from "lucide-react";
 import { MarksPulse } from "@/components/marks-pulse";
-import { usePlayBoard } from "@/lib/play-board";
+import { usePlayBoard, selectRoomPulse } from "@/lib/play-board";
 import { getMeaning, getTrack } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
@@ -11,7 +11,7 @@ const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 export function Leaderboard() {
   const rows = usePlayBoard((s) => s.rows);
-  const recent = usePlayBoard((s) => s.recent);
+  const recent = usePlayBoard(selectRoomPulse);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
   const playPending = usePlayer((s) => s.playPending);

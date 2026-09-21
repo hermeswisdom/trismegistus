@@ -6,7 +6,8 @@ import { useHearts } from "@/lib/hearts";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getMeaning, type Track } from "@/lib/rooms";
-import { clipboardShareText, tabletSharePayload } from "@/lib/share";
+import { clipboardShareText, shareTabletAsDaily, tabletSharePayload } from "@/lib/share";
+import { dailyTrackId } from "@/lib/daily-catalog";
 import { cn } from "@/lib/utils";
 
 const swap =
@@ -74,11 +75,15 @@ export function HeartButton({
 export function ShareButton({
   track,
   className,
+  daily,
 }: {
   track: Track;
   className?: string;
+  daily?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
+  const dailyId = dailyTrackId();
+  const asDaily = daily ?? shareTabletAsDaily(track.id, dailyId);
 
   useEffect(() => {
     if (!copied) return;
@@ -89,10 +94,10 @@ export function ShareButton({
   return (
     <button
       type="button"
-      aria-label={copied ? "Link copied" : "Share"}
+      aria-label={copied ? "Link copied" : asDaily ? "Share the day" : "Share"}
       onClick={async (e) => {
         e.stopPropagation();
-        const ok = await shareTrack(track);
+        const ok = await shareTabletPage(track, { daily: asDaily });
         if (ok) setCopied(true);
       }}
       className={cn(
@@ -118,6 +123,42 @@ export function ShareButton({
           )}
         />
       </span>
+    </button>
+  );
+}
+
+export function ShareDayButton({
+  track,
+  className,
+}: {
+  track: Track;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const id = window.setTimeout(() => setCopied(false), 1600);
+    return () => window.clearTimeout(id);
+  }, [copied]);
+
+  return (
+    <button
+      type="button"
+      data-share-day=""
+      aria-label={copied ? "Link copied" : "Share the day"}
+      onClick={async (e) => {
+        e.stopPropagation();
+        const ok = await shareTabletPage(track, { daily: true });
+        if (ok) setCopied(true);
+      }}
+      className={cn(
+        "inline-flex h-11 w-fit items-center gap-2 bg-elevated px-5 text-xs font-medium tracking-[0.2em] text-fg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]",
+        className,
+      )}
+    >
+      {copied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
+      {copied ? "Copied" : "Share the day"}
     </button>
   );
 }
@@ -165,6 +206,7 @@ function shareOrigin(): string | undefined {
 
 export async function shareTrack(track: Track) {
   const payload = tabletSharePayload(track, {
+    daily: shareTabletAsDaily(track.id, dailyTrackId()),
     origin: shareOrigin(),
     meaning: getMeaning(track.id),
   });

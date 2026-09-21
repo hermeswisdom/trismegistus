@@ -7,6 +7,7 @@ import { usePlayer } from "@/lib/player-store";
 
 const LINKS = [
   { href: "#work", label: "Wall" },
+  { href: "#saved", label: "Saved" },
   { href: "#wheel", label: "Wheel" },
   { href: "#board", label: "Board" },
   { href: "#office", label: "Office" },

@@ -4,6 +4,8 @@ import { addTrackMark, listTrackMarks, type TrackMark } from "@/lib/marks";
 import { useMarksFeed } from "@/lib/marks-feed";
 import { useMarkSheet } from "@/lib/mark-sheet";
 import { markAuthorFromSession } from "@/lib/mark-name";
+import { leftMarkCopy, markNameHint } from "@/lib/mark-copy";
+import { usePlayBoard } from "@/lib/play-board";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { isSignedInForSaves } from "@/lib/favorites-sync";
@@ -43,6 +45,9 @@ export function MarksSheet() {
   const [author, setAuthor] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
+  const [left, setLeft] = useState(false);
+  const [error, setError] = useState(false);
+  const noteTabletMark = usePlayBoard((s) => s.noteTabletMark);
 
   useEffect(() => {
     if (signedName) {
@@ -60,8 +65,12 @@ export function MarksSheet() {
     if (!trackId) {
       setMarks([]);
       setBody("");
+      setLeft(false);
+      setError(false);
       return;
     }
+    setLeft(false);
+    setError(false);
     void listTrackMarks({ data: trackId })
       .then((rows) => {
         const next = rows ?? [];
@@ -92,6 +101,8 @@ export function MarksSheet() {
     const nextBody = body.trim();
     if (!nextAuthor || !nextBody) return;
     setSending(true);
+    setError(false);
+    setLeft(false);
     if (!signedName) {
       try {
         localStorage.setItem(NAME_KEY, nextAuthor.slice(0, 40));
@@ -106,8 +117,10 @@ export function MarksSheet() {
       setMarks(rows ?? []);
       if (trackId) setTrack(trackId, rows ?? []);
       setBody("");
+      setLeft(true);
+      noteTabletMark(trackId);
     } catch {
-      /* stay open */
+      setError(true);
     } finally {
       setSending(false);
     }
@@ -162,7 +175,7 @@ export function MarksSheet() {
           <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
             <label className="block">
               <span className="mb-2 block text-xs tracking-[0.2em] text-subtle uppercase">
-                {signedName ? "Your name" : "Name"}
+                {signedName ? "Your name (private)" : "Name"}
               </span>
               <input
                 required={!signedName}
@@ -170,13 +183,17 @@ export function MarksSheet() {
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
                 readOnly={Boolean(signedName)}
+                placeholder={signedName ? undefined : "A name for this tablet"}
                 className="h-12 w-full border-0 border-b border-border bg-transparent px-0 text-base text-fg outline-none transition-[border-color] duration-150 placeholder:text-subtle focus:border-fg read-only:text-accent"
                 autoComplete="nickname"
                 suppressHydrationWarning
               />
             </label>
-            {authEnabled ? (
-              <AccountNudge forMarks className="mt-3" />
+            <p className="text-xs leading-relaxed text-subtle">
+              {markNameHint({ signedIn: Boolean(signedName), name: signedName || author })}
+            </p>
+            {authEnabled && !signedName ? (
+              <AccountNudge forMarks className="mt-1" />
             ) : null}
             <label className="block">
               <span className="mb-2 block text-xs tracking-[0.2em] text-subtle uppercase">
@@ -188,13 +205,30 @@ export function MarksSheet() {
                 rows={3}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
+                placeholder="A line for the tablet"
                 className="w-full resize-none border-0 border-b border-border bg-transparent px-0 py-3 text-base text-fg outline-none transition-[border-color] duration-150 placeholder:text-subtle focus:border-fg"
                 suppressHydrationWarning
               />
             </label>
+            {left ? (
+              <p
+                data-mark-left=""
+                className="text-sm leading-relaxed text-accent"
+              >
+                {leftMarkCopy({
+                  signedIn: Boolean(signedName),
+                  name: signedName || author,
+                })}
+              </p>
+            ) : null}
+            {error ? (
+              <p className="text-sm leading-relaxed text-accent">
+                The mark did not hold. Try again.
+              </p>
+            ) : null}
             <button
               type="submit"
-              disabled={sending}
+              disabled={sending || !(signedName || author).trim() || !body.trim()}
               className="inline-flex h-12 w-fit items-center justify-center bg-accent px-8 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-opacity duration-150 hover:opacity-90 active:scale-[0.96] disabled:opacity-60"
             >
               {sending ? "Leaving" : "Leave mark"}
@@ -207,8 +241,11 @@ export function MarksSheet() {
                 No marks yet. Leave the first.
               </li>
             ) : (
-              marks.map((mark) => (
-                <li key={mark.id} className="py-5">
+              marks.map((mark, index) => (
+                <li
+                  key={mark.id}
+                  className={cn("py-5", left && index === 0 && "mark-pulse-in")}
+                >
                   <p className="flex items-baseline justify-between gap-4">
                     <span className="font-display text-lg text-fg">
                       {mark.author}

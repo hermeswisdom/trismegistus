@@ -17,6 +17,11 @@ function firstVerseLine(meaning: string | undefined): string {
   return line.length > 160 ? `${line.slice(0, 157).trimEnd()}…` : line;
 }
 
+/** Today's tablet shares `/?daily=1` so crawlers hit the daily OG card. */
+export function shareTabletAsDaily(trackId: string, dailyId: string): boolean {
+  return Boolean(trackId && dailyId && trackId === dailyId);
+}
+
 /** Title, text, and wall URL for Web Share / clipboard. Brand is Atman Music. */
 export function tabletSharePayload(
   track: { title: string; slug: string },
