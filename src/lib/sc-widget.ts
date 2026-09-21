@@ -34,6 +34,7 @@ type SCApi = {
       PAUSE: string;
       FINISH: string;
       PLAY_PROGRESS: string;
+      ERROR?: string;
     };
   };
 };
@@ -181,6 +182,7 @@ export function bindLiveWidget(
     widget.unbind(events.PAUSE);
     widget.unbind(events.FINISH);
     widget.unbind(events.PLAY_PROGRESS);
+    if (events.ERROR) widget.unbind(events.ERROR);
   } catch {
     /* a fresh widget has nothing to unbind */
   }
@@ -209,6 +211,19 @@ export function bindLiveWidget(
   });
   widget.bind(events.FINISH, () => emit({ type: "finish" }));
   widget.bind(events.PLAY_PROGRESS, (raw) => emit({ type: "progress", raw }));
+  if (events.ERROR) {
+    try {
+      widget.bind(events.ERROR, () => {
+        if (heardPlay) return;
+        if (!wantPlay && pending?.intent !== "play") return;
+        wantPlay = false;
+        clearConfirm();
+        emit({ type: "blocked", message: PLAY_BLOCKED_COPY });
+      });
+    } catch {
+      /* older widget builds omit ERROR */
+    }
+  }
 }
 
 export function getLiveWidget() {

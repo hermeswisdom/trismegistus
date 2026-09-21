@@ -7,6 +7,7 @@ import {
   pickSpinTurns,
   planWheelSpin,
   shouldAutoSpinOnEnter,
+  wheelRiteCopy,
   wheelTransform,
   WHEEL_SEGMENTS,
   WHEEL_SLICE,
@@ -66,6 +67,33 @@ describe("shouldAutoSpinOnEnter", () => {
 
   it("still spins when a previous visit wrote first-spin", () => {
     assert.equal(shouldAutoSpinOnEnter(false, false), true);
+  });
+});
+
+describe("wheelRiteCopy", () => {
+  it("never returns empty after Enter, even with no landed tablet", () => {
+    assert.equal(
+      wheelRiteCopy({ entered: true, landedId: null, busy: false }),
+      "turning",
+    );
+    assert.equal(
+      wheelRiteCopy({ entered: true, landedId: null, busy: true }),
+      "turning",
+    );
+  });
+
+  it("keeps the landed tablet after the disc rests", () => {
+    assert.equal(
+      wheelRiteCopy({ entered: true, landedId: "bank-holiday-bloke", busy: false }),
+      "landed",
+    );
+  });
+
+  it("is empty only before the first crossing", () => {
+    assert.equal(
+      wheelRiteCopy({ entered: false, landedId: null, busy: false }),
+      "empty",
+    );
   });
 });
 

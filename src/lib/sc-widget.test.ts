@@ -164,4 +164,18 @@ describe("sc-widget playback client", () => {
     assert.equal(iframe.src, srcBefore);
     assert.deepEqual(plays, ["play"]);
   });
+
+  it("treats a widget ERROR during play as a blocked tablet", () => {
+    const types: string[] = [];
+    const off = subscribePlayback((notice) => types.push(notice.type));
+    const { widget } = fakeWidget();
+    const events = { ...Events, ERROR: "error" };
+    bindLiveWidget(widget, events, "555");
+    widget.fire("ready");
+    applyPlayback(cmd);
+    widget.fire("error");
+    off();
+    assert.equal(types.includes("blocked"), true);
+    assert.equal(getPlaybackSurface().heardPlay, false);
+  });
 });

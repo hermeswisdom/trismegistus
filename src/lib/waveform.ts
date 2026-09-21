@@ -3,6 +3,8 @@ import type { SCWidget } from "@/lib/sc-widget";
 
 const cache = new Map<string, Float32Array>();
 const inflight = new Map<string, Promise<Float32Array | null>>();
+const failed = new Set<string>();
+const hydrated = new Set<string>();
 const listeners = new Set<() => void>();
 
 function notify() {
@@ -27,19 +29,29 @@ function pack(samples: number[]) {
 
 export async function loadWaveform(id: string, waveformUrl: string) {
   if (cache.has(id)) return cache.get(id) ?? null;
+  if (failed.has(id)) return null;
   const pending = inflight.get(id);
   if (pending) return pending;
-  const work = fetch(jsonUrl(waveformUrl))
+  const work = fetch(jsonUrl(waveformUrl), { mode: "cors" })
     .then(async (res) => {
-      if (!res.ok) return null;
+      if (!res.ok) {
+        failed.add(id);
+        return null;
+      }
       const data = (await res.json()) as { samples?: number[] };
-      if (!data.samples?.length) return null;
+      if (!data.samples?.length) {
+        failed.add(id);
+        return null;
+      }
       const packed = pack(data.samples);
       cache.set(id, packed);
       notify();
       return packed;
     })
-    .catch(() => null)
+    .catch(() => {
+      failed.add(id);
+      return null;
+    })
     .finally(() => inflight.delete(id));
   inflight.set(id, work);
   return work;
@@ -48,11 +60,18 @@ export async function loadWaveform(id: string, waveformUrl: string) {
 export function hydrateWaveform(widget: SCWidget) {
   try {
     widget.getCurrentSound((sound) => {
-      if (!sound?.id || !sound.waveform_url) return;
-      void loadWaveform(String(sound.id), sound.waveform_url);
+      try {
+        if (!sound?.id || !sound.waveform_url) return;
+        const id = String(sound.id);
+        if (cache.has(id) || failed.has(id) || hydrated.has(id)) return;
+        hydrated.add(id);
+        void loadWaveform(id, sound.waveform_url);
+      } catch {
+        /* SoundCloud's canvas createPattern can throw while the widget draws. */
+      }
     });
   } catch {
-    /* widget not ready yet */
+    /* widget not ready yet, or InvalidStateError inside the embed */
   }
 }
 
@@ -94,4 +113,12 @@ export function useWaveform(soundId?: string) {
   }, []);
   if (!soundId) return null;
   return cache.get(soundId) ?? null;
+}
+
+export function resetWaveformForTests() {
+  cache.clear();
+  inflight.clear();
+  failed.clear();
+  hydrated.clear();
+  listeners.clear();
 }

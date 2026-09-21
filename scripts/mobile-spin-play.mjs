@@ -126,6 +126,12 @@ try {
   if (!landedId || landedId !== playerId) {
     throw new Error(`spin did not select the landed tablet (landed=${landedId} player=${playerId})`);
   }
+  const noTabletAfterLand = await page.evaluate(() =>
+    document.body.innerText.includes("No tablet yet."),
+  );
+  if (noTabletAfterLand) {
+    throw new Error("Enter spin snapped back to No tablet yet after landing");
+  }
 
   const afterSpin = await page.evaluate(() => ({
     plays: window.__scMock?.plays.length ?? 0,
@@ -153,9 +159,7 @@ try {
   }
 
   const rain = await page.evaluate(() => {
-    const canvases = [...document.querySelectorAll("[data-rain]")];
-    const hero = document.querySelector("#top");
-    const heroBox = hero?.getBoundingClientRect();
+    const canvases = [...document.querySelectorAll(".hermes-fall [data-rain]")];
     return canvases
       .filter((el) => {
         const style = getComputedStyle(el);
@@ -164,12 +168,13 @@ try {
       })
       .map((el) => {
         const box = el.getBoundingClientRect();
+        const host = el.parentElement?.getBoundingClientRect();
         return {
           cols: Number(el.getAttribute("data-rain-cols") || 0),
           phone: el.getAttribute("data-rain-phone"),
           height: Math.round(box.height),
-          overflowY: heroBox ? box.bottom > heroBox.bottom + 12 : null,
-          overflowX: heroBox ? box.right > heroBox.right + 12 : null,
+          overflowY: host ? box.bottom > host.bottom + 2 : null,
+          overflowX: host ? box.right > host.right + 2 : null,
         };
       });
   });

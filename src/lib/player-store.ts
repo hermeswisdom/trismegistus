@@ -136,9 +136,9 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   spinTablet: (opts) => {
     ensurePlaybackBridge();
     noteUserGesture();
+    if (opts?.markEntered) set({ entered: true, playError: null });
     const winner = randomTrack(get().currentId);
     if (!useWheelSpin.getState().begin(winner.id, { force: opts?.force ?? true })) {
-      if (opts?.markEntered) set({ entered: true, playError: null });
       return;
     }
     get().play(winner.id, { forceEmbed: true, markEntered: opts?.markEntered });
@@ -154,7 +154,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const reset = nextId !== prevId;
     const forceEmbed = opts?.forceEmbed ?? true;
     set({
-      ...(opts?.markEntered ? { entered: true } : {}),
+      ...(opts?.markEntered || get().entered ? { entered: true } : {}),
       currentId: nextId,
       playing: true,
       playPending: true,
