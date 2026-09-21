@@ -40,9 +40,10 @@ The wall never forces sign-in for playback. With auth off, favorites and last ta
 | --- | --- | --- |
 | `VITE_AUTH_ENABLED` | Yes | Must be `true` (not the string `"false"`). Production is currently `false`, which hides live sessions and shows the gated `/login` copy. |
 | `BETTER_AUTH_SECRET` | Yes | Long random string. Used to sign session cookies. |
-| `BETTER_AUTH_URL` | Yes | Public origin, e.g. `https://atmanmusic.app`. Must match the site the phone opens. Add preview origins here if you sign in on Vercel previews. |
+| `BETTER_AUTH_URL` | Yes | Canonical origin, `https://atmanmusic.app`. Email sign-up/sign-in also trust `https://www.atmanmusic.app` and `https://trismegistus-smlc-1397.vercel.app` (Production alias; currently 308s to `.app`). |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | No | Optional extra origins (comma or space separated). Do not set a `*.vercel.app` wildcard. |
 | `DATABASE_URL` | Already set | Neon. Auth tables apply from globbed `migrations/0001_auth.sql` (copy of `migrations/auth/0001_auth.sql`). |
-| `GROK_AUTH_ISSUER` | Optional | Broker for Google / X. Omit to keep email + password only. |
+| `GROK_AUTH_ISSUER` | Optional | Broker for Google / X. Omit to keep email + password only. Google/X stay hidden until these are set. |
 | `GROK_AUTH_CLIENT_ID` | Optional | Per-app broker client. |
 | `GROK_AUTH_CLIENT_SECRET` | Optional | Per-app broker secret. |
 
@@ -52,6 +53,8 @@ OAuth is **full-page redirect**, not a popup (popups fail on iOS). Callbacks:
 - `https://<BETTER_AUTH_URL>/api/auth/oauth2/callback/grok-x`
 
 Email + password is enabled in-app (`src/lib/auth/email-password.ts`) and does not need the broker.
+
+Session cookies are `__Host-` prefixed, so they are bound to one host. Sign up and sign in on the same host (`atmanmusic.app` vs `www` vs a Vercel alias are different cookies). Prefer `https://atmanmusic.app`.
 
 ### Local
 
