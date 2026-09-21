@@ -1,5 +1,9 @@
 export const FIRST_SPIN_KEY = "trismegistus-first-spin";
 
+/**
+ * Visit marker only. Enter always spins on a fresh page life unless the URL
+ * already chose a tablet — a prior `localStorage` flag must not skip the rite.
+ */
 export function shouldRunFirstSpin(input: {
   alreadyDone: boolean;
   hasDeepLink: boolean;

@@ -134,6 +134,18 @@
     box-shadow: var(--shadow-border-hover);
   }
 
+  .wheel-frame {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+  }
+
+  .wheel-disc {
+    transform-origin: 50% 50%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
+  }
+
   .hermes-lockup {
     position: relative;
     display: flex;

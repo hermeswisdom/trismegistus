@@ -2,6 +2,7 @@ import { Play, X } from "lucide-react";
 import { getMeaning, getTrack } from "@/lib/rooms";
 import { useMeaningSheet } from "@/lib/meaning-sheet";
 import { usePlayer } from "@/lib/player-store";
+import { noteUserGesture } from "@/lib/sc-widget";
 import { cn } from "@/lib/utils";
 
 export function MeaningSheet() {
@@ -69,8 +70,9 @@ export function MeaningSheet() {
           {track ? (
             <button
               type="button"
+              onPointerDown={noteUserGesture}
               onClick={() => {
-                play(track.id);
+                play(track.id, { forceEmbed: true });
                 close();
               }}
               className="mt-8 inline-flex h-12 items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"

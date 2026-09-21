@@ -12,17 +12,17 @@ import { useMarksFeed } from "@/lib/marks-feed";
 import { usePlayBoard } from "@/lib/play-board";
 import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
-import { primePlayback } from "@/lib/sc-widget";
-import { useWheelSpin } from "@/lib/wheel-spin";
+import { noteUserGesture } from "@/lib/sc-widget";
 import { cn } from "@/lib/utils";
 
 export function TrackWall() {
   const entered = usePlayer((s) => s.entered);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
-  const play = usePlayer((s) => s.play);
-  const pause = usePlayer((s) => s.pause);
-  const requestSpin = useWheelSpin((s) => s.requestSpin);
+  const playPending = usePlayer((s) => s.playPending);
+  const playError = usePlayer((s) => s.playError);
+  const toggleTrack = usePlayer((s) => s.toggleTrack);
+  const spinTablet = usePlayer((s) => s.spinTablet);
   const hydrateMarks = useMarksFeed((s) => s.hydrate);
   const recent = usePlayBoard((s) => s.recent);
   const dailyId = dailyTrackId();
@@ -65,11 +65,11 @@ export function TrackWall() {
             <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10">
               <button
                 type="button"
-                onPointerDown={primePlayback}
-                onClick={() => (playing ? pause() : play(current.id))}
+                onPointerDown={noteUserGesture}
+                onClick={() => toggleTrack(current.id)}
                 className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
               >
-                {playing ? (
+                {playing && !playPending && !playError ? (
                   <>
                     <Pause className="size-3.5" fill="currentColor" />
                     Pause
@@ -77,19 +77,20 @@ export function TrackWall() {
                 ) : (
                   <>
                     <Play className="ml-px size-3.5" fill="currentColor" />
-                    Play <span className="hidden sm:inline">{current.title}</span>
+                    {playPending ? "Sounding" : playError ? "Try again" : "Play"}{" "}
+                    <span className="hidden sm:inline">{current.title}</span>
                   </>
                 )}
               </button>
               <button
                 type="button"
-                onPointerDown={primePlayback}
+                onPointerDown={noteUserGesture}
                 onClick={() => {
                   document.getElementById("wheel")?.scrollIntoView({
                     behavior: "smooth",
                     block: "center",
                   });
-                  requestSpin();
+                  spinTablet();
                 }}
                 className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-elevated px-5 text-xs font-medium tracking-[0.2em] text-fg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
               >
@@ -134,9 +135,7 @@ export function TrackWall() {
               active={track.id === currentId}
               isPlaying={track.id === currentId && playing}
               isDaily={track.id === dailyId}
-              onToggle={() =>
-                track.id === currentId && playing ? pause() : play(track.id)
-              }
+              onToggle={() => toggleTrack(track.id)}
             />
           ))}
         </ul>
@@ -162,6 +161,8 @@ function TabletTile({
     <li className="relative">
       <button
         type="button"
+        data-tablet-id={track.id}
+        onPointerDown={noteUserGesture}
         onClick={onToggle}
         className="group relative block w-full overflow-hidden text-left"
       >

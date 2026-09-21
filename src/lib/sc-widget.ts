@@ -1,3 +1,13 @@
+import {
+  PLAY_BLOCKED_COPY,
+  PLAY_CONFIRM_MS,
+  embedNeedsRewrite,
+  planPlayback,
+  soundcloudPlayerSrc,
+  type PlayCommand,
+  type PlaybackSurface,
+} from "./playback.ts";
+
 export type SCWidget = {
   bind: (event: string, listener: (...args: unknown[]) => void) => void;
   unbind: (event: string) => void;
@@ -28,9 +38,20 @@ type SCApi = {
   };
 };
 
+export type PlaybackNotice =
+  | { type: "play" }
+  | { type: "pause" }
+  | { type: "finish" }
+  | { type: "ready" }
+  | { type: "pending" }
+  | { type: "blocked"; message: string }
+  | { type: "progress"; raw: unknown };
+
 declare global {
   interface Window {
     SC?: SCApi;
+    __ATMAN_SPIN_MS?: number;
+    webkitAudioContext?: typeof AudioContext;
   }
 }
 
@@ -66,11 +87,123 @@ export function loadSoundCloudApi() {
 }
 
 let live: SCWidget | null = null;
+let iframe: HTMLIFrameElement | null = null;
 let liveSoundId: string | null = null;
+let widgetReady = false;
+let unlocked = false;
+let pending: PlayCommand | null = null;
+let confirmTimer: ReturnType<typeof setTimeout> | null = null;
+let playGeneration = 0;
+let gestureCtx: AudioContext | null = null;
+const listeners = new Set<(notice: PlaybackNotice) => void>();
+
+export function subscribePlayback(listener: (notice: PlaybackNotice) => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function emit(notice: PlaybackNotice) {
+  listeners.forEach((listener) => listener(notice));
+}
+
+function resumeWebAudio() {
+  if (typeof window === "undefined") return;
+  try {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (!Ctor) return;
+    if (!gestureCtx) gestureCtx = new Ctor();
+    void gestureCtx.resume();
+  } catch {
+    /* Web Audio is optional; the widget is the source. */
+  }
+}
+
+/**
+ * Mark a user gesture. Does not call `widget.play()` — that raced with
+ * click-to-toggle and paused the tablet on mobile.
+ */
+export function noteUserGesture() {
+  unlocked = true;
+  resumeWebAudio();
+}
+
+/** @deprecated Use noteUserGesture — kept so older call sites still unlock. */
+export function primePlayback() {
+  noteUserGesture();
+}
+
+export function isPlaybackUnlocked() {
+  return unlocked;
+}
+
+export function setLiveIframe(el: HTMLIFrameElement | null) {
+  iframe = el;
+}
+
+function resolveIframe() {
+  if (iframe?.isConnected) return iframe;
+  if (typeof document === "undefined") return iframe;
+  const found = document.querySelector<HTMLIFrameElement>('iframe[title^="SoundCloud"]');
+  if (found) iframe = found;
+  return iframe;
+}
+
+export function getLiveIframe() {
+  return resolveIframe();
+}
 
 export function setLiveWidget(widget: SCWidget | null, soundId?: string | null) {
   live = widget;
+  widgetReady = false;
   if (soundId !== undefined) liveSoundId = soundId;
+}
+
+export function bindLiveWidget(
+  widget: SCWidget,
+  events: SCApi["Widget"]["Events"],
+  soundId?: string | null,
+) {
+  live = widget;
+  widgetReady = false;
+  if (pending?.soundId) {
+    liveSoundId = pending.soundId;
+  } else if (soundId !== undefined && soundId !== null) {
+    liveSoundId = soundId;
+  }
+
+  try {
+    widget.unbind(events.READY);
+    widget.unbind(events.PLAY);
+    widget.unbind(events.PAUSE);
+    widget.unbind(events.FINISH);
+    widget.unbind(events.PLAY_PROGRESS);
+  } catch {
+    /* a fresh widget has nothing to unbind */
+  }
+
+  widget.bind(events.READY, () => {
+    widgetReady = true;
+    emit({ type: "ready" });
+    if (pending && pending.intent !== "pause") {
+      applyPlayback(pending);
+    }
+  });
+  widget.bind(events.PLAY, () => {
+    unlocked = true;
+    clearConfirm();
+    if (pending?.intent === "play") {
+      pending = { ...pending, intent: "select" };
+    }
+    emit({ type: "play" });
+  });
+  widget.bind(events.PAUSE, () => {
+    if (pending?.intent === "play") return;
+    emit({ type: "pause" });
+  });
+  widget.bind(events.FINISH, () => emit({ type: "finish" }));
+  widget.bind(events.PLAY_PROGRESS, (raw) => emit({ type: "progress", raw }));
 }
 
 export function getLiveWidget() {
@@ -85,14 +218,117 @@ export function setLiveSoundId(id: string) {
   liveSoundId = id;
 }
 
-/**
- * Wake the SoundCloud widget on a user gesture so later spin landings can
- * play on iOS Safari (autoplay after a timeout is otherwise blocked).
- */
-export function primePlayback() {
+export function getPlaybackSurface(): PlaybackSurface {
+  return {
+    hasWidget: Boolean(live),
+    widgetReady,
+    hasIframe: Boolean(resolveIframe()),
+    liveSoundId,
+    unlocked,
+  };
+}
+
+function clearConfirm() {
+  if (confirmTimer !== null) {
+    clearTimeout(confirmTimer);
+    confirmTimer = null;
+  }
+}
+
+function armConfirm() {
+  const gen = ++playGeneration;
+  clearConfirm();
+  if (typeof window === "undefined") return;
+  confirmTimer = setTimeout(() => {
+    if (gen !== playGeneration) return;
+    if (pending?.intent !== "play") return;
+    emit({ type: "blocked", message: PLAY_BLOCKED_COPY });
+  }, PLAY_CONFIRM_MS);
+}
+
+function applyIframeSrc(soundId: string, autoplay: boolean) {
+  const target = resolveIframe();
+  if (!target) return;
+  const next = soundcloudPlayerSrc(soundId, autoplay);
+  const current = target.getAttribute("src") ?? target.src ?? "";
+  if (!embedNeedsRewrite(current, next)) {
+    if (autoplay) {
+      try {
+        live?.play();
+      } catch {
+        /* not bound yet */
+      }
+    }
+    return;
+  }
+  target.setAttribute("allow", "autoplay; encrypted-media");
+  target.src = next;
+  liveSoundId = soundId;
+  widgetReady = false;
+}
+
+function executePlan(cmd: PlayCommand) {
+  const plan = planPlayback(cmd, getPlaybackSurface());
+
+  if (plan.iframeSoundId) {
+    applyIframeSrc(plan.iframeSoundId, Boolean(plan.iframeAutoplay));
+  }
+
+  if (!live) {
+    return plan;
+  }
+
   try {
-    live?.play();
+    if (plan.widgetOp === "pause") {
+      live.pause();
+    } else if (plan.widgetOp === "play") {
+      live.play();
+    } else if (plan.widgetOp === "load") {
+      liveSoundId = cmd.soundId;
+      live.load(cmd.permalink, { auto_play: plan.loadAutoplay });
+    }
   } catch {
-    /* widget may not be bound yet */
+    /* Widget methods can throw if the iframe is gone. */
+  }
+
+  return plan;
+}
+
+export function applyPlayback(cmd: PlayCommand) {
+  if (cmd.intent === "pause") {
+    pending = null;
+    clearConfirm();
+  } else {
+    pending = cmd;
+  }
+  const plan = executePlan(cmd);
+  if (cmd.intent === "play") emit({ type: "pending" });
+  if (plan.expectPlayEvent) armConfirm();
+  return plan;
+}
+
+export function markWidgetReady() {
+  widgetReady = true;
+  emit({ type: "ready" });
+  if (pending && pending.intent !== "pause") applyPlayback(pending);
+}
+
+export function resetPlaybackForTests() {
+  live = null;
+  iframe = null;
+  liveSoundId = null;
+  widgetReady = false;
+  unlocked = false;
+  pending = null;
+  playGeneration += 1;
+  clearConfirm();
+  listeners.clear();
+  if (gestureCtx) {
+    try {
+      void gestureCtx.close();
+    } catch {
+      /* ignore */
+    }
+    gestureCtx = null;
   }
 }

@@ -3,6 +3,7 @@ import { MarksPulse } from "@/components/marks-pulse";
 import { usePlayBoard } from "@/lib/play-board";
 import { getMeaning, getTrack } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
+import { noteUserGesture } from "@/lib/sc-widget";
 import { cn } from "@/lib/utils";
 
 const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
@@ -12,8 +13,9 @@ export function Leaderboard() {
   const recent = usePlayBoard((s) => s.recent);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
-  const play = usePlayer((s) => s.play);
-  const pause = usePlayer((s) => s.pause);
+  const playPending = usePlayer((s) => s.playPending);
+  const playError = usePlayer((s) => s.playError);
+  const toggleTrack = usePlayer((s) => s.toggleTrack);
 
   return (
     <section id="board" className="border-t border-border">
@@ -45,15 +47,14 @@ export function Leaderboard() {
               const track = getTrack(row.trackId);
               if (!track) return null;
               const active = track.id === currentId;
-              const isPlaying = active && playing;
+              const isPlaying = active && playing && !playPending && !playError;
               const crowned = index === 0;
               return (
                 <li key={track.id}>
                   <button
                     type="button"
-                    onClick={() =>
-                      isPlaying ? pause() : play(track.id)
-                    }
+                    onPointerDown={noteUserGesture}
+                    onClick={() => toggleTrack(track.id)}
                     className="group flex min-h-16 w-full touch-manipulation items-center gap-3 py-3.5 text-left transition-colors duration-150 hover:bg-elevated/60 sm:gap-6 sm:py-5"
                   >
                     <span className="relative w-10 shrink-0 font-display text-xl text-accent sm:w-12 sm:text-2xl">
