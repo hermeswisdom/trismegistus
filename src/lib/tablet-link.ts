@@ -1,4 +1,5 @@
-export const SITE_ORIGIN = "https://trismegistus-three.vercel.app";
+/** Working Vercel Production alias. Custom domain atmanmusic.com is not live yet. */
+export const SITE_ORIGIN = "https://trismegistus-smlc-1397.vercel.app";
 
 export function tabletPagePath(opts: {
   daily?: boolean;

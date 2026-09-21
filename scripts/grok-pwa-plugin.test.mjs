@@ -309,20 +309,20 @@ test("vercel Host keeps app cover-art og:image when grok cannot emit one", () =>
     const html =
       '<html><head><title>Fragile God — Atman Music</title>' +
       '<meta property="og:title" content="Fragile God — Atman Music">' +
-      '<meta property="og:image" content="https://trismegistus-three.vercel.app/images/tracks/fragile-god.jpg">' +
-      '<meta property="og:url" content="https://trismegistus-three.vercel.app/?tablet=fragile-god">' +
+      '<meta property="og:image" content="https://trismegistus-smlc-1397.vercel.app/images/tracks/fragile-god.jpg">' +
+      '<meta property="og:url" content="https://trismegistus-smlc-1397.vercel.app/?tablet=fragile-god">' +
       "</head></html>";
     const out = injectGrokPwaHead(html, {
-      host: "trismegistus-three.vercel.app",
+      host: "trismegistus-smlc-1397.vercel.app",
       site: { card: "custom" },
     });
     assert.match(
       out,
-      /property="og:image" content="https:\/\/trismegistus-three\.vercel\.app\/images\/tracks\/fragile-god\.jpg"/,
+      /property="og:image" content="https:\/\/trismegistus-smlc-1397\.vercel\.app\/images\/tracks\/fragile-god\.jpg"/,
     );
     assert.match(
       out,
-      /property="og:url" content="https:\/\/trismegistus-three\.vercel\.app\/\?tablet=fragile-god"/,
+      /property="og:url" content="https:\/\/trismegistus-smlc-1397\.vercel\.app\/\?tablet=fragile-god"/,
     );
     assert.match(out, /property="og:title" content="Fragile God — Atman Music"/);
     assert.equal(out.split('property="og:image"').length - 1, 1);
