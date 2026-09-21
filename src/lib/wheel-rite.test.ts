@@ -7,6 +7,9 @@ import {
   pickSpinTurns,
   planWheelSpin,
   shouldAutoSpinOnEnter,
+  sliceUnderPointer,
+  sliceWedge,
+  wheelPlayOn,
   wheelRiteCopy,
   wheelTransform,
   WHEEL_SEGMENTS,
@@ -22,6 +25,14 @@ describe("landingRotation", () => {
       landingRotation(0, 3, 5),
       5 * 360 + ((WHEEL_SEGMENTS - 3) % WHEEL_SEGMENTS) * WHEEL_SLICE,
     );
+    for (let index = 0; index < WHEEL_SEGMENTS; index += 1) {
+      const rest = landingRotation(0, index, 5);
+      assert.equal(
+        sliceUnderPointer(rest),
+        index,
+        `winIndex ${index} must rest on its own tablet, not a seam`,
+      );
+    }
   });
 
   it("keeps spinning forward from an already-wound wheel", () => {
@@ -126,5 +137,29 @@ describe("buildWheelSegments", () => {
 describe("wheelTransform", () => {
   it("uses a 3d rotate so iOS composites the disc", () => {
     assert.equal(wheelTransform(90), "translate3d(0,0,0) rotate(90deg)");
+  });
+});
+
+describe("sliceWedge", () => {
+  it("centers tablet 0 on the pointer at rest, not on a seam", () => {
+    const first = sliceWedge(0);
+    assert.equal(first.center, 0);
+    assert.equal(first.start, -WHEEL_SLICE / 2);
+    assert.equal(first.end, WHEEL_SLICE / 2);
+    assert.equal(sliceUnderPointer(0), 0);
+  });
+
+  it("keeps later tablets centered on their index angle", () => {
+    const third = sliceWedge(3);
+    assert.equal(third.center, 3 * WHEEL_SLICE);
+    assert.equal(third.start, 3 * WHEEL_SLICE - WHEEL_SLICE / 2);
+    assert.equal(sliceUnderPointer(landingRotation(0, 3, 5)), 3);
+  });
+});
+
+describe("wheelPlayOn", () => {
+  it("holds SoundCloud play until the disc rests", () => {
+    assert.equal(wheelPlayOn("begin"), false);
+    assert.equal(wheelPlayOn("land"), true);
   });
 });

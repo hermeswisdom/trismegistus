@@ -82,22 +82,33 @@ try {
   await page.locator("[data-enter-gate][data-gate-ready='true']").waitFor({ state: "attached" });
   await enter.waitFor({ state: "visible" });
   await enter.click();
+  await page.locator("[data-wheel-turning], [data-wheel-disc][data-wheel-spinning='true']").first().waitFor({
+    timeout: 2000,
+  });
   const afterEnterCopy = await page.evaluate(() => ({
     noTablet: document.body.innerText.includes("No tablet yet."),
     turning: Boolean(document.querySelector("[data-wheel-turning]")),
+    spinning: document.querySelector("[data-wheel-disc]")?.getAttribute("data-wheel-spinning"),
     player: document.querySelector("[data-player-current]")?.getAttribute("data-player-current"),
+    playing: document.querySelector("[data-player-playing]")?.getAttribute("data-player-playing"),
+    plays: window.__scMock?.plays.length ?? 0,
+    loads: window.__scMock?.loads.length ?? 0,
   }));
   if (afterEnterCopy.noTablet) {
     throw new Error(`Enter left No tablet yet: ${JSON.stringify(afterEnterCopy)}`);
   }
-  if (afterEnterCopy.player === "the-sleepers-waking") {
-    throw new Error(`Enter kept the featured tablet instead of spinning: ${JSON.stringify(afterEnterCopy)}`);
+  if (!afterEnterCopy.turning && afterEnterCopy.spinning !== "true") {
+    throw new Error(`Enter did not start a visible spin: ${JSON.stringify(afterEnterCopy)}`);
+  }
+  if (afterEnterCopy.playing === "true" || afterEnterCopy.plays + afterEnterCopy.loads > 0) {
+    throw new Error(`SoundCloud started before the disc rested: ${JSON.stringify(afterEnterCopy)}`);
   }
   try {
     await page.locator("[data-wheel-landed]").waitFor({ state: "attached", timeout: 8000 });
   } catch (err) {
     const dump = await page.evaluate(() => ({
       spinning: document.querySelector("[data-wheel-disc]")?.getAttribute("data-wheel-spinning"),
+      pointerSlice: document.querySelector("[data-wheel-disc]")?.getAttribute("data-wheel-pointer-slice"),
       transform: document.querySelector("[data-wheel-disc]")?.getAttribute("style"),
       firstSpin: localStorage.getItem("trismegistus-first-spin"),
       turning: document.body.innerText.includes("The wheel is turning."),
@@ -125,6 +136,21 @@ try {
   const playerId = await page.locator("[data-player-current]").getAttribute("data-player-current");
   if (!landedId || landedId !== playerId) {
     throw new Error(`spin did not select the landed tablet (landed=${landedId} player=${playerId})`);
+  }
+  if (playerId === "the-sleepers-waking") {
+    throw new Error(`Enter kept the featured tablet instead of spinning: landed=${landedId}`);
+  }
+  const pointerSlice = await page.locator("[data-wheel-disc]").getAttribute("data-wheel-pointer-slice");
+  const sliceNum = pointerSlice === null ? NaN : Number(pointerSlice);
+  if (!Number.isInteger(sliceNum) || sliceNum < 0 || sliceNum > 11) {
+    throw new Error(
+      `pointer did not rest on a tablet center: slice=${pointerSlice} rest=${JSON.stringify(rotation)}`,
+    );
+  }
+  const restDeg = rotation.deg == null ? null : ((rotation.deg % 360) + 360) % 360;
+  const seam = restDeg == null ? null : Math.min(restDeg % 30, 30 - (restDeg % 30));
+  if (seam == null || seam > 1.5) {
+    throw new Error(`pointer rest is not on a slice center: rest=${restDeg} seam=${seam}`);
   }
   const noTabletAfterLand = await page.evaluate(() =>
     document.body.innerText.includes("No tablet yet."),
