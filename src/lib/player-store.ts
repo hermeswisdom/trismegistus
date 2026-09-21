@@ -1,9 +1,5 @@
 import { create } from "zustand";
-import {
-  readFirstSpinDone,
-  shouldRunFirstSpin,
-  writeFirstSpinDone,
-} from "@/lib/first-spin";
+import { readFirstSpinDone, shouldRunFirstSpin } from "@/lib/first-spin";
 import { FEATURED_ID, getTrack, nextTrack } from "@/lib/rooms";
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
@@ -85,8 +81,15 @@ export const usePlayer = create<PlayerState>((set, get) => ({
         hasDeepLink: pageHasDeepLink(),
       })
     ) {
-      writeFirstSpinDone();
       useWheelSpin.getState().requestSpin();
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          document.getElementById("wheel")?.scrollIntoView({
+            behavior: "smooth",
+            block: "center",
+          });
+        }, 280);
+      }
     }
   },
 

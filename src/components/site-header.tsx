@@ -48,7 +48,7 @@ export function SiteHeader() {
           <HermesNote size="mark" />
           Atman Music
         </a>
-        <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-8 lg:flex" aria-label="Primary">
           {LINKS.map((link) => (
             <a
               key={link.href}
@@ -62,7 +62,7 @@ export function SiteHeader() {
         </nav>
         <button
           type="button"
-          className="relative flex size-11 touch-manipulation items-center justify-center text-fg md:hidden"
+          className="relative flex size-11 touch-manipulation items-center justify-center text-fg lg:hidden"
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
@@ -85,7 +85,7 @@ export function SiteHeader() {
       </div>
       <div
         className={cn(
-          "fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 bg-bg md:hidden transition-[opacity,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 bg-bg lg:hidden transition-[opacity,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           open ? "visible opacity-100" : "invisible pointer-events-none opacity-0",
         )}
       >

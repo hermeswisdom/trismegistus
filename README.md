@@ -40,7 +40,7 @@ The wall never forces sign-in for playback.
 | `VITE_AUTH_ENABLED` | Yes | Must be `true` (not the string `"false"`). Production is currently `false`, which hides live sessions and shows the gated `/login` copy. |
 | `BETTER_AUTH_SECRET` | Yes | Long random string. Used to sign session cookies. |
 | `BETTER_AUTH_URL` | Yes | Public origin, e.g. `https://trismegistus-three.vercel.app`. Must match the site the phone opens. Add preview origins here if you sign in on Vercel previews. |
-| `DATABASE_URL` | Already set | Neon. Auth tables come from `migrations/auth/0001_auth.sql`. |
+| `DATABASE_URL` | Already set | Neon. Auth tables apply from globbed `migrations/0001_auth.sql` (copy of `migrations/auth/0001_auth.sql`). |
 | `GROK_AUTH_ISSUER` | Optional | Broker for Google / X. Omit to keep email + password only. |
 | `GROK_AUTH_CLIENT_ID` | Optional | Per-app broker client. |
 | `GROK_AUTH_CLIENT_SECRET` | Optional | Per-app broker secret. |

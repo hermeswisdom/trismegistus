@@ -201,13 +201,13 @@ export function NowPlaying() {
           <SkipForward className="size-4" />
         </button>
       </div>
-      <div className="mx-auto max-w-6xl px-3 sm:px-8">
+      <div className="relative mx-auto h-5 max-w-6xl overflow-hidden px-3 sm:px-8">
         <iframe
           ref={iframeRef}
           title={`SoundCloud — ${current.title}`}
           src={embedSrc(featured.soundId, false)}
           allow="autoplay; encrypted-media"
-          className="h-5 w-full border-0"
+          className="pointer-events-none absolute inset-x-3 top-0 h-5 w-[calc(100%-1.5rem)] max-w-full border-0 sm:inset-x-8 sm:w-[calc(100%-4rem)]"
           loading="eager"
         />
         <a

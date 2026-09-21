@@ -35,7 +35,7 @@ export function TrackWall() {
 
   return (
     <section id="top" className="relative">
-      <div className="relative isolate min-h-dvh overflow-hidden">
+      <div className="relative isolate min-h-dvh overflow-x-clip overflow-hidden">
         {current ? (
           <img
             src={current.image}
@@ -44,7 +44,7 @@ export function TrackWall() {
           />
         ) : null}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/55 to-bg/30" />
-        <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-[calc(8.5rem+env(safe-area-inset-bottom))] pt-[calc(6.5rem+env(safe-area-inset-top))] sm:px-8 sm:pb-32">
+        <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-[calc(10.5rem+env(safe-area-inset-bottom))] pt-[calc(6.5rem+env(safe-area-inset-top))] sm:px-8 sm:pb-32">
           <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
             Esoteric music · {TRACKS.length} tablets
             {isDaily ? " · Today's tablet" : ""}
@@ -98,7 +98,7 @@ export function TrackWall() {
               </button>
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
-              <ShareButton track={current} className="bg-elevated" />
+              <ShareButton track={current} className="hidden bg-elevated sm:flex" />
               <MarkButton trackId={current.id} className="bg-elevated" />
             </div>
           ) : null}
@@ -126,7 +126,7 @@ export function TrackWall() {
           ) : null}
         </div>
 
-        <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border lg:grid-cols-3 xl:grid-cols-4">
           {TRACKS.map((track) => (
             <TabletTile
               key={track.id}

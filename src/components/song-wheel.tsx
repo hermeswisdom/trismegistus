@@ -147,15 +147,16 @@ export function SongWheel() {
     }
     firstSpinRef.current = true;
     writeFirstSpinDone();
+    if (nonce > 0) return;
     const id = window.setTimeout(() => requestSpin(), 480);
     return () => window.clearTimeout(id);
-  }, [entered, requestSpin, search.daily, search.tablet]);
+  }, [entered, nonce, requestSpin, search.daily, search.tablet]);
 
   const meaning = landed ? getMeaning(landed.id) : undefined;
 
   return (
     <section id="wheel" className="border-t border-border">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:gap-12 sm:px-8 sm:py-20 lg:grid-cols-[1fr_minmax(0,22rem)] lg:py-28">
+      <div className="mx-auto grid w-full max-w-6xl items-center gap-10 overflow-x-clip px-5 py-16 sm:gap-12 sm:px-8 sm:py-20 lg:grid-cols-[1fr_minmax(0,22rem)] lg:py-28">
         <div>
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
             The wheel
@@ -181,7 +182,7 @@ export function SongWheel() {
           )}
         </div>
 
-        <div className="relative mx-auto w-full max-w-[min(100%,22rem)]">
+        <div className="relative mx-auto w-full max-w-[min(100%,calc(100vw-2.5rem),22rem)]">
           <div className="relative aspect-square w-full touch-manipulation">
             <span
               className="pointer-events-none absolute top-0 left-1/2 z-20 -translate-x-1/2 -translate-y-1 text-accent"
@@ -192,6 +193,7 @@ export function SongWheel() {
               </svg>
             </span>
 
+            <div className="size-full overflow-hidden rounded-full">
             <div
               className="pointer-events-none size-full rounded-full border border-border bg-elevated will-change-transform"
               style={{
@@ -231,6 +233,7 @@ export function SongWheel() {
                 ))}
                 <circle cx={CX} cy={CY} r="32" fill="var(--color-bg)" />
               </svg>
+            </div>
             </div>
 
             <button
