@@ -6,7 +6,7 @@ import { parseAccountForm, type AccountMode } from "@/lib/auth/account-form";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
 
-export function LoginForm() {
+export function LoginForm({ oauthEnabled = false }: { oauthEnabled?: boolean }) {
   const { user, isPending } = useCurrentUserState();
   const [mode, setMode] = useState<AccountMode>("sign-in");
   const [name, setName] = useState("");
@@ -48,7 +48,7 @@ export function LoginForm() {
   }
 
   async function onOAuth(providerId: string) {
-    if (!authEnabled || busy) return;
+    if (!authEnabled || busy || !oauthEnabled) return;
     setBusy(true);
     setError(null);
     try {
@@ -163,22 +163,25 @@ export function LoginForm() {
         {mode === "sign-up" ? "I already keep a name" : "I have no name yet"}
       </button>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-xs tracking-[0.2em] text-subtle uppercase">
-          Or a full-page outer door
-        </p>
-        {GROK_PROVIDERS.map((provider) => (
-          <button
-            key={provider.providerId}
-            type="button"
-            disabled={busy}
-            onClick={() => onOAuth(provider.providerId)}
-            className="inline-flex h-12 w-full touch-manipulation items-center justify-center border border-border bg-elevated text-xs font-medium tracking-[0.18em] text-fg uppercase disabled:opacity-60"
-          >
-            Continue with {provider.label}
-          </button>
-        ))}
-      </div>
+      {/* Google / X only when GROK_AUTH_CLIENT_ID + SECRET are set (not grok_preview). */}
+      {oauthEnabled ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-xs tracking-[0.2em] text-subtle uppercase">
+            Or a full-page outer door
+          </p>
+          {GROK_PROVIDERS.map((provider) => (
+            <button
+              key={provider.providerId}
+              type="button"
+              disabled={busy}
+              onClick={() => onOAuth(provider.providerId)}
+              className="inline-flex h-12 w-full touch-manipulation items-center justify-center border border-border bg-elevated text-xs font-medium tracking-[0.18em] text-fg uppercase disabled:opacity-60"
+            >
+              Continue with {provider.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       <Link
         to="/"
