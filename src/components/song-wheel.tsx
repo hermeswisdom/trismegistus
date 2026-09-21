@@ -1,10 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
-import {
-  readFirstSpinDone,
-  shouldRunFirstSpin,
-  writeFirstSpinDone,
-} from "@/lib/first-spin";
 import { TRACKS, getMeaning, getTrack, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
@@ -48,6 +43,7 @@ function prefersReducedMotion() {
 export function SongWheel() {
   const spinTablet = usePlayer((s) => s.spinTablet);
   const entered = usePlayer((s) => s.entered);
+  const currentId = usePlayer((s) => s.currentId);
   const nonce = useWheelSpin((s) => s.nonce);
   const winnerId = useWheelSpin((s) => s.winnerId);
   const busy = useWheelSpin((s) => s.busy);
@@ -65,20 +61,21 @@ export function SongWheel() {
     angleRef.current = angle;
   }, [angle]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!entered || firstSpinRef.current) return;
-    const hasDeepLink = Boolean(search.daily || search.tablet);
-    if (
-      !shouldRunFirstSpin({
-        alreadyDone: readFirstSpinDone(),
-        hasDeepLink,
-      })
-    ) {
+    if (search.daily || search.tablet) {
+      firstSpinRef.current = true;
+      const focused = getTrack(currentId);
+      if (focused) setLanded(focused);
+      return;
+    }
+    if (nonce > 0 || busy) {
+      firstSpinRef.current = true;
       return;
     }
     firstSpinRef.current = true;
-    writeFirstSpinDone();
-  }, [entered, search.daily, search.tablet]);
+    spinTablet({ force: true });
+  }, [entered, nonce, busy, currentId, search.daily, search.tablet, spinTablet]);
 
   useLayoutEffect(() => {
     if (nonce === 0 || !winnerId) return;
@@ -120,14 +117,11 @@ export function SongWheel() {
       void run.done.then(land);
     };
 
-    const raf = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(start);
-    });
+    start();
     const watchdog = window.setTimeout(land, Math.max(0, plan.duration) + 400);
 
     return () => {
       cancelled = true;
-      window.cancelAnimationFrame(raf);
       runner.cancel();
       window.clearTimeout(watchdog);
     };
@@ -139,6 +133,7 @@ export function SongWheel() {
   }
 
   const meaning = landed ? getMeaning(landed.id) : undefined;
+  const turning = spinning || busy || Boolean(winnerId && !landed);
 
   return (
     <section id="wheel" className="border-t border-border">
@@ -164,9 +159,13 @@ export function SongWheel() {
                 {meaning}
               </span>
             </p>
+          ) : turning || entered ? (
+            <p className="mt-8 text-sm text-subtle" data-wheel-turning="">
+              The wheel is turning.
+            </p>
           ) : (
             <p className="mt-8 text-sm text-subtle">
-              {spinning || busy ? "The wheel is turning." : "No tablet yet."}
+              No tablet yet.
             </p>
           )}
         </div>

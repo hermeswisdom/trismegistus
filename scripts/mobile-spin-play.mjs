@@ -82,6 +82,17 @@ try {
   await page.locator("[data-enter-gate][data-gate-ready='true']").waitFor({ state: "attached" });
   await enter.waitFor({ state: "visible" });
   await enter.click();
+  const afterEnterCopy = await page.evaluate(() => ({
+    noTablet: document.body.innerText.includes("No tablet yet."),
+    turning: Boolean(document.querySelector("[data-wheel-turning]")),
+    player: document.querySelector("[data-player-current]")?.getAttribute("data-player-current"),
+  }));
+  if (afterEnterCopy.noTablet) {
+    throw new Error(`Enter left No tablet yet: ${JSON.stringify(afterEnterCopy)}`);
+  }
+  if (afterEnterCopy.player === "the-sleepers-waking") {
+    throw new Error(`Enter kept the featured tablet instead of spinning: ${JSON.stringify(afterEnterCopy)}`);
+  }
   try {
     await page.locator("[data-wheel-landed]").waitFor({ state: "attached", timeout: 8000 });
   } catch (err) {
@@ -150,18 +161,61 @@ try {
     { timeout: 4000 },
   );
 
-  const verdict = {
+  const afterCover = await page.evaluate(() => ({
+      plays: window.__scMock?.plays.length ?? 0,
+      loads: window.__scMock?.loads.length ?? 0,
+      current: document.querySelector("[data-player-current]")?.getAttribute("data-player-current"),
+    }));
+    if (afterCover.current === landedId) {
+      throw new Error("cover tap did not change the selected tablet");
+    }
+
+    await context.close();
+
+    const returning = await browser.newContext({
+      ...iphone,
+      hasTouch: true,
+      isMobile: true,
+    });
+    await returning.addInitScript(MOCK_SC);
+    await returning.addInitScript(() => {
+      try {
+        localStorage.setItem("trismegistus-first-spin", "1");
+      } catch {}
+    });
+    const page2 = await returning.newPage();
+    page2.setDefaultTimeout(timeoutMs);
+    await page2.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
+    await page2.locator("[data-enter-gate][data-gate-ready='true']").waitFor({ state: "attached" });
+    await page2.getByRole("button", { name: /^enter$/i }).click();
+    await page2.locator("[data-wheel-landed]").waitFor({ state: "attached", timeout: 8000 });
+    const returningLanded = await page2.locator("[data-wheel-landed]").getAttribute("data-wheel-landed");
+    const returningPlayer = await page2.locator("[data-player-current]").getAttribute("data-player-current");
+    const returningCopy = await page2.evaluate(() =>
+      document.body.innerText.includes("No tablet yet."),
+    );
+    if (!returningLanded || returningLanded !== returningPlayer) {
+      throw new Error(
+        `returning Enter did not spin-to-select (landed=${returningLanded} player=${returningPlayer})`,
+      );
+    }
+    if (returningCopy) {
+      throw new Error("returning Enter left No tablet yet");
+    }
+    if (returningPlayer === "the-sleepers-waking") {
+      throw new Error("returning Enter kept the featured tablet instead of spinning");
+    }
+    await returning.close();
+
+    const verdict = {
     ok: true,
     url,
     rotation,
     landedId,
     playerId,
     afterSpin,
-    afterCover: await page.evaluate(() => ({
-      plays: window.__scMock?.plays.length ?? 0,
-      loads: window.__scMock?.loads.length ?? 0,
-      current: document.querySelector("[data-player-current]")?.getAttribute("data-player-current"),
-    })),
+    afterCover,
+    returning: { landed: returningLanded, player: returningPlayer },
   };
   console.log(JSON.stringify(verdict, null, 2));
 } catch (err) {

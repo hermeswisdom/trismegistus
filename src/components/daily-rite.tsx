@@ -67,12 +67,13 @@ export function useListenStreak(dailyId: string): number {
 
 export function DailyRite() {
   const daily = dailyTrack();
-  const play = usePlayer((s) => s.play);
-  const pause = usePlayer((s) => s.pause);
+  const toggleTrack = usePlayer((s) => s.toggleTrack);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
+  const playPending = usePlayer((s) => s.playPending);
+  const playError = usePlayer((s) => s.playError);
   const streak = useListenStreak(daily.id);
-  const isPlaying = currentId === daily.id && playing;
+  const isPlaying = currentId === daily.id && playing && !playPending && !playError;
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export function DailyRite() {
         <button
           type="button"
           onPointerDown={noteUserGesture}
-          onClick={() => (isPlaying ? pause() : play(daily.id))}
+          onClick={() => toggleTrack(daily.id)}
           className="relative shrink-0 text-left"
           aria-label={isPlaying ? "Pause today's tablet" : "Play today's tablet"}
         >
@@ -114,7 +115,7 @@ export function DailyRite() {
             <button
               type="button"
               onPointerDown={noteUserGesture}
-              onClick={() => (isPlaying ? pause() : play(daily.id))}
+              onClick={() => toggleTrack(daily.id)}
               className="inline-flex h-11 w-fit items-center gap-2 bg-accent px-5 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
             >
               {isPlaying ? (

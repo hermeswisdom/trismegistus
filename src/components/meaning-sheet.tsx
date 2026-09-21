@@ -72,7 +72,7 @@ export function MeaningSheet() {
               type="button"
               onPointerDown={noteUserGesture}
               onClick={() => {
-                play(track.id);
+                play(track.id, { forceEmbed: true });
                 close();
               }}
               className="mt-8 inline-flex h-12 items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"

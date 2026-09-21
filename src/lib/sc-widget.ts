@@ -43,6 +43,7 @@ export type PlaybackNotice =
   | { type: "pause" }
   | { type: "finish" }
   | { type: "ready" }
+  | { type: "pending" }
   | { type: "blocked"; message: string }
   | { type: "progress"; raw: unknown };
 
@@ -141,8 +142,16 @@ export function setLiveIframe(el: HTMLIFrameElement | null) {
   iframe = el;
 }
 
-export function getLiveIframe() {
+function resolveIframe() {
+  if (iframe?.isConnected) return iframe;
+  if (typeof document === "undefined") return iframe;
+  const found = document.querySelector<HTMLIFrameElement>('iframe[title^="SoundCloud"]');
+  if (found) iframe = found;
   return iframe;
+}
+
+export function getLiveIframe() {
+  return resolveIframe();
 }
 
 export function setLiveWidget(widget: SCWidget | null, soundId?: string | null) {
@@ -189,7 +198,10 @@ export function bindLiveWidget(
     }
     emit({ type: "play" });
   });
-  widget.bind(events.PAUSE, () => emit({ type: "pause" }));
+  widget.bind(events.PAUSE, () => {
+    if (pending?.intent === "play") return;
+    emit({ type: "pause" });
+  });
   widget.bind(events.FINISH, () => emit({ type: "finish" }));
   widget.bind(events.PLAY_PROGRESS, (raw) => emit({ type: "progress", raw }));
 }
@@ -210,7 +222,7 @@ export function getPlaybackSurface(): PlaybackSurface {
   return {
     hasWidget: Boolean(live),
     widgetReady,
-    hasIframe: Boolean(iframe),
+    hasIframe: Boolean(resolveIframe()),
     liveSoundId,
     unlocked,
   };
@@ -235,9 +247,10 @@ function armConfirm() {
 }
 
 function applyIframeSrc(soundId: string, autoplay: boolean) {
-  if (!iframe) return;
+  const target = resolveIframe();
+  if (!target) return;
   const next = soundcloudPlayerSrc(soundId, autoplay);
-  const current = iframe.getAttribute("src") ?? iframe.src ?? "";
+  const current = target.getAttribute("src") ?? target.src ?? "";
   if (!embedNeedsRewrite(current, next)) {
     if (autoplay) {
       try {
@@ -248,8 +261,8 @@ function applyIframeSrc(soundId: string, autoplay: boolean) {
     }
     return;
   }
-  iframe.setAttribute("allow", "autoplay; encrypted-media");
-  iframe.src = next;
+  target.setAttribute("allow", "autoplay; encrypted-media");
+  target.src = next;
   liveSoundId = soundId;
   widgetReady = false;
 }
@@ -289,6 +302,7 @@ export function applyPlayback(cmd: PlayCommand) {
     pending = cmd;
   }
   const plan = executePlan(cmd);
+  if (cmd.intent === "play") emit({ type: "pending" });
   if (plan.expectPlayEvent) armConfirm();
   return plan;
 }

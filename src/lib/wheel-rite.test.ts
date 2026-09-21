@@ -59,6 +59,14 @@ describe("shouldAutoSpinOnEnter", () => {
     assert.equal(shouldAutoSpinOnEnter(false), true);
     assert.equal(shouldAutoSpinOnEnter(true), false);
   });
+
+  it("stands aside for a deep-linked tablet", () => {
+    assert.equal(shouldAutoSpinOnEnter(false, true), false);
+  });
+
+  it("still spins when a previous visit wrote first-spin", () => {
+    assert.equal(shouldAutoSpinOnEnter(false, false), true);
+  });
 });
 
 describe("planWheelSpin", () => {

@@ -3,6 +3,7 @@ import { Pause, Play, SkipForward, Dices } from "lucide-react";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
+import { PLAY_PENDING_COPY } from "@/lib/playback";
 import { FEATURED_ID, embedSrc, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
 import { usePlayer } from "@/lib/player-store";
@@ -23,6 +24,7 @@ export function NowPlaying() {
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
   const playError = usePlayer((s) => s.playError);
+  const playPending = usePlayer((s) => s.playPending);
   const elapsed = usePlayer((s) => s.elapsed);
   const duration = usePlayer((s) => s.duration);
   const toggle = usePlayer((s) => s.toggle);
@@ -35,7 +37,6 @@ export function NowPlaying() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const initialSrc = useRef(embedSrc(getTrack(FEATURED_ID)?.soundId ?? "", false));
   const current = getTrack(currentId);
-  const featured = getTrack(FEATURED_ID);
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export function NowPlaying() {
       setLiveWidget(null, null);
       setLiveIframe(null);
     };
-  }, [featured?.soundId, setTiming]);
+  }, [setTiming]);
 
   useEffect(() => {
     if (!playing) return;
@@ -112,7 +113,7 @@ export function NowPlaying() {
     return () => window.clearInterval(id);
   }, [playing, setTiming]);
 
-  if (!current || !featured) return null;
+  if (!current) return null;
 
   function spinFromDock() {
     noteUserGesture();
@@ -130,6 +131,15 @@ export function NowPlaying() {
   }
 
   return (
+    <>
+    <iframe
+      ref={iframeRef}
+      title="SoundCloud"
+      src={initialSrc.current}
+      allow="autoplay; encrypted-media"
+      className="pointer-events-none fixed right-0 bottom-0 z-30 size-5 opacity-100"
+      loading="eager"
+    />
     <div
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -137,6 +147,7 @@ export function NowPlaying() {
       )}
       data-player-current={current.id}
       data-player-playing={playing ? "true" : "false"}
+      data-player-pending={playPending ? "true" : "false"}
       data-player-blocked={playError ? "true" : "false"}
     >
       <button
@@ -156,6 +167,10 @@ export function NowPlaying() {
       {playError ? (
         <p className="mx-auto max-w-6xl px-3 pt-2 text-[0.7rem] tracking-[0.16em] text-accent uppercase sm:px-8">
           {playError}
+        </p>
+      ) : playPending ? (
+        <p className="mx-auto max-w-6xl px-3 pt-2 text-[0.7rem] tracking-[0.16em] text-subtle uppercase sm:px-8">
+          {PLAY_PENDING_COPY}
         </p>
       ) : null}
       <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2 sm:gap-3 sm:px-8">
@@ -199,9 +214,11 @@ export function NowPlaying() {
           onPointerDown={noteUserGesture}
           onClick={onPlayToggle}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
-          aria-label={playError ? "Retry play" : playing ? "Pause" : "Play"}
+          aria-label={
+            playError ? "Retry play" : playPending ? "Sounding" : playing ? "Pause" : "Play"
+          }
         >
-          {playing && !playError ? (
+          {playing && !playError && !playPending ? (
             <Pause className="size-4" fill="currentColor" />
           ) : (
             <Play className="ml-px size-4" fill="currentColor" />
@@ -218,14 +235,6 @@ export function NowPlaying() {
         </button>
       </div>
       <div className="relative mx-auto h-5 max-w-6xl overflow-hidden px-3 sm:px-8">
-        <iframe
-          ref={iframeRef}
-          title={`SoundCloud — ${current.title}`}
-          src={initialSrc.current}
-          allow="autoplay; encrypted-media"
-          className="pointer-events-none absolute inset-x-3 top-0 h-5 w-[calc(100%-1.5rem)] max-w-full border-0 sm:inset-x-8 sm:w-[calc(100%-4rem)]"
-          loading="eager"
-        />
         <a
           href={current.permalink}
           target="_blank"
@@ -236,5 +245,6 @@ export function NowPlaying() {
         </a>
       </div>
     </div>
+    </>
   );
 }

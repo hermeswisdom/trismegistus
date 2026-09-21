@@ -2,8 +2,10 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   PLAY_BLOCKED_COPY,
+  PLAY_PENDING_COPY,
   embedNeedsRewrite,
   planPlayback,
+  resolvePlayTap,
   soundcloudPlayerSrc,
 } from "./playback.ts";
 
@@ -98,5 +100,39 @@ describe("embedNeedsRewrite", () => {
 describe("copy", () => {
   it("keeps the blocked-play rite in brand voice", () => {
     assert.match(PLAY_BLOCKED_COPY, /tablet did not sound/i);
+    assert.match(PLAY_PENDING_COPY, /sounding/i);
+  });
+});
+
+describe("resolvePlayTap", () => {
+  const base = {
+    currentId: "alpha",
+    tapId: "alpha",
+    playing: false,
+    playPending: false,
+    playError: null as string | null,
+  };
+
+  it("plays a different cover even if another tablet is pending", () => {
+    assert.equal(
+      resolvePlayTap({ ...base, playing: true, playPending: true, tapId: "beta" }),
+      "play",
+    );
+  });
+
+  it("retries the same cover when play is pending or blocked", () => {
+    assert.equal(
+      resolvePlayTap({ ...base, playing: true, playPending: true }),
+      "play",
+    );
+    assert.equal(
+      resolvePlayTap({ ...base, playing: false, playError: PLAY_BLOCKED_COPY }),
+      "play",
+    );
+  });
+
+  it("pauses only a confirmed playing tablet", () => {
+    assert.equal(resolvePlayTap({ ...base, playing: true }), "pause");
+    assert.equal(resolvePlayTap(base), "play");
   });
 });

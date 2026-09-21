@@ -1,6 +1,7 @@
-export const PLAY_CONFIRM_MS = 3500;
+export const PLAY_CONFIRM_MS = 2200;
 
 export const PLAY_BLOCKED_COPY = "The tablet did not sound. Tap to try again.";
+export const PLAY_PENDING_COPY = "Sounding…";
 
 export type PlayIntent = "play" | "pause" | "select";
 
@@ -122,6 +123,27 @@ export function soundcloudPlayerSrc(soundId: string, autoplay: boolean) {
     download: "false",
   });
   return `https://w.soundcloud.com/player/?${params.toString()}`;
+}
+
+export type PlayTapState = {
+  currentId: string;
+  tapId: string;
+  playing: boolean;
+  playPending: boolean;
+  playError: string | null;
+};
+
+export type PlayTapAction = "pause" | "play";
+
+/**
+ * Cover / dock / Enter retries. A pending or blocked play must not look like
+ * Pause — that tap would cancel the gesture instead of retrying the widget.
+ */
+export function resolvePlayTap(state: PlayTapState): PlayTapAction {
+  if (state.tapId !== state.currentId) return "play";
+  if (state.playError || state.playPending) return "play";
+  if (state.playing) return "pause";
+  return "play";
 }
 
 export function embedNeedsRewrite(currentSrc: string, nextSrc: string) {

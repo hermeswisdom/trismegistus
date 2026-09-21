@@ -19,8 +19,9 @@ export function TrackWall() {
   const entered = usePlayer((s) => s.entered);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
-  const play = usePlayer((s) => s.play);
-  const pause = usePlayer((s) => s.pause);
+  const playPending = usePlayer((s) => s.playPending);
+  const playError = usePlayer((s) => s.playError);
+  const toggleTrack = usePlayer((s) => s.toggleTrack);
   const spinTablet = usePlayer((s) => s.spinTablet);
   const hydrateMarks = useMarksFeed((s) => s.hydrate);
   const recent = usePlayBoard((s) => s.recent);
@@ -65,10 +66,10 @@ export function TrackWall() {
               <button
                 type="button"
                 onPointerDown={noteUserGesture}
-                onClick={() => (playing ? pause() : play(current.id))}
+                onClick={() => toggleTrack(current.id)}
                 className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
               >
-                {playing ? (
+                {playing && !playPending && !playError ? (
                   <>
                     <Pause className="size-3.5" fill="currentColor" />
                     Pause
@@ -76,7 +77,8 @@ export function TrackWall() {
                 ) : (
                   <>
                     <Play className="ml-px size-3.5" fill="currentColor" />
-                    Play <span className="hidden sm:inline">{current.title}</span>
+                    {playPending ? "Sounding" : playError ? "Try again" : "Play"}{" "}
+                    <span className="hidden sm:inline">{current.title}</span>
                   </>
                 )}
               </button>
@@ -133,9 +135,7 @@ export function TrackWall() {
               active={track.id === currentId}
               isPlaying={track.id === currentId && playing}
               isDaily={track.id === dailyId}
-              onToggle={() =>
-                track.id === currentId && playing ? pause() : play(track.id)
-              }
+              onToggle={() => toggleTrack(track.id)}
             />
           ))}
         </ul>

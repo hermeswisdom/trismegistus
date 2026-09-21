@@ -7,6 +7,7 @@ import {
   noteUserGesture,
   resetPlaybackForTests,
   setLiveIframe,
+  subscribePlayback,
   type SCWidget,
 } from "./sc-widget.ts";
 
@@ -122,5 +123,18 @@ describe("sc-widget playback client", () => {
     applyPlayback(cmd);
     bindLiveWidget(widget, Events, "featured-old");
     assert.equal(getPlaybackSurface().liveSoundId, "555");
+  });
+
+  it("ignores a widget pause while a play is still pending", () => {
+    const types: string[] = [];
+    const off = subscribePlayback((notice) => types.push(notice.type));
+    const { widget } = fakeWidget();
+    bindLiveWidget(widget, Events, "555");
+    widget.fire("ready");
+    applyPlayback(cmd);
+    widget.fire("pause");
+    off();
+    assert.equal(types.includes("pause"), false);
+    assert.equal(types.includes("pending"), true);
   });
 });

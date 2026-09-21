@@ -175,6 +175,9 @@ export function isRiteKey(
 }
 
 /** First crossing of the wall this page life — the Enter spin rite. */
-export function shouldAutoSpinOnEnter(alreadyEntered: boolean) {
-  return !alreadyEntered;
+export function shouldAutoSpinOnEnter(
+  alreadyEntered: boolean,
+  hasDeepLink = false,
+) {
+  return !alreadyEntered && !hasDeepLink;
 }

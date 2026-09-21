@@ -18,4 +18,11 @@ describe("useWheelSpin", () => {
     assert.equal(useWheelSpin.getState().begin("beta"), true);
     assert.equal(useWheelSpin.getState().winnerId, "beta");
   });
+
+  it("force-begins over a stuck busy lock", () => {
+    assert.equal(useWheelSpin.getState().begin("alpha"), true);
+    assert.equal(useWheelSpin.getState().begin("beta", { force: true }), true);
+    assert.equal(useWheelSpin.getState().winnerId, "beta");
+    assert.equal(useWheelSpin.getState().nonce, 2);
+  });
 });
