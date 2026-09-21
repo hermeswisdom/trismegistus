@@ -3,6 +3,7 @@ import { MarksPulse } from "@/components/marks-pulse";
 import { usePlayBoard } from "@/lib/play-board";
 import { getMeaning, getTrack } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
+import { noteUserGesture } from "@/lib/sc-widget";
 import { cn } from "@/lib/utils";
 
 const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
@@ -51,6 +52,7 @@ export function Leaderboard() {
                 <li key={track.id}>
                   <button
                     type="button"
+                    onPointerDown={noteUserGesture}
                     onClick={() =>
                       isPlaying ? pause() : play(track.id)
                     }

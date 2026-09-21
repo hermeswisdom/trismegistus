@@ -5,7 +5,7 @@ import { CoverMosaic } from "@/components/cover-mosaic";
 import { MatrixRain } from "@/components/matrix-rain";
 import { authEnabled } from "@/lib/auth/client";
 import { usePlayer } from "@/lib/player-store";
-import { loadSoundCloudApi, primePlayback } from "@/lib/sc-widget";
+import { loadSoundCloudApi, noteUserGesture } from "@/lib/sc-widget";
 import { isRiteKey } from "@/lib/wheel-rite";
 
 function releaseGateFocus() {
@@ -62,7 +62,7 @@ export function EnterGate() {
       }
       aria-hidden={sealed ? true : undefined}
       inert={sealed ? true : undefined}
-      onPointerDown={primePlayback}
+      onPointerDown={noteUserGesture}
     >
       <CoverMosaic className="absolute inset-0 size-full opacity-70" />
       <div className="absolute inset-0 bg-linear-to-b from-bg/30 via-bg/70 to-bg" />
@@ -85,7 +85,7 @@ export function EnterGate() {
           ref={buttonRef}
           type="button"
           tabIndex={entered ? -1 : 0}
-          onPointerDown={primePlayback}
+          onPointerDown={noteUserGesture}
           onClick={cross}
           className="inline-flex h-12 min-h-12 w-full touch-manipulation items-center justify-center bg-accent px-7 text-sm font-medium tracking-[0.14em] whitespace-nowrap text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96] sm:mx-auto sm:max-w-xs"
         >

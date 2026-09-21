@@ -1,5 +1,6 @@
 import { SOUNDCLOUD_TRACKS } from "./soundcloud-tracks";
 import { getMeaning } from "./meanings";
+import { soundcloudPlayerSrc } from "./playback";
 
 export type Track = {
   id: string;
@@ -107,20 +108,5 @@ export function randomTrack(except?: string) {
 }
 
 export function embedSrc(soundId: string, autoplay: boolean) {
-  const params = new URLSearchParams({
-    url: `https://api.soundcloud.com/tracks/${soundId}`,
-    color: "#d6e24a",
-    auto_play: autoplay ? "true" : "false",
-    hide_related: "true",
-    show_comments: "false",
-    show_user: "false",
-    show_reposts: "false",
-    show_teaser: "false",
-    show_artwork: "false",
-    visual: "false",
-    buying: "false",
-    sharing: "false",
-    download: "false",
-  });
-  return `https://w.soundcloud.com/player/?${params.toString()}`;
+  return soundcloudPlayerSrc(soundId, autoplay);
 }

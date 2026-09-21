@@ -1,19 +1,20 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
 import {
   readFirstSpinDone,
   shouldRunFirstSpin,
   writeFirstSpinDone,
 } from "@/lib/first-spin";
-import { TRACKS, getMeaning, randomTrack, type Track } from "@/lib/rooms";
+import { TRACKS, getMeaning, getTrack, type Track } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
-import { primePlayback } from "@/lib/sc-widget";
+import { noteUserGesture } from "@/lib/sc-widget";
 import {
   WHEEL_SEGMENTS,
   WHEEL_SLICE,
-  WHEEL_SPIN_MS,
-  landingRotation,
-  pickSpinTurns,
+  buildWheelSegments,
+  planWheelSpin,
+  runWheelSpin,
+  wheelTransform,
 } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
 
@@ -37,25 +38,6 @@ function wedgePath(index: number) {
   return `M ${CX} ${CY} L ${x0} ${y0} A ${R} ${R} 0 0 1 ${x1} ${y1} Z`;
 }
 
-function shuffle<T>(list: T[]) {
-  const next = [...list];
-  for (let i = next.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const hold = next[i]!;
-    next[i] = next[j]!;
-    next[j] = hold;
-  }
-  return next;
-}
-
-function buildSegments(winner: Track) {
-  const pool = shuffle(TRACKS.filter((track) => track.id !== winner.id));
-  const winIndex = Math.floor(Math.random() * WHEEL_SEGMENTS);
-  const rest = pool.slice(0, WHEEL_SEGMENTS - 1);
-  rest.splice(winIndex, 0, winner);
-  return { segments: rest, winIndex };
-}
-
 function prefersReducedMotion() {
   return (
     typeof window !== "undefined" &&
@@ -64,75 +46,26 @@ function prefersReducedMotion() {
 }
 
 export function SongWheel() {
-  const play = usePlayer((s) => s.play);
-  const currentId = usePlayer((s) => s.currentId);
+  const spinTablet = usePlayer((s) => s.spinTablet);
   const entered = usePlayer((s) => s.entered);
   const nonce = useWheelSpin((s) => s.nonce);
-  const requestSpin = useWheelSpin((s) => s.requestSpin);
+  const winnerId = useWheelSpin((s) => s.winnerId);
+  const busy = useWheelSpin((s) => s.busy);
+  const finish = useWheelSpin((s) => s.finish);
   const search = useSearch({ from: "/" });
   const [segments, setSegments] = useState<Track[]>(() => TRACKS.slice(0, WHEEL_SEGMENTS));
   const [angle, setAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [landed, setLanded] = useState<Track | null>(null);
-  const spinRef = useRef<{ winIndex: number; winner: Track } | null>(null);
-  const spinningRef = useRef(false);
-  const firstSpinRef = useRef(false);
+  const discRef = useRef<HTMLDivElement>(null);
   const angleRef = useRef(0);
-
-  useEffect(() => {
-    spinningRef.current = spinning;
-  }, [spinning]);
+  const firstSpinRef = useRef(false);
+  const planRef = useRef<ReturnType<typeof planWheelSpin> | null>(null);
+  const winnerRef = useRef<Track | null>(null);
 
   useEffect(() => {
     angleRef.current = angle;
   }, [angle]);
-
-  useEffect(() => {
-    if (!spinning) return;
-    const id = window.setTimeout(() => {
-      const spin = spinRef.current;
-      setSpinning(false);
-      spinningRef.current = false;
-      if (!spin) return;
-      setLanded(spin.winner);
-      play(spin.winner.id);
-    }, prefersReducedMotion() ? 0 : WHEEL_SPIN_MS);
-    return () => window.clearTimeout(id);
-  }, [spinning, play]);
-
-  function spin() {
-    if (spinningRef.current) return;
-    spinningRef.current = true;
-    primePlayback();
-    const winner = randomTrack(currentId);
-    const next = buildSegments(winner);
-    setSegments(next.segments);
-    setLanded(null);
-    spinRef.current = { winIndex: next.winIndex, winner };
-
-    if (prefersReducedMotion()) {
-      setAngle(((WHEEL_SEGMENTS - next.winIndex) % WHEEL_SEGMENTS) * WHEEL_SLICE);
-      setSpinning(true);
-      return;
-    }
-
-    const origin = angleRef.current;
-    const nextAngle = landingRotation(origin, next.winIndex, pickSpinTurns());
-    setAngle(Math.ceil(origin / 360) * 360);
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        setSpinning(true);
-        setAngle(nextAngle);
-      });
-    });
-  }
-
-  useEffect(() => {
-    if (nonce === 0) return;
-    spin();
-    // Intentional: each nonce is a single spin request.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nonce]);
 
   useEffect(() => {
     if (!entered || firstSpinRef.current) return;
@@ -147,10 +80,60 @@ export function SongWheel() {
     }
     firstSpinRef.current = true;
     writeFirstSpinDone();
-    if (nonce > 0) return;
-    const id = window.setTimeout(() => requestSpin(), 480);
-    return () => window.clearTimeout(id);
-  }, [entered, nonce, requestSpin, search.daily, search.tablet]);
+  }, [entered, search.daily, search.tablet]);
+
+  useLayoutEffect(() => {
+    if (nonce === 0 || !winnerId) return;
+    const winner = getTrack(winnerId);
+    if (!winner) return;
+            const next = buildWheelSegments(winner, TRACKS);
+    const plan = planWheelSpin(angleRef.current, next.winIndex, {
+      reduced: prefersReducedMotion(),
+    });
+    planRef.current = plan;
+    winnerRef.current = winner;
+    setSegments(next.segments);
+    setLanded(null);
+    setSpinning(true);
+  }, [nonce, winnerId]);
+
+  useLayoutEffect(() => {
+    if (!spinning) return;
+    const plan = planRef.current;
+    const winner = winnerRef.current;
+    const el = discRef.current;
+    if (!plan || !winner) {
+      setSpinning(false);
+      finish();
+      return;
+    }
+    const run = el
+      ? runWheelSpin(el, plan)
+      : {
+          done: new Promise<void>((resolve) => {
+            window.setTimeout(resolve, plan.duration);
+          }),
+          cancel() {},
+        };
+    let cancelled = false;
+    void run.done.then(() => {
+      if (cancelled) return;
+      angleRef.current = plan.to;
+      setAngle(plan.to);
+      setSpinning(false);
+      setLanded(winner);
+      finish();
+    });
+    return () => {
+      cancelled = true;
+      run.cancel();
+    };
+  }, [spinning, nonce, finish]);
+
+  function onSpin() {
+    noteUserGesture();
+    spinTablet();
+  }
 
   const meaning = landed ? getMeaning(landed.id) : undefined;
 
@@ -169,7 +152,10 @@ export function SongWheel() {
             choose. The spin does.
           </p>
           {landed ? (
-            <p className="mt-8 font-display text-2xl italic text-fg">
+            <p
+              className="mt-8 font-display text-2xl italic text-fg"
+              data-wheel-landed={landed.id}
+            >
               {landed.title}
               <span className="mt-2 block line-clamp-4 whitespace-pre-line text-sm font-sans font-light tracking-normal text-muted not-italic normal-case">
                 {meaning}
@@ -177,7 +163,7 @@ export function SongWheel() {
             </p>
           ) : (
             <p className="mt-8 text-sm text-subtle">
-              {spinning ? "The wheel is turning." : "No tablet yet."}
+              {spinning || busy ? "The wheel is turning." : "No tablet yet."}
             </p>
           )}
         </div>
@@ -193,71 +179,69 @@ export function SongWheel() {
               </svg>
             </span>
 
-            <div className="size-full overflow-hidden rounded-full">
-            <div
-              className="pointer-events-none size-full rounded-full border border-border bg-elevated will-change-transform"
-              style={{
-                transform: `translateZ(0) rotate(${angle}deg)`,
-                transition: spinning
-                  ? `transform ${WHEEL_SPIN_MS}ms cubic-bezier(0.12, 0.7, 0.08, 1)`
-                  : "none",
-              }}
-            >
-              <svg viewBox="0 0 200 200" className="size-full">
-                <defs>
-                  {segments.map((track, index) => (
-                    <pattern
-                      key={`pat-${track.id}-${index}`}
-                      id={`wheel-art-${index}`}
-                      patternUnits="userSpaceOnUse"
-                      width="200"
-                      height="200"
-                    >
-                      <image
-                        href={track.image}
+            <div className="wheel-frame size-full overflow-hidden rounded-full">
+              <div
+                ref={discRef}
+                data-wheel-disc=""
+                data-wheel-spinning={spinning ? "true" : "false"}
+                className="wheel-disc pointer-events-none size-full rounded-full border border-border bg-elevated"
+                style={{ transform: wheelTransform(angle) }}
+              >
+                <svg viewBox="0 0 200 200" className="size-full">
+                  <defs>
+                    {segments.map((track, index) => (
+                      <pattern
+                        key={`pat-${track.id}-${index}`}
+                        id={`wheel-art-${index}`}
+                        patternUnits="userSpaceOnUse"
                         width="200"
                         height="200"
-                        preserveAspectRatio="xMidYMid slice"
-                      />
-                    </pattern>
+                      >
+                        <image
+                          href={track.image}
+                          width="200"
+                          height="200"
+                          preserveAspectRatio="xMidYMid slice"
+                        />
+                      </pattern>
+                    ))}
+                  </defs>
+                  {segments.map((track, index) => (
+                    <path
+                      key={`${track.id}-${index}`}
+                      d={wedgePath(index)}
+                      fill={`url(#wheel-art-${index})`}
+                      stroke="var(--color-bg)"
+                      strokeWidth="1.2"
+                    />
                   ))}
-                </defs>
-                {segments.map((track, index) => (
-                  <path
-                    key={`${track.id}-${index}`}
-                    d={wedgePath(index)}
-                    fill={`url(#wheel-art-${index})`}
-                    stroke="var(--color-bg)"
-                    strokeWidth="1.2"
-                  />
-                ))}
-                <circle cx={CX} cy={CY} r="32" fill="var(--color-bg)" />
-              </svg>
-            </div>
+                  <circle cx={CX} cy={CY} r="32" fill="var(--color-bg)" />
+                </svg>
+              </div>
             </div>
 
             <button
               type="button"
-              onPointerDown={primePlayback}
-              onClick={spin}
-              disabled={spinning}
-              aria-label={spinning ? "Spinning" : "Spin the wheel"}
-              className="absolute inset-0 z-10 flex touch-manipulation items-center justify-center rounded-full bg-transparent text-bg"
+              onPointerDown={noteUserGesture}
+              onClick={onSpin}
+              disabled={spinning || busy}
+              aria-label={spinning || busy ? "Spinning" : "Spin the wheel"}
+              className="absolute inset-0 z-10 flex touch-manipulation items-center justify-center rounded-full bg-[rgba(0,0,0,0.001)] text-bg"
             >
-              <span className="flex size-20 items-center justify-center rounded-full bg-accent text-xs font-medium tracking-[0.22em] uppercase transition-[transform,opacity] duration-150 ease-out sm:size-20">
-                {spinning ? "…" : "Spin"}
+              <span className="flex size-24 items-center justify-center rounded-full bg-accent text-xs font-medium tracking-[0.22em] uppercase transition-[transform,opacity] duration-150 ease-out sm:size-20">
+                {spinning || busy ? "…" : "Spin"}
               </span>
             </button>
           </div>
 
           <button
             type="button"
-            onPointerDown={primePlayback}
-            onClick={spin}
-            disabled={spinning}
+            onPointerDown={noteUserGesture}
+            onClick={onSpin}
+            disabled={spinning || busy}
             className="mt-5 inline-flex h-12 w-full touch-manipulation items-center justify-center bg-accent text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96] disabled:opacity-70 sm:hidden"
           >
-            {spinning ? "Turning" : "Spin the tablet"}
+            {spinning || busy ? "Turning" : "Spin the tablet"}
           </button>
         </div>
       </div>
