@@ -23,10 +23,12 @@ describe("tabletSharePayload", () => {
     assert.equal(payload.url.includes("soundcloud.com"), false);
   });
 
-  it("falls back to the live Production alias when origin is omitted", () => {
+  it("falls back to atmanmusic.app when origin is omitted", () => {
     const payload = tabletSharePayload(TRACK);
     assert.equal(payload.url, `${SITE_ORIGIN}/?tablet=fragile-god`);
+    assert.equal(payload.url, "https://atmanmusic.app/?tablet=fragile-god");
     assert.equal(payload.url.includes("trismegistus-three"), false);
+    assert.equal(payload.url.includes("vercel.app"), false);
   });
 
   it("names today's tablet in the share", () => {

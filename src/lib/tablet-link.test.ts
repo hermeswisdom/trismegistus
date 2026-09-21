@@ -8,9 +8,11 @@ import {
 } from "./tablet-link.ts";
 
 describe("SITE_ORIGIN", () => {
-  it("is the live Production alias, not the retired three tip", () => {
-    assert.equal(SITE_ORIGIN, "https://trismegistus-smlc-1397.vercel.app");
+  it("is the live atmanmusic.app origin, not a Vercel alias or .com", () => {
+    assert.equal(SITE_ORIGIN, "https://atmanmusic.app");
     assert.equal(SITE_ORIGIN.includes("trismegistus-three"), false);
+    assert.equal(SITE_ORIGIN.includes("vercel.app"), false);
+    assert.equal(SITE_ORIGIN.includes("atmanmusic.com"), false);
   });
 });
 
@@ -30,12 +32,12 @@ describe("tabletPageUrl", () => {
     );
   });
 
-  it("defaults OG / share URLs to the live Production alias", () => {
+  it("defaults OG / share URLs to the live atmanmusic.app origin", () => {
     assert.equal(
       tabletPageUrl({ tablet: "fragile-god" }),
-      "https://trismegistus-smlc-1397.vercel.app/?tablet=fragile-god",
+      "https://atmanmusic.app/?tablet=fragile-god",
     );
-    assert.equal(tabletPageUrl({}), "https://trismegistus-smlc-1397.vercel.app/");
+    assert.equal(tabletPageUrl({}), "https://atmanmusic.app/");
   });
 });
 
