@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
 import { Check, Heart, Share2 } from "lucide-react";
+import { setMyFavorite } from "@/lib/favorites";
+import { isSignedInForSaves } from "@/lib/favorites-sync";
 import { useHearts } from "@/lib/hearts";
-import type { Track } from "@/lib/rooms";
-import { tabletPageUrl } from "@/lib/tablet-link";
+import { authEnabled } from "@/lib/auth/client";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { getMeaning, type Track } from "@/lib/rooms";
+import { clipboardShareText, tabletSharePayload } from "@/lib/share";
 import { cn } from "@/lib/utils";
 
 const swap =
@@ -17,15 +21,28 @@ export function HeartButton({
 }) {
   const liked = useHearts((s) => Boolean(s.ids[id]));
   const toggle = useHearts((s) => s.toggle);
+  const { user, isPending } = useCurrentUserState();
+  const signedIn = isSignedInForSaves({
+    authEnabled,
+    userId: user?.id,
+    isDevFallback: user?.isDevFallback,
+  });
 
   return (
     <button
       type="button"
-      aria-label={liked ? "Unlike" : "Like"}
+      aria-label={liked ? "Remove from saved tablets" : "Save this tablet"}
       aria-pressed={liked}
       onClick={(e) => {
         e.stopPropagation();
-        toggle(id);
+        const next = toggle(id);
+        if (signedIn && !isPending) {
+          void setMyFavorite({ data: { trackId: id, liked: next } }).catch(
+            () => {
+              /* local heart still holds */
+            },
+          );
+        }
       }}
       className={cn(
         "flex size-11 shrink-0 items-center justify-center text-fg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]",
@@ -118,13 +135,14 @@ export async function shareUrl(
       if (error instanceof Error && error.name === "AbortError") return false;
     }
   }
+  const pasted = clipboardShareText({ title, text, url });
   try {
-    await navigator.clipboard.writeText(url);
+    await navigator.clipboard.writeText(pasted);
     return true;
   } catch {
     try {
       const field = document.createElement("textarea");
-      field.value = url;
+      field.value = pasted;
       field.setAttribute("readonly", "");
       field.style.position = "fixed";
       field.style.top = "0";
@@ -141,31 +159,26 @@ export async function shareUrl(
   }
 }
 
+function shareOrigin(): string | undefined {
+  return typeof window !== "undefined" ? window.location.origin : undefined;
+}
+
 export async function shareTrack(track: Track) {
-  return shareUrl(
-    track.permalink,
-    `${track.title} — Atman Music`,
-    `${track.title} · Atman Music`,
-  );
+  const payload = tabletSharePayload(track, {
+    origin: shareOrigin(),
+    meaning: getMeaning(track.id),
+  });
+  return shareUrl(payload.url, payload.title, payload.text);
 }
 
 export async function shareTabletPage(
   track: Track,
   opts: { daily?: boolean; origin?: string } = {},
 ) {
-  const origin =
-    opts.origin ??
-    (typeof window !== "undefined" ? window.location.origin : undefined);
-  const url = tabletPageUrl({
+  const payload = tabletSharePayload(track, {
     daily: opts.daily,
-    tablet: opts.daily ? undefined : track.slug,
-    origin,
+    origin: opts.origin ?? shareOrigin(),
+    meaning: getMeaning(track.id),
   });
-  return shareUrl(
-    url,
-    opts.daily
-      ? `Today's tablet — ${track.title} — Atman Music`
-      : `${track.title} — Atman Music`,
-    `${track.title} · Atman Music`,
-  );
+  return shareUrl(payload.url, payload.title, payload.text);
 }

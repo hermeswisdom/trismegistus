@@ -375,11 +375,15 @@ export function grokOgHeadTags({
   return tags;
 }
 
-export function stripShareMetaTags(html) {
+export function stripShareMetaTags(html, keep = []) {
+  const keepSet = new Set(
+    (Array.isArray(keep) ? keep : []).map((key) => String(key).toLowerCase()),
+  );
   return String(html).replace(/<meta\b[^>]*>/gi, (tag) => {
     const attrs = [...tag.matchAll(/\b(?:property|name)\s*=\s*["']([^"']+)["']/gi)];
     for (const match of attrs) {
-      if (SHARE_META_KEYS.has(String(match[1]).toLowerCase())) return "";
+      const key = String(match[1]).toLowerCase();
+      if (SHARE_META_KEYS.has(key) && !keepSet.has(key)) return "";
     }
     return tag;
   });
@@ -432,7 +436,27 @@ export function injectGrokPwaHead(html, ctx = {}) {
     host,
     documentTitle,
   );
-  let next = stripShareMetaTags(html);
+  const ogTags = grokOgHeadTags({ host, appName, site, documentTitle, cwd });
+  // Vercel system hosts are not valid og:image origins, so the injector
+  // emits no image. Keep app-authored cover-art metas (home / tablet deep
+  // links) instead of stripping them and leaving the unfurl imageless.
+  const grokEmitsImage = ogTags.some((tag) => /property="og:image"/i.test(tag));
+  const keep = grokEmitsImage
+    ? []
+    : [
+        "og:image",
+        "og:image:width",
+        "og:image:height",
+        "og:image:alt",
+        "og:url",
+        "og:description",
+        "og:type",
+        "og:site_name",
+        "twitter:title",
+        "twitter:description",
+        "twitter:image",
+      ];
+  let next = stripShareMetaTags(html, keep);
 
   const missing = grokPwaHeadTags(appName)
     .filter(([key]) => {
@@ -442,10 +466,7 @@ export function injectGrokPwaHead(html, ctx = {}) {
     })
     .map(([, tag]) => tag);
 
-  next = insertAfterHeadOpen(
-    next,
-    grokOgHeadTags({ host, appName, site, documentTitle, cwd }).join(""),
-  );
+  next = insertAfterHeadOpen(next, ogTags.join(""));
 
   if (!next.includes("/grok-app-builder/extensions.js")) {
     missing.push(...grokExtensionsHeadTags(projectId));

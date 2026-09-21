@@ -14,33 +14,24 @@ import { getMeaning } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
 import { playControlFace, playControlShowsPause } from "@/lib/playback";
+import { wallStreakCopy } from "@/lib/streak-copy";
 
-function riteNumeral(n: number): string {
-  const glyphs = [
-    "I",
-    "II",
-    "III",
-    "IV",
-    "V",
-    "VI",
-    "VII",
-    "VIII",
-    "IX",
-    "X",
-    "XI",
-    "XII",
-  ];
-  return glyphs[n - 1] ?? String(n);
-}
-
-export function useListenStreak(dailyId: string): number {
+function useListenStreak(dailyId: string): {
+  count: number;
+  todayMarked: boolean;
+} {
   const currentId = usePlayer((s) => s.currentId);
   const elapsed = usePlayer((s) => s.elapsed);
   const playing = usePlayer((s) => s.playing);
-  const [streak, setStreak] = useState(0);
+  const [streak, setStreak] = useState({ count: 0, todayMarked: false });
 
   useEffect(() => {
-    setStreak(readStreak(londonDateKey(new Date())).count);
+    const today = londonDateKey(new Date());
+    const stored = readStreak(today);
+    setStreak({
+      count: stored.count,
+      todayMarked: stored.days.includes(today),
+    });
   }, []);
 
   useEffect(() => {
@@ -60,7 +51,7 @@ export function useListenStreak(dailyId: string): number {
     if (stored.days.includes(today)) return;
     const next = markListenDay(stored.days, today);
     writeStreak(next);
-    setStreak(next.count);
+    setStreak({ count: next.count, todayMarked: true });
   }, [playing, currentId, dailyId, elapsed]);
 
   return streak;
@@ -74,6 +65,7 @@ export function DailyRite() {
   const playPending = usePlayer((s) => s.playPending);
   const playError = usePlayer((s) => s.playError);
   const streak = useListenStreak(daily.id);
+  const copy = wallStreakCopy(streak);
   const dailyFace = playControlFace({
     playing: currentId === daily.id && playing,
     playPending: currentId === daily.id && playPending,
@@ -147,12 +139,12 @@ export function DailyRite() {
               {copied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
               {copied ? "Copied" : "Share the day"}
             </button>
-            <span className="px-2 text-xs tracking-[0.16em] text-subtle uppercase">
-              {streak > 0
-                ? `Rite · ${riteNumeral(streak)}`
-                : "Thirty seconds writes the day"}
-            </span>
           </div>
+          <p className="mt-4 max-w-md text-xs tracking-[0.14em] text-subtle uppercase">
+            <span className="text-accent">{copy.kicker}</span>
+            <span className="mx-2 text-border">·</span>
+            {copy.detail}
+          </p>
         </div>
       </div>
     </aside>

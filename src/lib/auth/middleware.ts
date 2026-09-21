@@ -45,3 +45,28 @@ export const authMiddleware = createMiddleware({ type: "function" })
     const userId = await requireUserId(context.bearerToken);
     return next({ context: { userId } });
   });
+
+/**
+ * Session if present; never throws for a signed-out visitor. Use this for
+ * optional account polish (favorites, named marks, last tablet) so the wall
+ * still works when `VITE_AUTH_ENABLED=false` or nobody is signed in.
+ *
+ * Does not fall back to the shared dev user against a real database.
+ */
+export const optionalSessionMiddleware = createMiddleware({ type: "function" })
+  .client(async ({ next }) => {
+    const { getBearerToken } = await import("./client");
+    return next({ sendContext: { bearerToken: getBearerToken() ?? undefined } });
+  })
+  .server(async ({ next, context }) => {
+    const { assertSameSiteRequest } = await import("./isolation.server");
+    const { getSessionUser } = await import("./verify.server");
+    assertSameSiteRequest();
+    let sessionUser: import("./verify.server").VerifiedUser | null = null;
+    try {
+      sessionUser = await getSessionUser(context.bearerToken);
+    } catch {
+      sessionUser = null;
+    }
+    return next({ context: { sessionUser } });
+  });

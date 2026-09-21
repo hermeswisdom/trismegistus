@@ -1,16 +1,16 @@
 import { create } from "zustand";
-import { writeFirstSpinDone } from "@/lib/first-spin";
+import { readFirstSpinDone, writeFirstSpinDone } from "@/lib/first-spin";
+import { readLastTablet, resolveEnterIntent, writeLastTablet } from "@/lib/last-tablet";
 import { FEATURED_ID, getTrack, nextTrack, randomTrack } from "@/lib/rooms";
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
+import { resolvePlayTap } from "@/lib/playback";
 import {
   applyPlayback,
   getLiveWidget,
   noteUserGesture,
   subscribePlayback,
 } from "@/lib/sc-widget";
-import { resolvePlayTap } from "@/lib/playback";
-import { shouldAutoSpinOnEnter } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
 
 function pageHasDeepLink() {
@@ -116,12 +116,19 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   enter: () => {
     ensurePlaybackBridge();
-    const first = shouldAutoSpinOnEnter(get().entered, pageHasDeepLink());
-    if (!first && get().entered) return;
+    const last = readLastTablet();
+    const lastOk = Boolean(last && getTrack(last));
+    const intent = resolveEnterIntent({
+      alreadyEntered: get().entered,
+      hasDeepLink: pageHasDeepLink(),
+      firstSpinDone: readFirstSpinDone(),
+      lastTrackId: lastOk ? last : null,
+    });
+    if (intent === "play" && get().entered) return;
     noteUserGesture();
-    if (first) {
+    writeFirstSpinDone();
+    if (intent === "spin") {
       get().spinTablet({ force: true, markEntered: true });
-      writeFirstSpinDone();
       if (typeof window !== "undefined") {
         document.getElementById("wheel")?.scrollIntoView({
           behavior: "auto",
@@ -130,7 +137,10 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       }
       return;
     }
-    get().play(get().currentId, { forceEmbed: true, markEntered: true });
+    const resume = pageHasDeepLink()
+      ? get().currentId
+      : (lastOk && last ? last : get().currentId);
+    get().play(resume, { forceEmbed: true, markEntered: true });
   },
 
   spinTablet: (opts) => {
@@ -163,6 +173,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       duration: reset ? 0 : get().duration,
     });
     startWidget(nextId, true, { forceEmbed });
+    writeLastTablet(nextId);
     if (reset || !wasPlaying) {
       countPlay(nextId);
     }
