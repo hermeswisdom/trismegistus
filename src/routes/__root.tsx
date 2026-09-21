@@ -2,7 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { ViewportLock } from "@/components/viewport-lock";
-import { DEFAULT_VIEWPORT } from "@/lib/viewport-lock";
+import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Atman Music";
@@ -11,10 +11,6 @@ export const Route = createRootRoute({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      {
-        name: "viewport",
-        content: DEFAULT_VIEWPORT,
-      },
       { title: APP_NAME },
       {
         name: "description",
@@ -39,7 +35,9 @@ export const Route = createRootRoute({
   component: () => (
     <html lang="en" className="antialiased" suppressHydrationWarning>
       <head>
+        <meta charSet="utf-8" />
         <meta name="viewport" content={DEFAULT_VIEWPORT} />
+        <script dangerouslySetInnerHTML={{ __html: PHONE_VIEWPORT_BOOT }} />
         <HeadContent />
       </head>
       <body className="bg-bg text-fg font-sans">
