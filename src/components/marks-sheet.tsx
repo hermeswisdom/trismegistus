@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { addTrackMark, listTrackMarks, type TrackMark } from "@/lib/marks";
 import { useMarksFeed } from "@/lib/marks-feed";
 import { useMarkSheet } from "@/lib/mark-sheet";
+import { authEnabled } from "@/lib/auth/client";
+import { useCurrentUser } from "@/lib/auth/use-current-user";
 import { getTrack } from "@/lib/rooms";
 import { cn } from "@/lib/utils";
 
@@ -22,18 +24,27 @@ export function MarksSheet() {
   const close = useMarkSheet((s) => s.close);
   const setTrack = useMarksFeed((s) => s.setTrack);
   const track = trackId ? getTrack(trackId) : undefined;
+  const user = useCurrentUser();
+  const signedName =
+    authEnabled && user && !user.isDevFallback
+      ? (user.displayName ?? user.primaryEmail ?? "").trim()
+      : "";
   const [marks, setMarks] = useState<TrackMark[]>([]);
   const [author, setAuthor] = useState("");
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    if (signedName) {
+      setAuthor(signedName.slice(0, 40));
+      return;
+    }
     try {
       setAuthor(localStorage.getItem(NAME_KEY) ?? "");
     } catch {
       /* private mode */
     }
-  }, []);
+  }, [signedName]);
 
   useEffect(() => {
     if (!trackId) {
@@ -108,7 +119,7 @@ export function MarksSheet() {
         aria-modal="true"
         aria-labelledby="marks-title"
         className={cn(
-          "absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto border-t border-border bg-surface px-5 pb-28 pt-5 sm:px-8",
+          "absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto border-t border-border bg-surface px-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-8",
           "transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           trackId ? "translate-y-0" : "translate-y-6",
         )}
@@ -146,7 +157,8 @@ export function MarksSheet() {
                 maxLength={40}
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
-                className="h-12 w-full border-0 border-b border-border bg-transparent px-0 text-base text-fg outline-none transition-[border-color] duration-150 placeholder:text-subtle focus:border-fg"
+                readOnly={Boolean(signedName)}
+                className="h-12 w-full border-0 border-b border-border bg-transparent px-0 text-base text-fg outline-none transition-[border-color] duration-150 placeholder:text-subtle focus:border-fg read-only:text-accent"
                 autoComplete="nickname"
                 suppressHydrationWarning
               />

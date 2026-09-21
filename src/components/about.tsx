@@ -3,7 +3,7 @@ import { TRACKS } from "@/lib/rooms";
 export function About() {
   return (
     <section id="office" className="border-t border-border">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-28">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-28">
         <div className="order-2 lg:order-1">
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
             Esoteric music

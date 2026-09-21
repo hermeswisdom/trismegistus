@@ -31,7 +31,7 @@ export function Signal() {
 
   return (
     <section id="signal" className="border-t border-border">
-      <div className="mx-auto grid max-w-6xl gap-12 px-5 py-20 sm:px-8 lg:grid-cols-2 lg:py-28">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-12 lg:py-28">
         <div>
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
             Correspondence

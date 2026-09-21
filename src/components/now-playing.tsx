@@ -10,6 +10,7 @@ import { useWheelSpin } from "@/lib/wheel-spin";
 import {
   getLiveSoundId,
   loadSoundCloudApi,
+  primePlayback,
   setLiveSoundId,
   setLiveWidget,
 } from "@/lib/sc-widget";
@@ -111,21 +112,29 @@ export function NowPlaying() {
 
   if (!current || !featured) return null;
 
+  function spinFromDock() {
+    primePlayback();
+    document.getElementById("wheel")?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+    requestSpin();
+  }
+
   return (
     <div
       className={cn(
-        "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+        "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
         entered ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
       )}
     >
       <button
         type="button"
-        onClick={(e) => {
+        onPointerUp={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
-          const x = (e.clientX - rect.left) / rect.width;
-          seek(x);
+          seek((e.clientX - rect.left) / rect.width);
         }}
-        className="block h-1.5 w-full bg-elevated"
+        className="block h-2 w-full touch-manipulation bg-elevated sm:h-1.5"
         aria-label="Seek"
       >
         <span
@@ -133,23 +142,23 @@ export function NowPlaying() {
           style={{ transform: `scaleX(${ratio})` }}
         />
       </button>
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-3 py-2 sm:px-8">
+      <div className="mx-auto flex max-w-6xl items-center gap-2 px-3 py-2 sm:gap-3 sm:px-8">
         <img
           src={current.image}
           alt=""
-          className="size-12 shrink-0 object-cover sm:size-14"
+          className="size-11 shrink-0 object-cover sm:size-14"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate font-display text-base italic text-fg sm:text-lg">
+          <p className="truncate font-display text-[0.95rem] italic text-fg sm:text-lg">
             {current.title}
           </p>
-          <p className="truncate text-xs tracking-wider text-subtle">
+          <p className="truncate text-[0.7rem] tracking-wider text-subtle sm:text-xs">
             {getMeaning(current.id)}
           </p>
         </div>
         <ReadButton
           trackId={current.id}
-          className="hidden text-muted hover:text-fg sm:flex"
+          className="text-muted hover:text-fg"
         />
         <HeartButton id={current.id} className="text-muted hover:text-fg" />
         <ShareButton
@@ -158,26 +167,22 @@ export function NowPlaying() {
         />
         <MarkButton
           trackId={current.id}
-          className="hidden text-muted hover:text-fg sm:flex"
+          className="text-muted hover:text-fg"
         />
         <button
           type="button"
-          onClick={() => {
-            document.getElementById("wheel")?.scrollIntoView({
-              behavior: "smooth",
-              block: "center",
-            });
-            requestSpin();
-          }}
-          className="hidden size-11 shrink-0 items-center justify-center text-muted transition-colors duration-150 hover:text-fg sm:flex"
+          onPointerDown={primePlayback}
+          onClick={spinFromDock}
+          className="flex size-11 shrink-0 touch-manipulation items-center justify-center text-muted transition-colors duration-150 hover:text-fg"
           aria-label="Random song"
         >
           <Dices className="size-4" />
         </button>
         <button
           type="button"
+          onPointerDown={primePlayback}
           onClick={toggle}
-          className="flex size-11 shrink-0 items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
+          className="flex size-11 shrink-0 touch-manipulation items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
           aria-label={playing ? "Pause" : "Play"}
         >
           {playing ? (
@@ -188,14 +193,15 @@ export function NowPlaying() {
         </button>
         <button
           type="button"
+          onPointerDown={primePlayback}
           onClick={playNext}
-          className="hidden size-11 shrink-0 items-center justify-center text-muted transition-colors duration-150 hover:text-fg sm:flex"
+          className="flex size-11 shrink-0 touch-manipulation items-center justify-center text-muted transition-colors duration-150 hover:text-fg"
           aria-label="Next tablet"
         >
           <SkipForward className="size-4" />
         </button>
       </div>
-      <div className="mx-auto max-w-6xl px-3 pb-2 sm:px-8">
+      <div className="mx-auto max-w-6xl px-3 sm:px-8">
         <iframe
           ref={iframeRef}
           title={`SoundCloud — ${current.title}`}

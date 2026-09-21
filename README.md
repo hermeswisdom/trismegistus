@@ -24,3 +24,34 @@ Auth stays optional. `VITE_AUTH_ENABLED=false` is the shipped path.
 Production persistence needs `DATABASE_URL` (Neon / Postgres). Without it, local and preview use in-memory PGLite — marks reset when the process does. No Blob token is required.
 
 Live on `main` of [hermeswisdom/trismegistus](https://github.com/hermeswisdom/trismegistus).
+
+## Accounts
+
+Listening, hearts, and anonymous marks work without a login. An account is optional: it keeps a name on marks you leave and shows a local listen streak.
+
+The wall never forces sign-in for playback.
+
+### Vercel Production env
+
+`VITE_*` values are baked at build time. After changing them, redeploy.
+
+| Variable | Required for accounts | Notes |
+| --- | --- | --- |
+| `VITE_AUTH_ENABLED` | Yes | Must be `true` (not the string `"false"`). Production is currently `false`, which hides live sessions and shows the gated `/login` copy. |
+| `BETTER_AUTH_SECRET` | Yes | Long random string. Used to sign session cookies. |
+| `BETTER_AUTH_URL` | Yes | Public origin, e.g. `https://trismegistus-three.vercel.app`. Must match the site the phone opens. Add preview origins here if you sign in on Vercel previews. |
+| `DATABASE_URL` | Already set | Neon. Auth tables come from `migrations/auth/0001_auth.sql`. |
+| `GROK_AUTH_ISSUER` | Optional | Broker for Google / X. Omit to keep email + password only. |
+| `GROK_AUTH_CLIENT_ID` | Optional | Per-app broker client. |
+| `GROK_AUTH_CLIENT_SECRET` | Optional | Per-app broker secret. |
+
+OAuth is **full-page redirect**, not a popup (popups fail on iOS). Callbacks:
+
+- `https://<BETTER_AUTH_URL>/api/auth/oauth2/callback/grok-google`
+- `https://<BETTER_AUTH_URL>/api/auth/oauth2/callback/grok-x`
+
+Email + password is enabled in-app (`src/lib/auth/email-password.ts`) and does not need the broker.
+
+### Local
+
+Copy `.env.example` and set `VITE_AUTH_ENABLED=true` plus a `BETTER_AUTH_SECRET`. Without `DATABASE_URL`, sessions persist in local PGLite.

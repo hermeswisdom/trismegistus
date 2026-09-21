@@ -55,6 +55,8 @@
     background: var(--color-bg);
     color: var(--color-fg);
     scroll-behavior: smooth;
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
   }
 
   body {
@@ -62,6 +64,16 @@
     color: var(--color-fg);
     font-family: var(--font-sans);
     min-height: 100dvh;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
   }
 
   h1,
@@ -127,6 +139,8 @@
     align-items: center;
     gap: 0.28rem;
     line-height: 0.86;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .hermes-word-start,

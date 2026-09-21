@@ -29,7 +29,7 @@ export function MeaningSheet() {
         aria-modal="true"
         aria-labelledby="meaning-title"
         className={cn(
-          "absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto border-t border-border bg-surface px-5 pb-28 pt-5 sm:px-8",
+          "absolute inset-x-0 bottom-0 max-h-[80vh] overflow-y-auto border-t border-border bg-surface px-5 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-5 sm:px-8",
           "transition-transform duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           trackId ? "translate-y-0" : "translate-y-6",
         )}

@@ -17,7 +17,7 @@ export function Leaderboard() {
 
   return (
     <section id="board" className="border-t border-border">
-      <div className="mx-auto max-w-6xl px-5 py-20 sm:px-8 lg:py-28">
+      <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 lg:py-28">
         <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
           Played the most
         </p>
@@ -25,7 +25,8 @@ export function Leaderboard() {
           The board.
         </h2>
         <p className="mt-4 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-          Every listen writes a mark. Rank is the count. No names. No accounts.
+          Every listen writes a mark. Rank is the count. The board stays
+          unnamed — accounts keep a private name, not this list.
         </p>
 
         {recent.length > 0 ? (
@@ -53,7 +54,7 @@ export function Leaderboard() {
                     onClick={() =>
                       isPlaying ? pause() : play(track.id)
                     }
-                    className="group flex w-full items-center gap-4 py-4 text-left transition-colors duration-150 hover:bg-elevated/60 sm:gap-6 sm:py-5"
+                    className="group flex min-h-16 w-full touch-manipulation items-center gap-3 py-3.5 text-left transition-colors duration-150 hover:bg-elevated/60 sm:gap-6 sm:py-5"
                   >
                     <span className="relative w-10 shrink-0 font-display text-xl text-accent sm:w-12 sm:text-2xl">
                       {NUMERALS[index] ?? index + 1}

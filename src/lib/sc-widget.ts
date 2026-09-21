@@ -84,3 +84,15 @@ export function getLiveSoundId() {
 export function setLiveSoundId(id: string) {
   liveSoundId = id;
 }
+
+/**
+ * Wake the SoundCloud widget on a user gesture so later spin landings can
+ * play on iOS Safari (autoplay after a timeout is otherwise blocked).
+ */
+export function primePlayback() {
+  try {
+    live?.play();
+  } catch {
+    /* widget may not be bound yet */
+  }
+}
