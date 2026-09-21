@@ -158,7 +158,11 @@ export function bindLiveWidget(
 ) {
   live = widget;
   widgetReady = false;
-  if (soundId !== undefined && soundId !== null) liveSoundId = soundId;
+  if (pending?.soundId) {
+    liveSoundId = pending.soundId;
+  } else if (soundId !== undefined && soundId !== null) {
+    liveSoundId = soundId;
+  }
 
   try {
     widget.unbind(events.READY);

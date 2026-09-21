@@ -13,7 +13,7 @@ const timeoutMs = Number(process.env.MOBILE_SPIN_TIMEOUT_MS || 45000);
 const MOCK_SC = `
 (() => {
   try { localStorage.removeItem("trismegistus-first-spin"); } catch {}
-  window.__ATMAN_SPIN_MS = 700;
+  window.__ATMAN_SPIN_MS = 1800;
   const plays = [];
   const loads = [];
   const pauses = [];
@@ -79,23 +79,36 @@ try {
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
 
   const enter = page.getByRole("button", { name: /^enter$/i });
+  await page.locator("[data-enter-gate][data-gate-ready='true']").waitFor({ state: "attached" });
   await enter.waitFor({ state: "visible" });
-  await enter.tap();
+  await enter.click();
+  try {
+    await page.locator("[data-wheel-landed]").waitFor({ state: "attached", timeout: 8000 });
+  } catch (err) {
+    const dump = await page.evaluate(() => ({
+      spinning: document.querySelector("[data-wheel-disc]")?.getAttribute("data-wheel-spinning"),
+      transform: document.querySelector("[data-wheel-disc]")?.getAttribute("style"),
+      firstSpin: localStorage.getItem("trismegistus-first-spin"),
+      turning: document.body.innerText.includes("The wheel is turning."),
+      noTablet: document.body.innerText.includes("No tablet yet."),
+      player: document.querySelector("[data-player-current]")?.getAttribute("data-player-current"),
+      playing: document.querySelector("[data-player-playing]")?.getAttribute("data-player-playing"),
+      gate: document.querySelector("[data-enter-gate]")?.className.includes("invisible"),
+      mock: window.__scMock,
+    }));
+    throw new Error(`${String(err?.message || err)} dump=${JSON.stringify(dump)}`);
+  }
+  await page.locator("[data-wheel-spinning='false']").waitFor({ state: "attached", timeout: 2000 });
 
-  const disc = page.locator("[data-wheel-disc]");
-  await disc.waitFor();
-  await page.locator("[data-wheel-spinning='true']").waitFor({ timeout: 4000 });
-
-  const rotated = await page.waitForFunction(() => {
-    const el = document.querySelector("[data-wheel-disc]");
-    if (!el) return false;
-    const t = getComputedStyle(el).transform;
-    return Boolean(t && t !== "none" && t !== "matrix(1, 0, 0, 1, 0, 0)");
-  }, null, { timeout: 4000 });
-  if (!rotated) throw new Error("wheel did not rotate");
-
-  await page.locator("[data-wheel-landed]").waitFor({ timeout: 8000 });
-  await page.locator("[data-wheel-spinning='false']").waitFor({ timeout: 2000 });
+  const rotation = await page.locator("[data-wheel-disc]").evaluate((el) => {
+    const inline = el.style.transform || "";
+    const deg = /rotate\((-?\d+(?:\.\d+)?)deg\)/.exec(inline);
+    const spinning = el.getAttribute("data-wheel-spinning");
+    return { inline, deg: deg ? Number(deg[1]) : null, spinning };
+  });
+  if (rotation.deg === null || Math.abs(rotation.deg) < 360) {
+    throw new Error(`wheel did not turn a full rotation: ${JSON.stringify(rotation)}`);
+  }
 
   const landedId = await page.locator("[data-wheel-landed]").getAttribute("data-wheel-landed");
   const playerId = await page.locator("[data-player-current]").getAttribute("data-player-current");
@@ -127,7 +140,9 @@ try {
 
   const cover = page.locator(`#work button[data-tablet-id]:not([data-tablet-id="${landedId}"])`).first();
   await cover.scrollIntoViewIfNeeded();
-  const beforeCover = await page.evaluate(() => window.__scMock?.plays.length ?? 0);
+  const beforeCover = await page.evaluate(
+    () => (window.__scMock?.plays.length ?? 0) + (window.__scMock?.loads.length ?? 0),
+  );
   await cover.tap();
   await page.waitForFunction(
     (prev) => (window.__scMock?.plays.length ?? 0) + (window.__scMock?.loads.length ?? 0) > prev,
@@ -138,6 +153,7 @@ try {
   const verdict = {
     ok: true,
     url,
+    rotation,
     landedId,
     playerId,
     afterSpin,

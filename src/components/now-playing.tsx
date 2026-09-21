@@ -53,7 +53,11 @@ export function NowPlaying() {
         .then((SC) => {
           if (cancelled || !iframeRef.current) return;
           const widget = SC.Widget(iframeRef.current);
-          bindLiveWidget(widget, SC.Widget.Events, featured?.soundId ?? null);
+          bindLiveWidget(
+            widget,
+            SC.Widget.Events,
+            getTrack(usePlayer.getState().currentId)?.soundId ?? null,
+          );
           hydrateWaveform(widget);
         })
         .catch(() => {

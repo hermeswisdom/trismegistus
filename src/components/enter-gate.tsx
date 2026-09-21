@@ -20,6 +20,11 @@ export function EnterGate() {
   const enter = usePlayer((s) => s.enter);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [sealed, setSealed] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    setReady(true);
+  }, []);
 
   useEffect(() => {
     void loadSoundCloudApi().catch(() => {
@@ -56,6 +61,7 @@ export function EnterGate() {
   return (
     <div
       data-enter-gate=""
+      data-gate-ready={ready ? "true" : undefined}
       className={
         "enter-gate fixed top-0 left-0 z-50 flex flex-col overflow-hidden bg-bg transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] " +
         (entered ? "pointer-events-none invisible opacity-0" : "visible opacity-100")

@@ -60,8 +60,6 @@ export function SongWheel() {
   const discRef = useRef<HTMLDivElement>(null);
   const angleRef = useRef(0);
   const firstSpinRef = useRef(false);
-  const planRef = useRef<ReturnType<typeof planWheelSpin> | null>(null);
-  const winnerRef = useRef<Track | null>(null);
 
   useEffect(() => {
     angleRef.current = angle;
@@ -86,49 +84,54 @@ export function SongWheel() {
     if (nonce === 0 || !winnerId) return;
     const winner = getTrack(winnerId);
     if (!winner) return;
-            const next = buildWheelSegments(winner, TRACKS);
+    const next = buildWheelSegments(winner, TRACKS);
     const plan = planWheelSpin(angleRef.current, next.winIndex, {
       reduced: prefersReducedMotion(),
     });
-    planRef.current = plan;
-    winnerRef.current = winner;
     setSegments(next.segments);
     setLanded(null);
     setSpinning(true);
-  }, [nonce, winnerId]);
 
-  useLayoutEffect(() => {
-    if (!spinning) return;
-    const plan = planRef.current;
-    const winner = winnerRef.current;
-    const el = discRef.current;
-    if (!plan || !winner) {
-      setSpinning(false);
-      finish();
-      return;
-    }
-    const run = el
-      ? runWheelSpin(el, plan)
-      : {
-          done: new Promise<void>((resolve) => {
-            window.setTimeout(resolve, plan.duration);
-          }),
-          cancel() {},
-        };
     let cancelled = false;
-    void run.done.then(() => {
+    let runner: { cancel: () => void } = { cancel() {} };
+
+    const land = () => {
       if (cancelled) return;
+      cancelled = true;
       angleRef.current = plan.to;
       setAngle(plan.to);
       setSpinning(false);
       setLanded(winner);
       finish();
+    };
+
+    const start = () => {
+      if (cancelled) return;
+      const el = discRef.current;
+      const run = el
+        ? runWheelSpin(el, plan)
+        : {
+            done: new Promise<void>((resolve) => {
+              window.setTimeout(resolve, plan.duration);
+            }),
+            cancel() {},
+          };
+      runner = run;
+      void run.done.then(land);
+    };
+
+    const raf = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(start);
     });
+    const watchdog = window.setTimeout(land, Math.max(0, plan.duration) + 400);
+
     return () => {
       cancelled = true;
-      run.cancel();
+      window.cancelAnimationFrame(raf);
+      runner.cancel();
+      window.clearTimeout(watchdog);
     };
-  }, [spinning, nonce, finish]);
+  }, [nonce, winnerId, finish]);
 
   function onSpin() {
     noteUserGesture();

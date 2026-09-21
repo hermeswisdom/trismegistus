@@ -116,4 +116,11 @@ describe("sc-widget playback client", () => {
     assert.equal(loads[0]?.url, cmd.permalink);
     assert.equal(loads[0]?.auto, true);
   });
+
+  it("keeps a pending sound id when the widget rebinds", () => {
+    const { widget } = fakeWidget();
+    applyPlayback(cmd);
+    bindLiveWidget(widget, Events, "featured-old");
+    assert.equal(getPlaybackSurface().liveSoundId, "555");
+  });
 });
