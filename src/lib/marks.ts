@@ -1,4 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
+import { optionalSessionMiddleware } from "@/lib/auth/middleware";
+import { markAuthorFromSession } from "@/lib/mark-name";
 import { TRACKS } from "@/lib/rooms";
 
 export type TrackMark = {
@@ -85,28 +87,21 @@ export const listAllTrackMarks = createServerFn({ method: "GET" }).handler(
 );
 
 export const addTrackMark = createServerFn({ method: "POST" })
+  .middleware([optionalSessionMiddleware])
   .validator((input: { trackId: string; author: string; body: string }) => ({
     trackId: input.trackId,
     author: clean(input.author, 40),
     body: clean(input.body, 280),
   }))
-  .handler(async ({ data }) => {
-    if (!KNOWN.has(data.trackId) || !data.author || !data.body) {
+  .handler(async ({ data, context }) => {
+    const session = context.sessionUser;
+    const author = session
+      ? markAuthorFromSession(session, data.author)
+      : data.author;
+    if (!KNOWN.has(data.trackId) || !author || !data.body) {
       return readMarks(data.trackId);
     }
-    let userId: string | null = null;
-    let author = data.author;
-    try {
-      const { getSessionUser } = await import("@/lib/auth/verify.server");
-      const session = await getSessionUser();
-      if (session?.id) {
-        userId = session.id;
-        const named = session.email?.split("@")[0];
-        if (named && !author) author = clean(named, 40);
-      }
-    } catch {
-      /* anonymous marks still land */
-    }
+    const userId = session?.id ?? null;
     try {
       const { getSql } = await import("@/lib/db");
       const sql = await getSql();

@@ -1,7 +1,8 @@
-import { useLayoutEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { About } from "@/components/about";
 import { EnterGate } from "@/components/enter-gate";
+import { FavoritesSync } from "@/components/favorites-sync";
+import { LastTabletSync } from "@/components/last-tablet-sync";
 import { Leaderboard } from "@/components/leaderboard";
 import { MarksBoardSync } from "@/components/marks-board-sync";
 import { MarksSheet } from "@/components/marks-sheet";
@@ -14,7 +15,7 @@ import { SongWheel } from "@/components/song-wheel";
 import { TrackWall } from "@/components/track-wall";
 import { focusedTrackFromSearch } from "@/lib/daily-catalog";
 import { getMeaning, getTrack } from "@/lib/rooms";
-import { usePlayer } from "@/lib/player-store";
+import { homeOgCopy } from "@/lib/share";
 import { SITE_ORIGIN, parseHomeSearch, tabletPageUrl } from "@/lib/tablet-link";
 
 export const Route = createFileRoute("/")({
@@ -23,8 +24,11 @@ export const Route = createFileRoute("/")({
     const focus = focusedTrackFromSearch(match.search);
     const track = getTrack(focus.trackId);
     if (!track) return {};
-    const meaning = getMeaning(track.id).replace(/\s+/g, " ").trim();
-    const description = meaning.slice(0, 180);
+    const copy = homeOgCopy({
+      source: focus.source,
+      title: track.title,
+      meaning: getMeaning(track.id),
+    });
     const daily = focus.source === "daily";
     const url =
       focus.source === "none"
@@ -33,25 +37,21 @@ export const Route = createFileRoute("/")({
             daily,
             tablet: daily ? undefined : track.slug,
           });
-    const title =
-      focus.source === "none"
-        ? "Atman Music"
-        : daily
-          ? `Today's tablet — ${track.title} — Atman Music`
-          : `${track.title} — Atman Music`;
     const image = `${SITE_ORIGIN}${track.image}`;
     return {
       meta: [
-        { title },
-        { name: "description", content: description },
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
+        { title: copy.title },
+        { name: "description", content: copy.description },
+        { property: "og:title", content: copy.title },
+        { property: "og:description", content: copy.description },
         { property: "og:image", content: image },
+        { property: "og:image:alt", content: `${track.title} — Atman Music` },
         { property: "og:url", content: url },
         { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "Atman Music" },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: title },
-        { name: "twitter:description", content: description },
+        { name: "twitter:title", content: copy.title },
+        { name: "twitter:description", content: copy.description },
         { name: "twitter:image", content: image },
       ],
     };
@@ -59,23 +59,13 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function FocusFromSearch() {
-  const search = Route.useSearch();
-
-  useLayoutEffect(() => {
-    const focus = focusedTrackFromSearch(search);
-    if (focus.source === "none") return;
-    usePlayer.setState({ currentId: focus.trackId });
-  }, [search]);
-
-  return null;
-}
-
 function Home() {
+  const search = Route.useSearch();
   return (
     <>
       <div className="grain" aria-hidden="true" />
-      <FocusFromSearch />
+      <LastTabletSync search={search} />
+      <FavoritesSync />
       <MarksBoardSync />
       <EnterGate />
       <SiteHeader />

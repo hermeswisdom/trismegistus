@@ -4,6 +4,7 @@ import { AtmanWord } from "@/components/atman-word";
 import { CoverMosaic } from "@/components/cover-mosaic";
 import { MatrixRain } from "@/components/matrix-rain";
 import { authEnabled } from "@/lib/auth/client";
+import { readFirstSpinDone } from "@/lib/first-spin";
 import { usePlayer } from "@/lib/player-store";
 import { loadSoundCloudApi, noteUserGesture } from "@/lib/sc-widget";
 import { isRiteKey } from "@/lib/wheel-rite";
@@ -21,12 +22,14 @@ export function EnterGate() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [sealed, setSealed] = useState(false);
   const [ready, setReady] = useState(false);
+  const [returning, setReturning] = useState(false);
   const latched = useRef(false);
   if (entered) latched.current = true;
   const shut = entered || latched.current || sealed;
 
   useEffect(() => {
     setReady(true);
+    setReturning(readFirstSpinDone());
   }, []);
 
   useEffect(() => {
@@ -98,7 +101,9 @@ export function EnterGate() {
           Enter
         </button>
         <p className="relative mt-3 text-center text-xs leading-relaxed text-subtle">
-          Tap. The wheel turns. A tablet lands.
+          {returning
+            ? "Tap. Your tablet is waiting."
+            : "Tap. The wheel turns. A tablet lands."}
         </p>
         {authEnabled ? (
           <Link

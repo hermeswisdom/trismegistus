@@ -3,10 +3,13 @@ import { X } from "lucide-react";
 import { addTrackMark, listTrackMarks, type TrackMark } from "@/lib/marks";
 import { useMarksFeed } from "@/lib/marks-feed";
 import { useMarkSheet } from "@/lib/mark-sheet";
+import { markAuthorFromSession } from "@/lib/mark-name";
 import { authEnabled } from "@/lib/auth/client";
 import { useCurrentUser } from "@/lib/auth/use-current-user";
+import { isSignedInForSaves } from "@/lib/favorites-sync";
 import { getTrack } from "@/lib/rooms";
 import { cn } from "@/lib/utils";
+import { AccountNudge } from "@/components/account-nudge";
 
 const NAME_KEY = "trismegistus-mark-name";
 
@@ -25,10 +28,17 @@ export function MarksSheet() {
   const setTrack = useMarksFeed((s) => s.setTrack);
   const track = trackId ? getTrack(trackId) : undefined;
   const user = useCurrentUser();
-  const signedName =
-    authEnabled && user && !user.isDevFallback
-      ? (user.displayName ?? user.primaryEmail ?? "").trim()
-      : "";
+  const signedIn = isSignedInForSaves({
+    authEnabled,
+    userId: user?.id,
+    isDevFallback: user?.isDevFallback,
+  });
+  const signedName = signedIn
+    ? markAuthorFromSession({
+        name: user?.displayName,
+        email: user?.primaryEmail,
+      })
+    : "";
   const [marks, setMarks] = useState<TrackMark[]>([]);
   const [author, setAuthor] = useState("");
   const [body, setBody] = useState("");
@@ -78,14 +88,16 @@ export function MarksSheet() {
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (!trackId || sending) return;
-    const nextAuthor = author.trim();
+    const nextAuthor = (signedName || author).trim();
     const nextBody = body.trim();
     if (!nextAuthor || !nextBody) return;
     setSending(true);
-    try {
-      localStorage.setItem(NAME_KEY, nextAuthor.slice(0, 40));
-    } catch {
-      /* private mode */
+    if (!signedName) {
+      try {
+        localStorage.setItem(NAME_KEY, nextAuthor.slice(0, 40));
+      } catch {
+        /* private mode */
+      }
     }
     try {
       const rows = await addTrackMark({
@@ -150,10 +162,10 @@ export function MarksSheet() {
           <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-5">
             <label className="block">
               <span className="mb-2 block text-xs tracking-[0.2em] text-subtle uppercase">
-                Name
+                {signedName ? "Your name" : "Name"}
               </span>
               <input
-                required
+                required={!signedName}
                 maxLength={40}
                 value={author}
                 onChange={(e) => setAuthor(e.target.value)}
@@ -163,6 +175,9 @@ export function MarksSheet() {
                 suppressHydrationWarning
               />
             </label>
+            {authEnabled ? (
+              <AccountNudge forMarks className="mt-3" />
+            ) : null}
             <label className="block">
               <span className="mb-2 block text-xs tracking-[0.2em] text-subtle uppercase">
                 Comment

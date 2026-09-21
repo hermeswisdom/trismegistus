@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Pause, Play, Dices } from "lucide-react";
+import { AccountNudge } from "@/components/account-nudge";
 import { AtmanWord } from "@/components/atman-word";
 import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
@@ -8,6 +9,7 @@ import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
 import { dailyTrackId } from "@/lib/daily-catalog";
+import { useHearts } from "@/lib/hearts";
 import { useMarksFeed } from "@/lib/marks-feed";
 import { usePlayBoard } from "@/lib/play-board";
 import { TRACKS, getMeaning, type Track } from "@/lib/rooms";
@@ -26,11 +28,15 @@ export function TrackWall() {
   const spinTablet = usePlayer((s) => s.spinTablet);
   const hydrateMarks = useMarksFeed((s) => s.hydrate);
   const recent = usePlayBoard((s) => s.recent);
+  const hearts = useHearts((s) => s.ids);
+  const [savedOnly, setSavedOnly] = useState(false);
   const dailyId = dailyTrackId();
   const current = TRACKS.find((t) => t.id === currentId) ?? TRACKS[0];
   const isDaily = current?.id === dailyId;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
+  const saved = TRACKS.filter((track) => hearts[track.id]);
+  const tiles = savedOnly ? saved : TRACKS;
 
   useEffect(() => {
     void hydrateMarks();
@@ -102,7 +108,7 @@ export function TrackWall() {
               </button>
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
-              <ShareButton track={current} className="hidden bg-elevated sm:flex" />
+              <ShareButton track={current} className="bg-elevated" />
               <MarkButton trackId={current.id} className="bg-elevated" />
             </div>
           ) : null}
@@ -123,6 +129,12 @@ export function TrackWall() {
             Open a tablet and read the meaning. The filing is the verse, not the
             style.
           </p>
+          <AccountNudge className="mt-4 max-w-lg" />
+          <WallFilter
+            savedOnly={savedOnly}
+            savedCount={saved.length}
+            onChange={setSavedOnly}
+          />
           {recent.length > 0 ? (
             <div className="mt-8 max-w-2xl">
               <MarksPulse recent={recent} compact />
@@ -131,16 +143,22 @@ export function TrackWall() {
         </div>
 
         <ul className="mx-auto grid max-w-6xl grid-cols-2 border-t border-border lg:grid-cols-3 xl:grid-cols-4">
-          {TRACKS.map((track) => (
-            <TabletTile
-              key={track.id}
-              track={track}
-              active={track.id === currentId}
-              isPlaying={track.id === currentId && playing}
-              isDaily={track.id === dailyId}
-              onToggle={() => toggleTrack(track.id)}
-            />
-          ))}
+          {tiles.length === 0 ? (
+            <li className="col-span-full border-border px-5 py-12 text-sm text-muted sm:px-8">
+              No saved tablets yet. Heart one on the wall.
+            </li>
+          ) : (
+            tiles.map((track) => (
+              <TabletTile
+                key={track.id}
+                track={track}
+                active={track.id === currentId}
+                isPlaying={track.id === currentId && playing}
+                isDaily={track.id === dailyId}
+                onToggle={() => toggleTrack(track.id)}
+              />
+            ))
+          )}
         </ul>
       </div>
     </section>
@@ -207,10 +225,47 @@ function TabletTile({
       </button>
       <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
         <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
-        <HeartButton id={track.id} className="hidden size-11 bg-bg/55 text-fg sm:flex" />
+        <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
         <ShareButton track={track} className="hidden size-11 bg-bg/55 text-fg sm:flex" />
         <MarkButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
       </div>
     </li>
+  );
+}
+
+function WallFilter({
+  savedOnly,
+  savedCount,
+  onChange,
+}: {
+  savedOnly: boolean;
+  savedCount: number;
+  onChange: (value: boolean) => void;
+}) {
+  return (
+    <div className="mt-6 flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        aria-pressed={!savedOnly}
+        onClick={() => onChange(false)}
+        className={cn(
+          "inline-flex h-10 items-center px-4 text-[0.65rem] font-medium tracking-[0.2em] uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]",
+          savedOnly ? "bg-elevated text-fg" : "bg-accent text-bg",
+        )}
+      >
+        All tablets
+      </button>
+      <button
+        type="button"
+        aria-pressed={savedOnly}
+        onClick={() => onChange(true)}
+        className={cn(
+          "inline-flex h-10 items-center px-4 text-[0.65rem] font-medium tracking-[0.2em] uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]",
+          savedOnly ? "bg-accent text-bg" : "bg-elevated text-fg",
+        )}
+      >
+        Saved{savedCount > 0 ? ` · ${savedCount}` : ""}
+      </button>
+    </div>
   );
 }

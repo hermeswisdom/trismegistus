@@ -197,7 +197,7 @@ export function NowPlaying() {
         <HeartButton id={current.id} className="text-muted hover:text-fg" />
         <ShareButton
           track={current}
-          className="hidden text-muted hover:text-fg sm:flex"
+          className="text-muted hover:text-fg"
         />
         <MarkButton
           trackId={current.id}
