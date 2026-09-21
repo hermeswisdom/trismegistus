@@ -2,6 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
   clipboardShareText,
+  homeOgCard,
   homeOgCopy,
   tabletSharePayload,
 } from "./share.ts";
@@ -77,5 +78,48 @@ describe("homeOgCopy", () => {
     });
     assert.equal(copy.title, "Fragile God — Atman Music");
     assert.match(copy.description, /They come in robes/);
+  });
+});
+
+describe("homeOgCard", () => {
+  const track = {
+    title: "Fragile God",
+    meaning: "They come in robes and ring lights.",
+    image: "/images/tracks/fragile-god.jpg",
+    slug: "fragile-god",
+  };
+
+  it("uses the brand card, site name, and atmanmusic.app url on unmarked home", () => {
+    const card = homeOgCard({ source: "none", ...track });
+    assert.equal(card.title, "Atman Music");
+    assert.equal(card.siteName, "Atman Music");
+    assert.equal(card.url, "https://atmanmusic.app/");
+    assert.equal(card.image, "https://atmanmusic.app/og.jpg");
+    assert.equal(card.imageAlt, "Atman Music");
+    assert.equal(card.url.includes("atmanmusic.com"), false);
+  });
+
+  it("uses catalog cover art on a tablet deep link", () => {
+    const card = homeOgCard({ source: "tablet", ...track });
+    assert.equal(card.title, "Fragile God — Atman Music");
+    assert.equal(card.siteName, "Atman Music");
+    assert.equal(card.url, "https://atmanmusic.app/?tablet=fragile-god");
+    assert.equal(
+      card.image,
+      "https://atmanmusic.app/images/tracks/fragile-god.jpg",
+    );
+    assert.equal(card.image, `${SITE_ORIGIN}/images/tracks/fragile-god.jpg`);
+    assert.equal(card.image.includes("/og.jpg"), false);
+  });
+
+  it("uses catalog cover art on today's tablet", () => {
+    const card = homeOgCard({ source: "daily", ...track });
+    assert.equal(card.title, "Today's tablet — Fragile God — Atman Music");
+    assert.equal(card.siteName, "Atman Music");
+    assert.equal(card.url, "https://atmanmusic.app/?daily=1");
+    assert.equal(
+      card.image,
+      "https://atmanmusic.app/images/tracks/fragile-god.jpg",
+    );
   });
 });

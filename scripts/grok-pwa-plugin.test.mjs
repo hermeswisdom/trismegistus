@@ -10,7 +10,9 @@ import {
   grokXCreatorHeadTags,
   injectGrokPwaHead,
   isDocumentPath,
+  isGenericOgCardUrl,
   isInstallQuery,
+  isPageSpecificOgImage,
   publicAppHost,
   renderWebManifest,
   resolveOgCardAsset,
@@ -311,10 +313,12 @@ test("vercel Host keeps app cover-art og:image when grok cannot emit one", () =>
       '<meta property="og:title" content="Fragile God — Atman Music">' +
       '<meta property="og:image" content="https://atmanmusic.app/images/tracks/fragile-god.jpg">' +
       '<meta property="og:url" content="https://atmanmusic.app/?tablet=fragile-god">' +
+      '<meta property="og:site_name" content="Atman Music">' +
       "</head></html>";
     const out = injectGrokPwaHead(html, {
       host: "trismegistus-smlc-1397.vercel.app",
       site: { card: "custom" },
+      cwd: mkdtempSync(join(tmpdir(), "grok-og-vercel-keep-")),
     });
     assert.match(
       out,
@@ -324,12 +328,116 @@ test("vercel Host keeps app cover-art og:image when grok cannot emit one", () =>
       out,
       /property="og:url" content="https:\/\/atmanmusic\.app\/\?tablet=fragile-god"/,
     );
+    assert.match(out, /property="og:site_name" content="Atman Music"/);
     assert.match(out, /property="og:title" content="Fragile God — Atman Music"/);
+    assert.equal(out.split('property="og:image"').length - 1, 1);
+    assert.doesNotMatch(out, /atmanmusic\.app\/og\.jpg/);
+  } finally {
+    if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
+    else process.env.VITE_PUBLIC_HOSTNAME = prev;
+  }
+});
+
+function atmanShareHead({
+  title,
+  image,
+  url,
+} = {
+  title: "Fragile God — Atman Music",
+  image: "https://atmanmusic.app/images/tracks/fragile-god.jpg",
+  url: "https://atmanmusic.app/?tablet=fragile-god",
+}) {
+  return (
+    `<html><head><title>${title}</title>` +
+    `<meta property="og:title" content="${title}">` +
+    `<meta property="og:image" content="${image}">` +
+    `<meta name="twitter:image" content="${image}">` +
+    `<meta property="og:url" content="${url}">` +
+    `<meta property="og:site_name" content="Atman Music">` +
+    "</head></html>"
+  );
+}
+
+test("atmanmusic.app keeps tablet cover art, site_name, and og:url", () => {
+  const prev = process.env.VITE_PUBLIC_HOSTNAME;
+  delete process.env.VITE_PUBLIC_HOSTNAME;
+  try {
+    const out = injectGrokPwaHead(atmanShareHead(), {
+      host: "atmanmusic.app",
+      site: { card: "custom", site_name: "Atman Music" },
+      cwd: mkdtempSync(join(tmpdir(), "grok-og-atman-tablet-")),
+    });
+    assert.match(
+      out,
+      /property="og:image" content="https:\/\/atmanmusic\.app\/images\/tracks\/fragile-god\.jpg"/,
+    );
+    assert.match(
+      out,
+      /name="twitter:image" content="https:\/\/atmanmusic\.app\/images\/tracks\/fragile-god\.jpg"/,
+    );
+    assert.match(
+      out,
+      /property="og:url" content="https:\/\/atmanmusic\.app\/\?tablet=fragile-god"/,
+    );
+    assert.match(out, /property="og:site_name" content="Atman Music"/);
+    assert.match(out, /property="og:title" content="Fragile God — Atman Music"/);
+    assert.equal(out.split('property="og:image"').length - 1, 1);
+    assert.doesNotMatch(out, /content="https:\/\/atmanmusic\.app\/og\.jpg"/);
+  } finally {
+    if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
+    else process.env.VITE_PUBLIC_HOSTNAME = prev;
+  }
+});
+
+test("atmanmusic.app home keeps brand og.jpg with site_name and og:url", () => {
+  const prev = process.env.VITE_PUBLIC_HOSTNAME;
+  delete process.env.VITE_PUBLIC_HOSTNAME;
+  try {
+    const out = injectGrokPwaHead(
+      atmanShareHead({
+        title: "Atman Music",
+        image: "https://atmanmusic.app/og.jpg",
+        url: "https://atmanmusic.app/",
+      }),
+      {
+        host: "atmanmusic.app",
+        site: { card: "custom", site_name: "Atman Music" },
+        cwd: mkdtempSync(join(tmpdir(), "grok-og-atman-home-")),
+      },
+    );
+    assert.match(
+      out,
+      /property="og:image" content="https:\/\/atmanmusic\.app\/og\.jpg"/,
+    );
+    assert.match(out, /property="og:site_name" content="Atman Music"/);
+    assert.match(out, /property="og:url" content="https:\/\/atmanmusic\.app\/"/);
+    assert.match(out, /property="og:title" content="Atman Music"/);
     assert.equal(out.split('property="og:image"').length - 1, 1);
   } finally {
     if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
     else process.env.VITE_PUBLIC_HOSTNAME = prev;
   }
+});
+
+test("grok.me still overwrites app cover art with the platform card", () => {
+  const html = atmanShareHead();
+  const out = injectGrokPwaHead(html, {
+    host: "wild-race.grok.me",
+    site: { title: "Wild Race", card: "custom" },
+    cwd: mkdtempSync(join(tmpdir(), "grok-og-overwrite-cover-")),
+  });
+  assert.match(out, /property="og:image" content="https:\/\/wild-race\.grok\.me\/og\.jpg"/);
+  assert.doesNotMatch(out, /images\/tracks\/fragile-god/);
+});
+
+test("page-specific og images are catalog covers, not /og.jpg", () => {
+  assert.equal(isGenericOgCardUrl("https://atmanmusic.app/og.jpg"), true);
+  assert.equal(isGenericOgCardUrl("https://og.grok.me/v1/card.png?host=x"), true);
+  assert.equal(
+    isPageSpecificOgImage("https://atmanmusic.app/images/tracks/fragile-god.jpg"),
+    true,
+  );
+  assert.equal(isPageSpecificOgImage("https://atmanmusic.app/og.jpg"), false);
 });
 
 test("emits og:image for a public host and prefers a custom card", () => {
@@ -539,5 +647,13 @@ test("vite plugin bakes og identity as a virtual module", () => {
   const plugin = readFileSync(join(TEMPLATE_ROOT, "scripts/grok-pwa-plugin.mjs"), "utf8");
   assert.match(plugin, /virtual:grok-og-identity/);
   assert.match(plugin, /snapshotOgIdentity/);
+});
+
+test("site.json sets og:site_name without pinning og:title", () => {
+  const site = JSON.parse(
+    readFileSync(join(TEMPLATE_ROOT, "src/lib/og/site.json"), "utf8"),
+  );
+  assert.equal(site.site_name, "Atman Music");
+  assert.equal(site.title, undefined);
 });
 

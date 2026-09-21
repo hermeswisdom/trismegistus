@@ -1,4 +1,4 @@
-/** Canonical production origin. Custom domain atmanmusic.com is still pending DNS. */
+/** Canonical production origin. atmanmusic.app is live; .com was skipped / remains optional. */
 export const SITE_ORIGIN = "https://atmanmusic.app";
 
 export function tabletPagePath(opts: {

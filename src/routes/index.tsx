@@ -15,8 +15,8 @@ import { SongWheel } from "@/components/song-wheel";
 import { TrackWall } from "@/components/track-wall";
 import { focusedTrackFromSearch } from "@/lib/daily-catalog";
 import { getMeaning, getTrack } from "@/lib/rooms";
-import { homeOgCopy } from "@/lib/share";
-import { SITE_ORIGIN, parseHomeSearch, tabletPageUrl } from "@/lib/tablet-link";
+import { homeOgCard } from "@/lib/share";
+import { parseHomeSearch } from "@/lib/tablet-link";
 
 export const Route = createFileRoute("/")({
   validateSearch: parseHomeSearch,
@@ -24,35 +24,28 @@ export const Route = createFileRoute("/")({
     const focus = focusedTrackFromSearch(match.search);
     const track = getTrack(focus.trackId);
     if (!track) return {};
-    const copy = homeOgCopy({
+    const card = homeOgCard({
       source: focus.source,
       title: track.title,
       meaning: getMeaning(track.id),
+      image: track.image,
+      slug: track.slug,
     });
-    const daily = focus.source === "daily";
-    const url =
-      focus.source === "none"
-        ? `${SITE_ORIGIN}/`
-        : tabletPageUrl({
-            daily,
-            tablet: daily ? undefined : track.slug,
-          });
-    const image = `${SITE_ORIGIN}${track.image}`;
     return {
       meta: [
-        { title: copy.title },
-        { name: "description", content: copy.description },
-        { property: "og:title", content: copy.title },
-        { property: "og:description", content: copy.description },
-        { property: "og:image", content: image },
-        { property: "og:image:alt", content: `${track.title} — Atman Music` },
-        { property: "og:url", content: url },
+        { title: card.title },
+        { name: "description", content: card.description },
+        { property: "og:title", content: card.title },
+        { property: "og:description", content: card.description },
+        { property: "og:image", content: card.image },
+        { property: "og:image:alt", content: card.imageAlt },
+        { property: "og:url", content: card.url },
         { property: "og:type", content: "website" },
-        { property: "og:site_name", content: "Atman Music" },
+        { property: "og:site_name", content: card.siteName },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "twitter:title", content: copy.title },
-        { name: "twitter:description", content: copy.description },
-        { name: "twitter:image", content: image },
+        { name: "twitter:title", content: card.title },
+        { name: "twitter:description", content: card.description },
+        { name: "twitter:image", content: card.image },
       ],
     };
   },
