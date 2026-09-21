@@ -13,10 +13,7 @@ describe("parseExtraOrigins", () => {
       parseExtraOrigins(
         "https://trismegistus-three.vercel.app, not-a-url https://preview.example.test/",
       ),
-      [
-        "https://trismegistus-three.vercel.app",
-        "https://preview.example.test",
-      ],
+      ["https://trismegistus-three.vercel.app", "https://preview.example.test"],
     );
     assert.deepEqual(parseExtraOrigins("  "), []);
     assert.deepEqual(parseExtraOrigins(undefined), []);
@@ -36,7 +33,10 @@ describe("resolveTrustedOrigins", () => {
       LOCAL_DEV_ORIGINS.every((origin) => origins.includes(origin)),
       true,
     );
-    assert.equal(origins.filter((o) => o === "https://atmanmusic.app").length, 1);
+    assert.equal(
+      origins.filter((o) => o === "https://atmanmusic.app").length,
+      1,
+    );
   });
 
   it("does not trust arbitrary vercel.app hosts", () => {
@@ -47,10 +47,7 @@ describe("resolveTrustedOrigins", () => {
       origins.some((origin) => origin.includes("*.vercel.app")),
       false,
     );
-    assert.equal(
-      origins.includes("https://some-other-app.vercel.app"),
-      false,
-    );
+    assert.equal(origins.includes("https://some-other-app.vercel.app"), false);
   });
 
   it("keeps preview wildcards when BETTER_AUTH_URL is unset", () => {
