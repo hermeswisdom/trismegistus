@@ -899,22 +899,4 @@ export const SOUNDCLOUD_TRACKS = [
     permalink: "https://soundcloud.com/esoteric_vibrations/i-never-left-you-i-left-the-i",
     recorded: "February 2019",
   },
-  {
-    id: "sunset-trap-15-09-2016-21-54",
-    title: "Sunset Trap",
-    soundId: "283089716",
-    slug: "sunset-trap-15-09-2016-21-54",
-    image: "/images/tracks/sunset-trap-15-09-2016-21-54.jpg",
-    permalink: "https://soundcloud.com/esoteric_vibrations/sunset-trap-15-09-2016-21-54",
-    recorded: "September 2016",
-  },
-  {
-    id: "starseed-child",
-    title: "Starseed Child",
-    soundId: "263912490",
-    slug: "starseed-child",
-    image: "/images/tracks/starseed-child.jpg",
-    permalink: "https://soundcloud.com/esoteric_vibrations/starseed-child",
-    recorded: "May 2016",
-  },
 ];
