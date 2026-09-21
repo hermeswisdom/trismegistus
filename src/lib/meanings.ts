@@ -99,8 +99,6 @@ export const MEANINGS: Record<string, string> = {
   "critical-mass-in-warrington": "Gray, gray, chair, sharp, steam, bus, queue, humming, half-asleep dream.\nHe saw the air bend round the town, lines in the pavement mapping out sound.\nEvery red light spelling out signs, every raindrop splitting in time.\nHe found the secret on a Warrington street.\nCrack in the concrete, in the skip heap.\nWatch the universe breathe through the factory glass.\nFelt humanity lean to a critical mass.\nCritical mass.\nCritical mass.\nCritical mass.",
   "still-not-retiring-in": "Same bus route through large trucks, same phone, same ringtone buzz.\nSame corner shop shutters half bent, same pub lads nodding good cause.\nGrey tracksuit, years in the fibre, smell of cling film stuck in his coat.\nEvery alley's got his footprints, every postcode knows that quote.\nHe said, one more winter, I'm done, lad.\nOne more flip and I'm clear.\nNow his beard's got streaks running silver, still talking about this time next year.\nHe's been grafting so long, he forgot how to stop.\nSame old warrant and rain on the same old block.\nEvery last run turns to just one more show.",
   "i-never-left-you-i-left-the-i": "We stuck on loop, in waiting this night, to get a call from the phone you.\nI wanna do your fantasy going to.\nWe stuck on loop, in waiting this night, to get a call from the phone you.\nI wanna do your fantasy going to.\nWe stuck on loop.\nPlease make that call.",
-  "sunset-trap-15-09-2016-21-54": "A date as a sigil. 15.09.2016, 21:54. The trap is the beauty of an ending. Walk in with your eyes open.",
-  "starseed-child": "Born remembering another sky. The child is not lost. The earth is the assignment.",
 };
 
 export function getMeaning(trackId: string) {
