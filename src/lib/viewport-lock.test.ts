@@ -111,6 +111,7 @@ describe("PHONE_VIEWPORT_BOOT", () => {
     assert.match(PHONE_VIEWPORT_BOOT, /width="\+Math\.round\(short\)/);
     assert.match(PHONE_VIEWPORT_BOOT, /--phone-h/);
     assert.match(PHONE_VIEWPORT_BOOT, /is-phone/);
+    assert.doesNotMatch(PHONE_VIEWPORT_BOOT, /removeChild/);
     assert.doesNotThrow(() => new Function(PHONE_VIEWPORT_BOOT));
   });
 });

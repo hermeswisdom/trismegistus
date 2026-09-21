@@ -92,17 +92,17 @@ export function applyPhoneViewport(
     resolvePhoneViewport({ screenWidth, screenHeight, layoutWidth });
   const content = viewportContent(forced);
   const metas = doc.querySelectorAll('meta[name="viewport"]');
-  let meta = metas[0] ?? null;
-  if (metas.length > 1) {
-    for (let i = 1; i < metas.length; i += 1) metas[i]?.remove();
-  }
-  if (!meta) {
-    meta = doc.createElement("meta");
+  if (metas.length === 0) {
+    const meta = doc.createElement("meta");
     meta.setAttribute("name", "viewport");
-    doc.head.appendChild(meta);
-  }
-  if (meta.getAttribute("content") !== content) {
     meta.setAttribute("content", content);
+    doc.head.appendChild(meta);
+  } else {
+    metas.forEach((meta) => {
+      if (meta.getAttribute("content") !== content) {
+        meta.setAttribute("content", content);
+      }
+    });
   }
   const root =
     doc.documentElement ??
@@ -131,4 +131,4 @@ export function applyPhoneViewport(
  * Blocking head script. Runs before `<body>` so the first paint uses a numeric
  * phone width — `useEffect` viewport changes do not shrink Chrome's layout viewport.
  */
-export const PHONE_VIEWPORT_BOOT = `(function(){var s=window.screen,a=s.width||0,b=s.height||0,short=Math.min(a,b),long=Math.max(a,b);if(!short)return;if(short>${PHONE_CSS_MAX}&&short<=${PHONE_LAYOUT_MAX}&&short/long<=0.55){short/=2;long/=2;}if(short>${PHONE_SCREEN_MAX})return;var m=document.querySelector('meta[name="viewport"]');if(!m){m=document.createElement("meta");m.setAttribute("name","viewport");document.head.appendChild(m);}m.setAttribute("content","width="+Math.round(short)+", initial-scale=1, viewport-fit=cover");var extra=document.querySelectorAll('meta[name="viewport"]');for(var i=1;i<extra.length;i++)extra[i].parentNode&&extra[i].parentNode.removeChild(extra[i]);var r=document.documentElement;r.classList.add("is-phone");r.style.setProperty("--phone-w",Math.round(short)+"px");r.style.setProperty("--phone-h",Math.round(long)+"px");})();`;
+export const PHONE_VIEWPORT_BOOT = `(function(){var s=window.screen,a=s.width||0,b=s.height||0,short=Math.min(a,b),long=Math.max(a,b);if(!short)return;if(short>${PHONE_CSS_MAX}&&short<=${PHONE_LAYOUT_MAX}&&short/long<=0.55){short/=2;long/=2;}if(short>${PHONE_SCREEN_MAX})return;var content="width="+Math.round(short)+", initial-scale=1, viewport-fit=cover";var metas=document.querySelectorAll('meta[name="viewport"]');if(!metas.length){var m=document.createElement("meta");m.setAttribute("name","viewport");m.setAttribute("content",content);document.head.appendChild(m);}else{for(var i=0;i<metas.length;i++)metas[i].setAttribute("content",content);}var r=document.documentElement;r.classList.add("is-phone");r.style.setProperty("--phone-w",Math.round(short)+"px");r.style.setProperty("--phone-h",Math.round(long)+"px");})();`;
