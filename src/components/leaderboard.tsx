@@ -11,7 +11,9 @@ const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"];
 
 export function Leaderboard() {
   const rows = usePlayBoard((s) => s.rows);
-  const recent = usePlayBoard((s) => s.recent);
+  const namedMarks = usePlayBoard((s) => s.namedMarks);
+  const listenMarks = usePlayBoard((s) => s.recent);
+  const recent = [...namedMarks, ...listenMarks].slice(0, 12);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
   const playPending = usePlayer((s) => s.playPending);

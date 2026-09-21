@@ -146,6 +146,12 @@
     will-change: transform;
   }
 
+  .favorites-shelf {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
   .hermes-lockup {
     position: relative;
     display: flex;

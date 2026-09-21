@@ -15,9 +15,10 @@ Requires Node 22.
 
 ## The rite
 
-- **Today’s tablet** — one catalog pick for the Europe/London civil day, the same for every visitor. Share `/?daily=1` or `/?tablet=slug`. Listen thirty seconds to write a streak in `localStorage` only. The wall then says **come back tomorrow**.
-- **Share** — Web Share / clipboard send an Atman Music title, verse line, and wall URL (not SoundCloud). Home and tablet links unfurl with cover art as the OG image.
-- **The board** — every listen writes an anonymous mark (Postgres / PGLite). Ranks crown the top tablet. A recent pulse keeps the room inhabited. Soft cookie / IP rate limits keep the count from being gamed.
+- **Today’s tablet** — one catalog pick for the Europe/London civil day, the same for every visitor. Share `/?daily=1` (Share the day) or `/?tablet=slug`. Listen thirty seconds to write a streak in `localStorage` only. The wall then says **come back tomorrow**.
+- **Saved shelf** — hearted tablets gather in a dedicated shelf (`#saved`), not only the wall filter. Signed-out hearts stay on the phone; a name syncs them to Neon.
+- **Share** — Web Share / clipboard send an Atman Music title, verse line, and wall URL (not SoundCloud). Home and tablet links unfurl with cover art as the OG image. Today's tablet shares `/?daily=1`.
+- **The board** — every listen writes an anonymous mark (Postgres / PGLite). Rank is the count. Named comments stay private on the tablet. A recent pulse keeps the room inhabited. Soft cookie / IP rate limits keep the count from being gamed.
 - **First spin** — the first visit lands a tablet on the wheel so the axle is never empty. Returning visitors resume the last tablet (localStorage; Neon when signed in).
 
 Auth stays optional. `VITE_AUTH_ENABLED=false` is the shipped path.

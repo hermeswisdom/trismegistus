@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Check, Pause, Play, Share2 } from "lucide-react";
-import { shareTabletPage } from "@/components/track-actions";
+import { Pause, Play } from "lucide-react";
+import { ShareDayButton } from "@/components/track-actions";
 import { dailyTrack } from "@/lib/daily-catalog";
 import { londonDateKey } from "@/lib/daily-tablet";
 import {
@@ -15,11 +15,9 @@ import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
 import { playControlFace, playControlShowsPause } from "@/lib/playback";
 import { wallStreakCopy } from "@/lib/streak-copy";
+import { cn } from "@/lib/utils";
 
-function useListenStreak(dailyId: string): {
-  count: number;
-  todayMarked: boolean;
-} {
+function useListenStreak(dailyId: string) {
   const currentId = usePlayer((s) => s.currentId);
   const elapsed = usePlayer((s) => s.elapsed);
   const playing = usePlayer((s) => s.playing);
@@ -54,7 +52,11 @@ function useListenStreak(dailyId: string): {
     setStreak({ count: next.count, todayMarked: true });
   }, [playing, currentId, dailyId, elapsed]);
 
-  return streak;
+  return {
+    ...streak,
+    elapsed,
+    listeningDaily: playing && currentId === dailyId,
+  };
 }
 
 export function DailyRite() {
@@ -65,20 +67,16 @@ export function DailyRite() {
   const playPending = usePlayer((s) => s.playPending);
   const playError = usePlayer((s) => s.playError);
   const streak = useListenStreak(daily.id);
-  const copy = wallStreakCopy(streak);
+  const copy = wallStreakCopy({
+    ...streak,
+    threshold: LISTEN_STREAK_SECONDS,
+  });
   const dailyFace = playControlFace({
     playing: currentId === daily.id && playing,
     playPending: currentId === daily.id && playPending,
     playError: currentId === daily.id ? playError : null,
   });
   const isPlaying = playControlShowsPause(dailyFace);
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const id = window.setTimeout(() => setCopied(false), 1600);
-    return () => window.clearTimeout(id);
-  }, [copied]);
 
   return (
     <aside id="daily" className="border-t border-border bg-elevated/35">
@@ -128,20 +126,19 @@ export function DailyRite() {
                 </>
               )}
             </button>
-            <button
-              type="button"
-              onClick={async () => {
-                const ok = await shareTabletPage(daily, { daily: true });
-                if (ok) setCopied(true);
-              }}
-              className="inline-flex h-11 w-fit items-center gap-2 bg-elevated px-5 text-xs font-medium tracking-[0.2em] text-fg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
-            >
-              {copied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
-              {copied ? "Copied" : "Share the day"}
-            </button>
+            <ShareDayButton track={daily} />
           </div>
-          <p className="mt-4 max-w-md text-xs tracking-[0.14em] text-subtle uppercase">
-            <span className="text-accent">{copy.kicker}</span>
+          <p
+            data-streak-today={streak.todayMarked ? "true" : "false"}
+            data-streak-copy={copy.detail}
+            className={cn(
+              "mt-4 max-w-md text-sm leading-relaxed",
+              streak.todayMarked ? "text-fg" : "text-muted",
+            )}
+          >
+            <span className="text-xs font-medium tracking-[0.14em] text-accent uppercase">
+              {copy.kicker}
+            </span>
             <span className="mx-2 text-border">·</span>
             {copy.detail}
           </p>

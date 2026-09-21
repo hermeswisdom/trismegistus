@@ -11,6 +11,7 @@ export type PlayRow = {
 export type RecentMark = {
   trackId: string;
   createdAt: string;
+  mine?: boolean;
 };
 
 export type MarksBoard = {

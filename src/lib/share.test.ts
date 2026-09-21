@@ -4,6 +4,7 @@ import {
   clipboardShareText,
   homeOgCard,
   homeOgCopy,
+  shareTabletAsDaily,
   tabletSharePayload,
 } from "./share.ts";
 import { SITE_ORIGIN } from "./tablet-link.ts";
@@ -43,6 +44,14 @@ describe("tabletSharePayload", () => {
     );
     assert.equal(payload.url, "https://example.test/?daily=1");
     assert.match(payload.text, /Today's tablet on Atman Music: Fragile God/);
+  });
+});
+
+describe("shareTabletAsDaily", () => {
+  it("is true only for today's tablet", () => {
+    assert.equal(shareTabletAsDaily("fragile-god", "fragile-god"), true);
+    assert.equal(shareTabletAsDaily("fragile-god", "the-sleepers-waking"), false);
+    assert.equal(shareTabletAsDaily("", "fragile-god"), false);
   });
 });
 

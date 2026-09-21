@@ -37,13 +37,30 @@ export function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
-/** Inverse of escapeHtml. Decode &amp; last so a single pass undoes one encode. */
-function unescapeHtml(value) {
+function fromHtmlCodePoint(code) {
+  if (!Number.isFinite(code) || code < 0 || code > 0x10ffff) return "";
+  try {
+    return String.fromCodePoint(code);
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Inverse of escapeHtml. React/TanStack often emit `&#x27;` in `<title>`;
+ * decoding that before re-escape prevents `Today&amp;#x27;s tablet` in og:title.
+ * Named entities first, then numeric, then `&amp;` last.
+ */
+export function unescapeHtml(value) {
   return String(value)
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">")
     .replaceAll("&quot;", '"')
-    .replaceAll("&#39;", "'")
+    .replaceAll("&apos;", "'")
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) =>
+      fromHtmlCodePoint(Number.parseInt(hex, 16)),
+    )
+    .replace(/&#(\d+);/g, (_, dec) => fromHtmlCodePoint(Number(dec)))
     .replaceAll("&amp;", "&");
 }
 

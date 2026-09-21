@@ -43,7 +43,7 @@ export function MarksPulse({
                 aria-hidden="true"
               />
               <span className="min-w-0">
-                A mark on{" "}
+                {mark.mine ? "You left a mark on" : "A mark on"}{" "}
                 <span className="font-display text-fg">{track.title}</span>
               </span>
             </li>
