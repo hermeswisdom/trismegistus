@@ -242,7 +242,7 @@ export function NowPlaying() {
           rel="noreferrer"
           className="mt-1 hidden text-xs tracking-[0.18em] text-subtle uppercase hover:text-muted sm:inline-block"
         >
-          SoundCloud · esoteric_vibrations
+          SoundCloud
         </a>
       </div>
     </div>

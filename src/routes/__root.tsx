@@ -15,7 +15,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Atman Music — Esoteric Vibrations. Esoteric music. The full SoundCloud catalog. All the cover art.",
+          "Atman Music. The full SoundCloud catalog. All the cover art.",
       },
       { name: "theme-color", content: "#09080e" },
     ],

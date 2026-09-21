@@ -49,7 +49,7 @@ export function TrackWall() {
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/55 to-bg/30" />
         <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-[calc(10.5rem+env(safe-area-inset-bottom))] pt-[calc(6.5rem+env(safe-area-inset-top))] sm:px-8 sm:pb-32">
           <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
-            Esoteric music · {TRACKS.length} tablets
+            Atman Music · {TRACKS.length} tablets
             {isDaily ? " · Today's tablet" : ""}
           </p>
           <h1 className="mt-4">

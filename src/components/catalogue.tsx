@@ -54,7 +54,7 @@ export function Catalogue() {
             rel="noreferrer"
             className="text-muted transition-colors duration-150 hover:text-fg"
           >
-            soundcloud.com/esoteric_vibrations
+            SoundCloud
           </a>
         </p>
       </div>

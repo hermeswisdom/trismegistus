@@ -11,7 +11,7 @@ export function Hero() {
       <div className="absolute inset-x-0 bottom-0 h-3/5 bg-linear-to-t from-bg via-bg/70 to-transparent" />
       <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-28 pt-28 sm:px-8 sm:pb-32">
         <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
-          Esoteric Vibrations · 2026
+          The listening wall · 2026
         </p>
         <h2 className="mt-5 font-display text-display italic text-fg">ATMAN MUSIC</h2>
         <p className="mt-6 max-w-md text-lead font-light text-fg/80">

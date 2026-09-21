@@ -78,11 +78,11 @@ export function EnterGate() {
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <p className="relative z-30 mb-4 text-xs font-medium tracking-[0.42em] text-accent uppercase">
-          Esoteric music
+          The listening wall
         </p>
         <AtmanWord as="h1" />
         <p className="relative z-30 mt-3 max-w-sm text-pretty text-sm font-light text-muted sm:text-lead">
-          Esoteric Vibrations. The full SoundCloud catalog. The wall is the record.
+          The full SoundCloud catalog. The wall is the record.
         </p>
       </div>
 

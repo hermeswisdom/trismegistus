@@ -9,7 +9,7 @@ export function SiteFooter() {
             Atman Music
           </p>
           <p className="mt-2 max-w-xs text-sm text-muted">
-            Esoteric music. {TRACKS.length} covers. Esoteric Vibrations.
+            The full catalog. {TRACKS.length} covers.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:items-end">
@@ -19,7 +19,7 @@ export function SiteFooter() {
             rel="noreferrer"
             className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
           >
-            SoundCloud · esoteric_vibrations
+            SoundCloud
           </a>
           <a
             href="https://x.com/Hermes10wisdom"
