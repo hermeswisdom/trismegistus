@@ -35,7 +35,7 @@ export const Route = createFileRoute("/")({
           });
     const title =
       focus.source === "none"
-        ? "Atman Music — Esoteric Vibrations"
+        ? "Atman Music"
         : daily
           ? `Today's tablet — ${track.title} — Atman Music`
           : `${track.title} — Atman Music`;

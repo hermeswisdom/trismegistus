@@ -145,7 +145,7 @@ export async function shareTrack(track: Track) {
   return shareUrl(
     track.permalink,
     `${track.title} — Atman Music`,
-    `${track.title} · Esoteric Vibrations`,
+    `${track.title} · Atman Music`,
   );
 }
 
@@ -166,6 +166,6 @@ export async function shareTabletPage(
     opts.daily
       ? `Today's tablet — ${track.title} — Atman Music`
       : `${track.title} — Atman Music`,
-    `${track.title} · Esoteric Vibrations`,
+    `${track.title} · Atman Music`,
   );
 }

@@ -6,7 +6,7 @@ export function About() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-28">
         <div className="order-2 lg:order-1">
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
-            Esoteric music
+            Atman Music
           </p>
           <h2 className="mt-3 font-display text-section text-fg">
             An old soul. A modern body with a futuristic state of mind.
@@ -17,7 +17,7 @@ export function About() {
               and of course music that moves the soul, often inspired by the moment.
             </p>
             <p>
-              ATMAN MUSIC records as Esoteric Vibrations. The covers are the current.
+              ATMAN MUSIC. The covers are the current.
               There is no press photo. If a voice appears that was not invited, it
               stays.
             </p>
@@ -25,7 +25,7 @@ export function About() {
           <dl className="mt-10 grid grid-cols-2 gap-x-6 gap-y-5 text-sm">
             <div>
               <dt className="text-xs tracking-[0.2em] text-subtle uppercase">Channel</dt>
-              <dd className="mt-1 text-fg">Esoteric Vibrations</dd>
+              <dd className="mt-1 text-fg">Atman Music</dd>
             </div>
             <div>
               <dt className="text-xs tracking-[0.2em] text-subtle uppercase">Form</dt>

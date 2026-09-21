@@ -1,6 +1,6 @@
 # Atman Music
 
-Esoteric Vibrations. A listening wall for the full SoundCloud catalog.
+A listening wall for the full SoundCloud catalog.
 
 Play a tablet. Read the verse. Leave a mark.
 
