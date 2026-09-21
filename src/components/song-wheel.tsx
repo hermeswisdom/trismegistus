@@ -9,6 +9,7 @@ import {
   buildWheelSegments,
   planWheelSpin,
   runWheelSpin,
+  wheelRiteCopy,
   wheelTransform,
 } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
@@ -47,6 +48,7 @@ export function SongWheel() {
   const nonce = useWheelSpin((s) => s.nonce);
   const winnerId = useWheelSpin((s) => s.winnerId);
   const busy = useWheelSpin((s) => s.busy);
+  const landedId = useWheelSpin((s) => s.landedId);
   const finish = useWheelSpin((s) => s.finish);
   const search = useSearch({ from: "/" });
   const [segments, setSegments] = useState<Track[]>(() => TRACKS.slice(0, WHEEL_SEGMENTS));
@@ -81,12 +83,17 @@ export function SongWheel() {
     if (nonce === 0 || !winnerId) return;
     const winner = getTrack(winnerId);
     if (!winner) return;
+    const already = useWheelSpin.getState();
+    if (already.landedId === winnerId && !already.busy) {
+      setLanded(winner);
+      setSpinning(false);
+      return;
+    }
     const next = buildWheelSegments(winner, TRACKS);
     const plan = planWheelSpin(angleRef.current, next.winIndex, {
       reduced: prefersReducedMotion(),
     });
     setSegments(next.segments);
-    setLanded(null);
     setSpinning(true);
 
     let cancelled = false;
@@ -99,7 +106,7 @@ export function SongWheel() {
       setAngle(plan.to);
       setSpinning(false);
       setLanded(winner);
-      finish();
+      finish(winner.id);
     };
 
     const start = () => {
@@ -132,8 +139,12 @@ export function SongWheel() {
     spinTablet();
   }
 
-  const meaning = landed ? getMeaning(landed.id) : undefined;
-  const turning = spinning || busy || Boolean(winnerId && !landed);
+  const sealedLanded = landed ?? (landedId ? getTrack(landedId) : null);
+  const rite = wheelRiteCopy({
+    entered,
+    landedId: sealedLanded?.id ?? null,
+    busy: spinning || busy,
+  });
 
   return (
     <section id="wheel" className="border-t border-border">
@@ -149,17 +160,17 @@ export function SongWheel() {
             One hundred and two covers on a hidden axle. The pointer does not
             choose. The spin does.
           </p>
-          {landed ? (
+          {rite === "landed" && sealedLanded ? (
             <p
               className="mt-8 font-display text-2xl italic text-fg"
-              data-wheel-landed={landed.id}
+              data-wheel-landed={sealedLanded.id}
             >
-              {landed.title}
+              {sealedLanded.title}
               <span className="mt-2 block line-clamp-4 whitespace-pre-line text-sm font-sans font-light tracking-normal text-muted not-italic normal-case">
-                {meaning}
+                {getMeaning(sealedLanded.id)}
               </span>
             </p>
-          ) : turning || entered ? (
+          ) : rite === "turning" ? (
             <p className="mt-8 text-sm text-subtle" data-wheel-turning="">
               The wheel is turning.
             </p>

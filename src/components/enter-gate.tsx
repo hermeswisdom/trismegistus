@@ -21,6 +21,9 @@ export function EnterGate() {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [sealed, setSealed] = useState(false);
   const [ready, setReady] = useState(false);
+  const latched = useRef(false);
+  if (entered) latched.current = true;
+  const shut = entered || latched.current || sealed;
 
   useEffect(() => {
     setReady(true);
@@ -33,16 +36,13 @@ export function EnterGate() {
   }, []);
 
   useLayoutEffect(() => {
-    if (!entered) {
-      setSealed(false);
-      return;
-    }
+    if (!entered) return;
     releaseGateFocus();
     setSealed(true);
   }, [entered]);
 
   useEffect(() => {
-    if (entered) return;
+    if (entered || latched.current) return;
     const onKey = (event: KeyboardEvent) => {
       if (!isRiteKey(event.key, event.target)) return;
       event.preventDefault();
@@ -64,16 +64,16 @@ export function EnterGate() {
       data-gate-ready={ready ? "true" : undefined}
       className={
         "enter-gate fixed top-0 left-0 z-50 flex flex-col overflow-hidden bg-bg transition-[opacity,visibility] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] " +
-        (entered ? "pointer-events-none invisible opacity-0" : "visible opacity-100")
+        (shut ? "pointer-events-none invisible opacity-0" : "visible opacity-100")
       }
-      aria-hidden={sealed ? true : undefined}
-      inert={sealed ? true : undefined}
+      aria-hidden={shut ? true : undefined}
+      inert={shut ? true : undefined}
       onPointerDown={noteUserGesture}
     >
       <CoverMosaic className="absolute inset-0 size-full opacity-70" />
       <div className="absolute inset-0 bg-linear-to-b from-bg/30 via-bg/70 to-bg" />
       <div className="hermes-fall hermes-fall-screen">
-        <MatrixRain active={!entered} />
+        <MatrixRain active={!shut} />
       </div>
 
       <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-hidden px-6 pt-[max(0.75rem,env(safe-area-inset-top))]">
@@ -90,7 +90,7 @@ export function EnterGate() {
         <button
           ref={buttonRef}
           type="button"
-          tabIndex={entered ? -1 : 0}
+          tabIndex={shut ? -1 : 0}
           onPointerDown={noteUserGesture}
           onClick={cross}
           className="inline-flex h-12 min-h-12 w-full touch-manipulation items-center justify-center bg-accent px-7 text-sm font-medium tracking-[0.14em] whitespace-nowrap text-bg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96] sm:mx-auto sm:max-w-xs"
@@ -103,7 +103,7 @@ export function EnterGate() {
         {authEnabled ? (
           <Link
             to="/login"
-            tabIndex={entered ? -1 : 0}
+            tabIndex={shut ? -1 : 0}
             className="relative mt-4 flex min-h-11 items-center justify-center text-xs tracking-[0.2em] text-muted uppercase underline-offset-4 hover:text-accent hover:underline"
           >
             Keep a name

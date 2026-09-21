@@ -23,8 +23,12 @@ export function Visualizer() {
         if (buffer.length !== analyser.fftSize) {
           buffer = new Uint8Array(analyser.fftSize);
         }
-        if (playing) analyser.getByteTimeDomainData(buffer);
-        else buffer.fill(128);
+        try {
+          if (playing) analyser.getByteTimeDomainData(buffer);
+          else buffer.fill(128);
+        } catch {
+          buffer.fill(128);
+        }
       } else {
         buffer.fill(128);
       }

@@ -126,6 +126,12 @@ try {
   if (!landedId || landedId !== playerId) {
     throw new Error(`spin did not select the landed tablet (landed=${landedId} player=${playerId})`);
   }
+  const noTabletAfterLand = await page.evaluate(() =>
+    document.body.innerText.includes("No tablet yet."),
+  );
+  if (noTabletAfterLand) {
+    throw new Error("Enter spin snapped back to No tablet yet after landing");
+  }
 
   const afterSpin = await page.evaluate(() => ({
     plays: window.__scMock?.plays.length ?? 0,
@@ -133,6 +139,48 @@ try {
   }));
   if (afterSpin.plays + afterSpin.loads < 1) {
     throw new Error("Enter/Spin did not start SoundCloud playback");
+  }
+
+  const faceAfterSpin = await page.locator("[data-player-current]").getAttribute("data-player-face");
+  if (faceAfterSpin !== "pause" && faceAfterSpin !== "pending") {
+    throw new Error(`dock did not show Pause/pending after Enter: face=${faceAfterSpin}`);
+  }
+  await page.locator("[data-player-current]").getByRole("button", { name: /^pause$/i }).waitFor({ timeout: 3000 });
+
+  const glow = await page.evaluate(() => {
+    const el = document.querySelector("[data-atman]");
+    return {
+      mode: el?.getAttribute("data-atman") ?? null,
+      hasCore: Boolean(el),
+    };
+  });
+  if (!glow.hasCore || glow.mode === "idle") {
+    throw new Error(`ATMAN did not leave idle after play: ${JSON.stringify(glow)}`);
+  }
+
+  const rain = await page.evaluate(() => {
+    const canvases = [...document.querySelectorAll(".hermes-fall [data-rain]")];
+    return canvases
+      .filter((el) => {
+        const style = getComputedStyle(el);
+        if (style.visibility === "hidden" || style.display === "none") return false;
+        return el.getAttribute("data-rain-paused") !== "true";
+      })
+      .map((el) => {
+        const box = el.getBoundingClientRect();
+        const host = el.parentElement?.getBoundingClientRect();
+        return {
+          cols: Number(el.getAttribute("data-rain-cols") || 0),
+          phone: el.getAttribute("data-rain-phone"),
+          height: Math.round(box.height),
+          overflowY: host ? box.bottom > host.bottom + 2 : null,
+          overflowX: host ? box.right > host.right + 2 : null,
+        };
+      });
+  });
+  const flooding = rain.filter((row) => row.overflowY || row.overflowX || row.cols > 12);
+  if (flooding.length) {
+    throw new Error(`notes rain not contained on phone: ${JSON.stringify({ rain, flooding })}`);
   }
 
   const playBtn = page.locator("[data-player-current]").getByRole("button", {
@@ -148,6 +196,11 @@ try {
     .getByRole("button", { name: /^(play|retry play)$/i })
     .tap();
   await page.locator("[data-player-playing='true']").waitFor({ timeout: 4000 });
+  await page.locator("[data-player-current]").getByRole("button", { name: /^pause$/i }).waitFor({ timeout: 2000 });
+  const faceAfterPlay = await page.locator("[data-player-current]").getAttribute("data-player-face");
+  if (faceAfterPlay !== "pause" && faceAfterPlay !== "pending") {
+    throw new Error(`Play tap did not show Pause: face=${faceAfterPlay}`);
+  }
 
   const cover = page.locator(`#work button[data-tablet-id]:not([data-tablet-id="${landedId}"])`).first();
   await cover.scrollIntoViewIfNeeded();

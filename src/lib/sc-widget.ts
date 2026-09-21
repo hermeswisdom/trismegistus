@@ -34,6 +34,7 @@ type SCApi = {
       PAUSE: string;
       FINISH: string;
       PLAY_PROGRESS: string;
+      ERROR?: string;
     };
   };
 };
@@ -91,6 +92,8 @@ let iframe: HTMLIFrameElement | null = null;
 let liveSoundId: string | null = null;
 let widgetReady = false;
 let unlocked = false;
+let heardPlay = false;
+let wantPlay = false;
 let pending: PlayCommand | null = null;
 let confirmTimer: ReturnType<typeof setTimeout> | null = null;
 let playGeneration = 0;
@@ -179,6 +182,7 @@ export function bindLiveWidget(
     widget.unbind(events.PAUSE);
     widget.unbind(events.FINISH);
     widget.unbind(events.PLAY_PROGRESS);
+    if (events.ERROR) widget.unbind(events.ERROR);
   } catch {
     /* a fresh widget has nothing to unbind */
   }
@@ -186,12 +190,15 @@ export function bindLiveWidget(
   widget.bind(events.READY, () => {
     widgetReady = true;
     emit({ type: "ready" });
+    if (pending?.intent === "play") armConfirm();
     if (pending && pending.intent !== "pause") {
       applyPlayback(pending);
     }
   });
   widget.bind(events.PLAY, () => {
     unlocked = true;
+    heardPlay = true;
+    wantPlay = true;
     clearConfirm();
     if (pending?.intent === "play") {
       pending = { ...pending, intent: "select" };
@@ -199,11 +206,24 @@ export function bindLiveWidget(
     emit({ type: "play" });
   });
   widget.bind(events.PAUSE, () => {
-    if (pending?.intent === "play") return;
+    if (wantPlay || pending?.intent === "play") return;
     emit({ type: "pause" });
   });
   widget.bind(events.FINISH, () => emit({ type: "finish" }));
   widget.bind(events.PLAY_PROGRESS, (raw) => emit({ type: "progress", raw }));
+  if (events.ERROR) {
+    try {
+      widget.bind(events.ERROR, () => {
+        if (heardPlay) return;
+        if (!wantPlay && pending?.intent !== "play") return;
+        wantPlay = false;
+        clearConfirm();
+        emit({ type: "blocked", message: PLAY_BLOCKED_COPY });
+      });
+    } catch {
+      /* older widget builds omit ERROR */
+    }
+  }
 }
 
 export function getLiveWidget() {
@@ -225,6 +245,7 @@ export function getPlaybackSurface(): PlaybackSurface {
     hasIframe: Boolean(resolveIframe()),
     liveSoundId,
     unlocked,
+    heardPlay,
   };
 }
 
@@ -242,6 +263,7 @@ function armConfirm() {
   confirmTimer = setTimeout(() => {
     if (gen !== playGeneration) return;
     if (pending?.intent !== "play") return;
+    wantPlay = false;
     emit({ type: "blocked", message: PLAY_BLOCKED_COPY });
   }, PLAY_CONFIRM_MS);
 }
@@ -265,6 +287,7 @@ function applyIframeSrc(soundId: string, autoplay: boolean) {
   target.src = next;
   liveSoundId = soundId;
   widgetReady = false;
+  live = null;
 }
 
 function executePlan(cmd: PlayCommand) {
@@ -297,11 +320,16 @@ function executePlan(cmd: PlayCommand) {
 export function applyPlayback(cmd: PlayCommand) {
   if (cmd.intent === "pause") {
     pending = null;
+    wantPlay = false;
     clearConfirm();
   } else {
     pending = cmd;
+    if (cmd.intent === "play") wantPlay = true;
   }
   const plan = executePlan(cmd);
+  if (plan.iframeSoundId && pending) {
+    pending = { ...pending, retry: false, forceEmbed: false };
+  }
   if (cmd.intent === "play") emit({ type: "pending" });
   if (plan.expectPlayEvent) armConfirm();
   return plan;
@@ -319,6 +347,8 @@ export function resetPlaybackForTests() {
   liveSoundId = null;
   widgetReady = false;
   unlocked = false;
+  heardPlay = false;
+  wantPlay = false;
   pending = null;
   playGeneration += 1;
   clearConfirm();

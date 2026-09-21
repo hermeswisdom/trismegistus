@@ -41,14 +41,19 @@ type PlayerState = {
   setPlayError: (value: string | null) => void;
 };
 
-function startWidget(nextId: string, autoplay: boolean, forceEmbed = false) {
+function startWidget(
+  nextId: string,
+  autoplay: boolean,
+  opts: { forceEmbed?: boolean; retry?: boolean } = {},
+) {
   const track = getTrack(nextId);
   if (!track) return;
   applyPlayback({
     intent: autoplay ? "play" : "select",
     soundId: track.soundId,
     permalink: track.permalink,
-    forceEmbed,
+    forceEmbed: opts.forceEmbed,
+    retry: opts.retry,
   });
 }
 
@@ -131,9 +136,9 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   spinTablet: (opts) => {
     ensurePlaybackBridge();
     noteUserGesture();
+    if (opts?.markEntered) set({ entered: true, playError: null });
     const winner = randomTrack(get().currentId);
     if (!useWheelSpin.getState().begin(winner.id, { force: opts?.force ?? true })) {
-      if (opts?.markEntered) set({ entered: true, playError: null });
       return;
     }
     get().play(winner.id, { forceEmbed: true, markEntered: opts?.markEntered });
@@ -149,7 +154,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const reset = nextId !== prevId;
     const forceEmbed = opts?.forceEmbed ?? true;
     set({
-      ...(opts?.markEntered ? { entered: true } : {}),
+      ...(opts?.markEntered || get().entered ? { entered: true } : {}),
       currentId: nextId,
       playing: true,
       playPending: true,
@@ -157,7 +162,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       elapsed: reset ? 0 : get().elapsed,
       duration: reset ? 0 : get().duration,
     });
-    startWidget(nextId, true, forceEmbed);
+    startWidget(nextId, true, { forceEmbed });
     if (reset || !wasPlaying) {
       countPlay(nextId);
     }
@@ -202,7 +207,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const track = getTrack(id);
     if (!track) return;
     set({ playing: true, playPending: true, playError: null });
-    startWidget(id, true, true);
+    startWidget(id, true, { forceEmbed: true, retry: true });
   },
 
   seek: (ratio) => {

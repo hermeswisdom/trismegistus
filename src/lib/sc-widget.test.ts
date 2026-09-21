@@ -137,4 +137,45 @@ describe("sc-widget playback client", () => {
     assert.equal(types.includes("pause"), false);
     assert.equal(types.includes("pending"), true);
   });
+
+  it("ignores a pause that follows PLAY before the tablet has been asked to rest", () => {
+    const types: string[] = [];
+    const off = subscribePlayback((notice) => types.push(notice.type));
+    const { widget } = fakeWidget();
+    bindLiveWidget(widget, Events, "555");
+    widget.fire("ready");
+    applyPlayback(cmd);
+    widget.fire("play");
+    widget.fire("pause");
+    off();
+    assert.equal(types.includes("play"), true);
+    assert.equal(types.includes("pause"), false);
+    assert.equal(getPlaybackSurface().heardPlay, true);
+  });
+
+  it("plays a ready widget without rewriting the iframe", () => {
+    const iframe = fakeIframe("https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F555");
+    setLiveIframe(iframe);
+    const { widget, plays } = fakeWidget();
+    bindLiveWidget(widget, Events, "555");
+    widget.fire("ready");
+    const srcBefore = iframe.src;
+    applyPlayback(cmd);
+    assert.equal(iframe.src, srcBefore);
+    assert.deepEqual(plays, ["play"]);
+  });
+
+  it("treats a widget ERROR during play as a blocked tablet", () => {
+    const types: string[] = [];
+    const off = subscribePlayback((notice) => types.push(notice.type));
+    const { widget } = fakeWidget();
+    const events = { ...Events, ERROR: "error" };
+    bindLiveWidget(widget, events, "555");
+    widget.fire("ready");
+    applyPlayback(cmd);
+    widget.fire("error");
+    off();
+    assert.equal(types.includes("blocked"), true);
+    assert.equal(getPlaybackSurface().heardPlay, false);
+  });
 });

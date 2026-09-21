@@ -3,7 +3,7 @@ import { Pause, Play, SkipForward, Dices } from "lucide-react";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
-import { PLAY_PENDING_COPY } from "@/lib/playback";
+import { PLAY_PENDING_COPY, playControlAria, playControlFace, playControlShowsPause } from "@/lib/playback";
 import { FEATURED_ID, embedSrc, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
 import { usePlayer } from "@/lib/player-store";
@@ -38,6 +38,8 @@ export function NowPlaying() {
   const initialSrc = useRef(embedSrc(getTrack(FEATURED_ID)?.soundId ?? "", false));
   const current = getTrack(currentId);
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
+  const face = playControlFace({ playing, playPending, playError });
+  const showPause = playControlShowsPause(face);
 
   useEffect(() => {
     hydrateHearts();
@@ -149,6 +151,7 @@ export function NowPlaying() {
       data-player-playing={playing ? "true" : "false"}
       data-player-pending={playPending ? "true" : "false"}
       data-player-blocked={playError ? "true" : "false"}
+      data-player-face={face}
     >
       <button
         type="button"
@@ -214,11 +217,9 @@ export function NowPlaying() {
           onPointerDown={noteUserGesture}
           onClick={onPlayToggle}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
-          aria-label={
-            playError ? "Retry play" : playPending ? "Sounding" : playing ? "Pause" : "Play"
-          }
+          aria-label={playControlAria(face)}
         >
-          {playing && !playError && !playPending ? (
+          {showPause ? (
             <Pause className="size-4" fill="currentColor" />
           ) : (
             <Play className="ml-px size-4" fill="currentColor" />

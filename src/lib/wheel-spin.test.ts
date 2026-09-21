@@ -4,7 +4,7 @@ import { useWheelSpin } from "./wheel-spin.ts";
 
 describe("useWheelSpin", () => {
   beforeEach(() => {
-    useWheelSpin.setState({ nonce: 0, winnerId: null, busy: false });
+    useWheelSpin.setState({ nonce: 0, winnerId: null, landedId: null, busy: false });
   });
 
   it("records the winner on begin and refuses a second spin while busy", () => {
@@ -15,6 +15,7 @@ describe("useWheelSpin", () => {
     assert.equal(useWheelSpin.getState().winnerId, "alpha");
     useWheelSpin.getState().finish();
     assert.equal(useWheelSpin.getState().busy, false);
+    assert.equal(useWheelSpin.getState().landedId, "alpha");
     assert.equal(useWheelSpin.getState().begin("beta"), true);
     assert.equal(useWheelSpin.getState().winnerId, "beta");
   });

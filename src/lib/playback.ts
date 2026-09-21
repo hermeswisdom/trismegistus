@@ -9,8 +9,10 @@ export type PlayCommand = {
   intent: PlayIntent;
   soundId: string;
   permalink: string;
-  /** Retry: rewrite the iframe src in this turn so iOS can start media. */
+  /** Prefer a same-turn start. Rewrite only if the widget cannot play yet. */
   forceEmbed?: boolean;
+  /** Blocked retry: always rewrite the iframe in this gesture. */
+  retry?: boolean;
 };
 
 export type PlaybackSurface = {
@@ -19,6 +21,7 @@ export type PlaybackSurface = {
   hasIframe: boolean;
   liveSoundId: string | null;
   unlocked: boolean;
+  heardPlay: boolean;
 };
 
 export type PlaybackPlan = {
@@ -54,14 +57,10 @@ export function planPlayback(
   const autoplay = cmd.intent === "play";
   const sameSound = surface.liveSoundId === cmd.soundId;
 
-  if (cmd.forceEmbed && surface.hasIframe && autoplay) {
+  if (shouldRewriteEmbed(cmd, surface)) {
     return {
-      widgetOp: surface.hasWidget && surface.widgetReady
-        ? sameSound
-          ? "play"
-          : "load"
-        : null,
-      loadAutoplay: !sameSound,
+      widgetOp: null,
+      loadAutoplay: false,
       iframeSoundId: cmd.soundId,
       iframeAutoplay: true,
       expectPlayEvent: true,
@@ -106,6 +105,18 @@ export function planPlayback(
   };
 }
 
+/**
+ * Rewrite the iframe only when the widget cannot take this gesture.
+ * A ready widget `play()` / `load()` is faster than a full player reload.
+ */
+export function shouldRewriteEmbed(cmd: PlayCommand, surface: PlaybackSurface) {
+  if (cmd.intent !== "play") return false;
+  if (!surface.hasIframe) return false;
+  if (cmd.retry) return true;
+  if (!surface.hasWidget || !surface.widgetReady) return true;
+  return false;
+}
+
 export function soundcloudPlayerSrc(soundId: string, autoplay: boolean) {
   const params = new URLSearchParams({
     url: `https://api.soundcloud.com/tracks/${soundId}`,
@@ -136,14 +147,41 @@ export type PlayTapState = {
 export type PlayTapAction = "pause" | "play";
 
 /**
- * Cover / dock / Enter retries. A pending or blocked play must not look like
- * Pause — that tap would cancel the gesture instead of retrying the widget.
+ * Cover / dock / Enter retries. Pending still retries rather than pause,
+ * so a second tap does not cancel a tablet that has not sounded yet.
  */
 export function resolvePlayTap(state: PlayTapState): PlayTapAction {
   if (state.tapId !== state.currentId) return "play";
   if (state.playError || state.playPending) return "play";
   if (state.playing) return "pause";
   return "play";
+}
+
+export type PlayControlFace = "play" | "pause" | "pending" | "retry";
+
+/**
+ * Dock / wall face. Pending still looks like Pause so the tap is not a
+ * no-op, while `resolvePlayTap` retries instead of cancelling.
+ */
+export function playControlFace(state: {
+  playing: boolean;
+  playPending: boolean;
+  playError: string | null;
+}): PlayControlFace {
+  if (state.playError) return "retry";
+  if (state.playPending) return "pending";
+  if (state.playing) return "pause";
+  return "play";
+}
+
+export function playControlShowsPause(face: PlayControlFace) {
+  return face === "pause" || face === "pending";
+}
+
+export function playControlAria(face: PlayControlFace) {
+  if (face === "retry") return "Retry play";
+  if (face === "pending" || face === "pause") return "Pause";
+  return "Play";
 }
 
 export function embedNeedsRewrite(currentSrc: string, nextSrc: string) {

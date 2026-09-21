@@ -13,6 +13,7 @@ import {
 import { getMeaning } from "@/lib/rooms";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
+import { playControlFace, playControlShowsPause } from "@/lib/playback";
 
 function riteNumeral(n: number): string {
   const glyphs = [
@@ -73,7 +74,12 @@ export function DailyRite() {
   const playPending = usePlayer((s) => s.playPending);
   const playError = usePlayer((s) => s.playError);
   const streak = useListenStreak(daily.id);
-  const isPlaying = currentId === daily.id && playing && !playPending && !playError;
+  const dailyFace = playControlFace({
+    playing: currentId === daily.id && playing,
+    playPending: currentId === daily.id && playPending,
+    playError: currentId === daily.id ? playError : null,
+  });
+  const isPlaying = playControlShowsPause(dailyFace);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -121,12 +127,12 @@ export function DailyRite() {
               {isPlaying ? (
                 <>
                   <Pause className="size-3.5" fill="currentColor" />
-                  Pause
+                  {dailyFace === "pending" ? "Sounding" : "Pause"}
                 </>
               ) : (
                 <>
                   <Play className="ml-px size-3.5" fill="currentColor" />
-                  Listen
+                  {dailyFace === "retry" ? "Try again" : "Listen"}
                 </>
               )}
             </button>

@@ -181,3 +181,19 @@ export function shouldAutoSpinOnEnter(
 ) {
   return !alreadyEntered && !hasDeepLink;
 }
+
+export type WheelRiteCopy = "empty" | "turning" | "landed";
+
+/**
+ * Once Enter has been pressed, the wheel must never snap back to
+ * "No tablet yet" — even if the disc animation is cancelled mid-spin.
+ */
+export function wheelRiteCopy(state: {
+  entered: boolean;
+  landedId: string | null;
+  busy: boolean;
+}): WheelRiteCopy {
+  if (state.landedId && !state.busy) return "landed";
+  if (state.entered || state.busy || state.landedId) return "turning";
+  return "empty";
+}
