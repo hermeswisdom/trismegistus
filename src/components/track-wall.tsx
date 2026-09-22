@@ -226,14 +226,11 @@ function TabletTile({
         {active ? (
           <span className="absolute inset-0 ring-2 ring-accent ring-inset" />
         ) : null}
-        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
-          {isDaily ? (
-            <span className="bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
-              Today
-            </span>
-          ) : null}
-          <DownloadMp3Button track={track} variant="card" />
-        </div>
+        {isDaily ? (
+          <span className="absolute top-2 left-2 z-10 bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
+            Today
+          </span>
+        ) : null}
         <span className="absolute inset-x-0 bottom-0 z-[6] p-2.5 sm:p-4">
           <span className="block truncate font-display text-base leading-tight text-fg sm:text-xl">
             {track.title}
@@ -250,6 +247,14 @@ function TabletTile({
           </span>
         </span>
       </button>
+      <div
+        className={cn(
+          "absolute left-2 z-10",
+          isDaily ? "top-9 sm:top-10" : "top-2",
+        )}
+      >
+        <DownloadMp3Button track={track} variant="card" />
+      </div>
       <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
         <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
         <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
