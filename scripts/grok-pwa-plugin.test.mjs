@@ -702,6 +702,8 @@ test("vite config keeps the nitro serverDir wiring", () => {
   const viteConfig = readFileSync(join(TEMPLATE_ROOT, "vite.config.ts"), "utf8");
   assert.match(viteConfig, /serverDir:\s*"\.\/server"/);
   assert.match(viteConfig, /grokPwaPlugin\(\)/);
+  const pkg = readFileSync(join(TEMPLATE_ROOT, "package.json"), "utf8");
+  assert.match(pkg, /stamp-pwa-vercel-headers\.mjs/);
 });
 
 test("nitro middleware and its bundled assets exist", () => {
