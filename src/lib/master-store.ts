@@ -47,8 +47,9 @@ export function silentMasterMp3(): Uint8Array {
   return out;
 }
 
-function workspaceRoot(): string {
-  return dirname(fileURLToPath(new URL("../..", import.meta.url)));
+function workspaceRoots(): string[] {
+  const fromModule = dirname(fileURLToPath(new URL("../..", import.meta.url)));
+  return [...new Set([process.cwd(), fromModule].filter(Boolean))];
 }
 
 function slugFromKey(downloadKey: string): string | undefined {
@@ -59,11 +60,10 @@ function slugFromKey(downloadKey: string): string | undefined {
 async function readLocalMaster(downloadKey: string): Promise<Uint8Array | null> {
   const slug = slugFromKey(downloadKey);
   if (!slug) return null;
-  const root = workspaceRoot();
-  const candidates = [
+  const candidates = workspaceRoots().flatMap((root) => [
     join(root, "masters", `${slug}.mp3`),
     join(root, "fixtures", "masters", `${slug}.mp3`),
-  ];
+  ]);
   for (const path of candidates) {
     try {
       return new Uint8Array(await readFile(path));
