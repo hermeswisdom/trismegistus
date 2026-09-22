@@ -5,7 +5,9 @@ import { AtmanWord } from "@/components/atman-word";
 import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
 import { MarksPulse } from "@/components/marks-pulse";
+import { DownloadMp3Button } from "@/components/download-button";
 import { HeartButton, ShareButton, ShareDayButton } from "@/components/track-actions";
+import { DOWNLOAD_LEGAL, trackHasMaster } from "@/lib/downloads";
 import { FavoritesShelf } from "@/components/favorites-shelf";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
@@ -118,7 +120,13 @@ export function TrackWall() {
                 <ShareButton track={current} className="bg-elevated" />
               )}
               <MarkButton trackId={current.id} className="bg-elevated" labeled />
+              <DownloadMp3Button track={current} />
             </div>
+          ) : null}
+          {current && trackHasMaster(current) ? (
+            <p className="mt-3 text-[0.65rem] tracking-[0.16em] text-subtle uppercase">
+              {DOWNLOAD_LEGAL}
+            </p>
           ) : null}
         </div>
       </div>
@@ -218,11 +226,14 @@ function TabletTile({
         {active ? (
           <span className="absolute inset-0 ring-2 ring-accent ring-inset" />
         ) : null}
-        {isDaily ? (
-          <span className="absolute top-2 left-2 z-10 bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
-            Today
-          </span>
-        ) : null}
+        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
+          {isDaily ? (
+            <span className="bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
+              Today
+            </span>
+          ) : null}
+          <DownloadMp3Button track={track} variant="card" />
+        </div>
         <span className="absolute inset-x-0 bottom-0 z-[6] p-2.5 sm:p-4">
           <span className="block truncate font-display text-base leading-tight text-fg sm:text-xl">
             {track.title}

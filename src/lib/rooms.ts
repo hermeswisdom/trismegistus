@@ -10,6 +10,8 @@ export type Track = {
   image: string;
   permalink: string;
   recorded: string;
+  /** Private Blob path key (`masters/<downloadKey>.mp3`) when a raw master exists. */
+  downloadKey?: string;
 };
 
 export type StyleRoom = {

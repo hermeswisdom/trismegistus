@@ -11,7 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as DownloadSuccessRouteImport } from './routes/download/success'
+import { Route as DownloadCancelRouteImport } from './routes/download/cancel'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
+import { Route as ApiDownloadsTokenRouteImport } from './routes/api/downloads/$token'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -23,40 +27,98 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DownloadSuccessRoute = DownloadSuccessRouteImport.update({
+  id: '/download/success',
+  path: '/download/success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DownloadCancelRoute = DownloadCancelRouteImport.update({
+  id: '/download/cancel',
+  path: '/download/cancel',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe/webhook',
+  path: '/api/stripe/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiDownloadsTokenRoute = ApiDownloadsTokenRouteImport.update({
+  id: '/api/downloads/$token',
+  path: '/api/downloads/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/download/success': typeof DownloadSuccessRoute
+  '/download/cancel': typeof DownloadCancelRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/downloads/$token': typeof ApiDownloadsTokenRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/download/success': typeof DownloadSuccessRoute
+  '/download/cancel': typeof DownloadCancelRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/downloads/$token': typeof ApiDownloadsTokenRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/download/success': typeof DownloadSuccessRoute
+  '/download/cancel': typeof DownloadCancelRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/stripe/webhook': typeof ApiStripeWebhookRoute
+  '/api/downloads/$token': typeof ApiDownloadsTokenRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/api/auth/$'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/download/success'
+    | '/download/cancel'
+    | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/api/downloads/$token'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/api/auth/$'
-  id: '__root__' | '/' | '/login' | '/api/auth/$'
+  to:
+    | '/'
+    | '/login'
+    | '/download/success'
+    | '/download/cancel'
+    | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/api/downloads/$token'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/download/success'
+    | '/download/cancel'
+    | '/api/auth/$'
+    | '/api/stripe/webhook'
+    | '/api/downloads/$token'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
+  DownloadSuccessRoute: typeof DownloadSuccessRoute
+  DownloadCancelRoute: typeof DownloadCancelRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
+  ApiDownloadsTokenRoute: typeof ApiDownloadsTokenRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -75,11 +137,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/download/success': {
+      id: '/download/success'
+      path: '/download/success'
+      fullPath: '/download/success'
+      preLoaderRoute: typeof DownloadSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/download/cancel': {
+      id: '/download/cancel'
+      path: '/download/cancel'
+      fullPath: '/download/cancel'
+      preLoaderRoute: typeof DownloadCancelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe/webhook': {
+      id: '/api/stripe/webhook'
+      path: '/api/stripe/webhook'
+      fullPath: '/api/stripe/webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/downloads/$token': {
+      id: '/api/downloads/$token'
+      path: '/api/downloads/$token'
+      fullPath: '/api/downloads/$token'
+      preLoaderRoute: typeof ApiDownloadsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -88,7 +178,11 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
+  DownloadSuccessRoute: DownloadSuccessRoute,
+  DownloadCancelRoute: DownloadCancelRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
+  ApiDownloadsTokenRoute: ApiDownloadsTokenRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
