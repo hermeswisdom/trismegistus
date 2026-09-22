@@ -1,3 +1,9 @@
+/**
+ * Catalog tablets. Optional `downloadKey` maps a track Atman owns to a private
+ * master at `masters/<downloadKey>.mp3` on Vercel Blob. Leave it unset until
+ * that file is uploaded — the wall only shows Buy on configured masters.
+ * SoundCloud streams stay free; never rip those. Upload steps: README.
+ */
 export const SOUNDCLOUD_TRACKS = [
   {
     id: "the-sleepers-waking",
@@ -7,6 +13,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-sleepers-waking.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-sleepers-waking",
     recorded: "September 2026",
+    downloadKey: "the-sleepers-waking",
   },
   {
     id: "fragile-god",

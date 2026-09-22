@@ -16,3 +16,5 @@ coverage
 .nitro
 .tanstack
 .vite
+# Private masters — upload to Vercel Blob, never commit real files.
+/masters/

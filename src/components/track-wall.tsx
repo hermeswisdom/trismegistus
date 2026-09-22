@@ -5,7 +5,9 @@ import { AtmanWord } from "@/components/atman-word";
 import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
 import { MarksPulse } from "@/components/marks-pulse";
+import { DownloadMp3Button } from "@/components/download-button";
 import { HeartButton, ShareButton, ShareDayButton } from "@/components/track-actions";
+import { DOWNLOAD_LEGAL, trackHasMaster } from "@/lib/downloads";
 import { FavoritesShelf } from "@/components/favorites-shelf";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
@@ -118,7 +120,13 @@ export function TrackWall() {
                 <ShareButton track={current} className="bg-elevated" />
               )}
               <MarkButton trackId={current.id} className="bg-elevated" labeled />
+              <DownloadMp3Button track={current} />
             </div>
+          ) : null}
+          {current && trackHasMaster(current) ? (
+            <p className="mt-3 text-[0.65rem] tracking-[0.16em] text-subtle uppercase">
+              {DOWNLOAD_LEGAL}
+            </p>
           ) : null}
         </div>
       </div>
@@ -239,6 +247,14 @@ function TabletTile({
           </span>
         </span>
       </button>
+      <div
+        className={cn(
+          "absolute left-2 z-10",
+          isDaily ? "top-9 sm:top-10" : "top-2",
+        )}
+      >
+        <DownloadMp3Button track={track} variant="card" />
+      </div>
       <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
         <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
         <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
