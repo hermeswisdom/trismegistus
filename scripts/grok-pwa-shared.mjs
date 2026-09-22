@@ -10,6 +10,12 @@ export const DEFAULT_APP_NAME = "Grok App";
 export const OG_SERVICE_URL_DEFAULT = "https://og.grok.me";
 export const OG_SITE_REL_PATH = "src/lib/og/site.json";
 
+/** Site chrome — keep in lockstep with `src/styles.css` tokens. */
+export const PWA_THEME_COLOR = "#09080e";
+export const PWA_BACKGROUND_COLOR = "#09080e";
+export const PWA_ACCENT_COLOR = "#d6e24a";
+export const PWA_FOREGROUND_COLOR = "#f4efe4";
+
 const SHARE_META_KEYS = new Set([
   "og:title",
   "og:description",
@@ -174,25 +180,72 @@ export function renderInstallPageHtml(template, { host, url } = {}) {
     .replaceAll("{{APP_URL}}", escapeHtml(stripInstallParams(url)));
 }
 
-export function renderWebManifest(hostHeader) {
-  const name = appNameFromHost(hostHeader);
+/**
+ * grok.me slugs keep the host-derived preview name. Custom domains (and
+ * localhost) use site.json `site_name` so atmanmusic.app is Atman Music,
+ * not the platform sentinel "Grok App".
+ */
+export function resolveAppDisplayName(hostHeader, site = {}) {
+  const fromHost = appNameFromHost(hostHeader);
+  if (fromHost !== DEFAULT_APP_NAME) return fromHost;
+  const fromSite = String(site.site_name ?? site.title ?? "").trim();
+  return fromSite || DEFAULT_APP_NAME;
+}
+
+export function pwaIcons() {
+  return [
+    {
+      src: "/__grok/icon-180.png",
+      sizes: "180x180",
+      type: "image/png",
+    },
+    {
+      src: "/icons/icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: "/icons/icon-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "any",
+    },
+    {
+      src: "/icons/icon-maskable-192.png",
+      sizes: "192x192",
+      type: "image/png",
+      purpose: "maskable",
+    },
+    {
+      src: "/icons/icon-maskable-512.png",
+      sizes: "512x512",
+      type: "image/png",
+      purpose: "maskable",
+    },
+  ];
+}
+
+export function renderWebManifest(hostHeader, site = {}) {
+  const resolved =
+    site && typeof site === "object" && Object.keys(site).length > 0
+      ? site
+      : readOgSite();
+  const name = resolveAppDisplayName(hostHeader, resolved);
   return JSON.stringify(
     {
       name,
       short_name: name,
+      description:
+        "Atman Music. The full SoundCloud catalog. Play a tablet. Read the verse. Leave a mark.",
       id: "/",
       start_url: "/",
       scope: "/",
       display: "standalone",
-      background_color: "#000000",
-      theme_color: "#000000",
-      icons: [
-        {
-          src: "/__grok/icon-180.png",
-          sizes: "180x180",
-          type: "image/png",
-        },
-      ],
+      background_color: PWA_BACKGROUND_COLOR,
+      theme_color: PWA_THEME_COLOR,
+      lang: "en",
+      icons: pwaIcons(),
     },
     null,
     2,
@@ -201,8 +254,6 @@ export function renderWebManifest(hostHeader) {
 
 export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
   return [
-    // Standalone display comes from the manifest ("display": "standalone");
-    // the legacy *-web-app-capable metas it replaces are deliberately absent.
     ["manifest", '<link rel="manifest" href="/__grok/manifest.webmanifest">'],
     ["apple-touch-icon", '<link rel="apple-touch-icon" href="/__grok/icon-180.png">'],
     [
@@ -210,10 +261,21 @@ export function grokPwaHeadTags(appName = DEFAULT_APP_NAME) {
       `<meta name="apple-mobile-web-app-title" content="${escapeHtml(appName)}">`,
     ],
     [
+      "apple-mobile-web-app-capable",
+      '<meta name="apple-mobile-web-app-capable" content="yes">',
+    ],
+    [
+      "mobile-web-app-capable",
+      '<meta name="mobile-web-app-capable" content="yes">',
+    ],
+    [
       "apple-mobile-web-app-status-bar-style",
       '<meta name="apple-mobile-web-app-status-bar-style" content="black">',
     ],
-    ["theme-color", '<meta name="theme-color" content="#000000">'],
+    [
+      "theme-color",
+      `<meta name="theme-color" content="${PWA_THEME_COLOR}">`,
+    ],
   ];
 }
 

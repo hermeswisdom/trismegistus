@@ -667,6 +667,32 @@ test("renders the manifest with the per-app name", () => {
   assert.equal(manifest.name, "Wild Race");
   assert.equal(manifest.short_name, "Wild Race");
   assert.equal(manifest.icons[0].src, "/__grok/icon-180.png");
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "192x192"));
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
+  assert.ok(manifest.icons.some((icon) => icon.purpose === "maskable"));
+  assert.equal(manifest.display, "standalone");
+  assert.equal(manifest.theme_color, "#09080e");
+  assert.equal(manifest.background_color, "#09080e");
+});
+
+test("names atmanmusic.app Atman Music from site.json, not Grok App", () => {
+  const manifest = JSON.parse(
+    renderWebManifest("atmanmusic.app", { site_name: "Atman Music" }),
+  );
+  assert.equal(manifest.name, "Atman Music");
+  assert.equal(manifest.short_name, "Atman Music");
+  assert.equal(manifest.start_url, "/");
+  assert.equal(manifest.description.includes("Esoteric Vibrations"), false);
+});
+
+test("injects iOS home-screen metas and the site theme color", () => {
+  const out = injectGrokPwaHead("<html><head></head></html>", {
+    appName: "Atman Music",
+  });
+  assert.match(out, /apple-mobile-web-app-title" content="Atman Music"/);
+  assert.match(out, /apple-mobile-web-app-capable" content="yes"/);
+  assert.match(out, /apple-mobile-web-app-status-bar-style" content="black"/);
+  assert.match(out, /theme-color" content="#09080e"/);
 });
 
 // Tripwires: the deployed-app path only works if Nitro scans server/ — an
@@ -676,6 +702,8 @@ test("vite config keeps the nitro serverDir wiring", () => {
   const viteConfig = readFileSync(join(TEMPLATE_ROOT, "vite.config.ts"), "utf8");
   assert.match(viteConfig, /serverDir:\s*"\.\/server"/);
   assert.match(viteConfig, /grokPwaPlugin\(\)/);
+  const pkg = readFileSync(join(TEMPLATE_ROOT, "package.json"), "utf8");
+  assert.match(pkg, /stamp-pwa-vercel-headers\.mjs/);
 });
 
 test("nitro middleware and its bundled assets exist", () => {
@@ -684,6 +712,12 @@ test("nitro middleware and its bundled assets exist", () => {
   assert.match(middleware, /virtual:grok-og-identity/);
   readFileSync(join(TEMPLATE_ROOT, "scripts/install-page.html"));
   readFileSync(join(TEMPLATE_ROOT, "public/__grok/icon-180.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/icons/icon-192.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/icons/icon-512.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/icons/icon-maskable-512.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/icons/apple-touch-icon.png"));
+  readFileSync(join(TEMPLATE_ROOT, "public/manifest.webmanifest"));
+  readFileSync(join(TEMPLATE_ROOT, "public/sw.js"));
   readFileSync(join(TEMPLATE_ROOT, "public/__grok/install/styles.css"));
 });
 
@@ -691,6 +725,21 @@ test("vite plugin bakes og identity as a virtual module", () => {
   const plugin = readFileSync(join(TEMPLATE_ROOT, "scripts/grok-pwa-plugin.mjs"), "utf8");
   assert.match(plugin, /virtual:grok-og-identity/);
   assert.match(plugin, /snapshotOgIdentity/);
+});
+
+test("static Atman Music manifest is installable", () => {
+  const manifest = JSON.parse(
+    readFileSync(join(TEMPLATE_ROOT, "public/manifest.webmanifest"), "utf8"),
+  );
+  assert.equal(manifest.name, "Atman Music");
+  assert.equal(manifest.short_name, "Atman Music");
+  assert.equal(manifest.start_url, "/");
+  assert.equal(manifest.display, "standalone");
+  assert.equal(manifest.theme_color, "#09080e");
+  assert.equal(manifest.background_color, "#09080e");
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "192x192"));
+  assert.ok(manifest.icons.some((icon) => icon.sizes === "512x512"));
+  assert.equal(JSON.stringify(manifest).includes("Esoteric Vibrations"), false);
 });
 
 test("site.json sets og:site_name without pinning og:title", () => {
