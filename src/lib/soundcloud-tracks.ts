@@ -7,6 +7,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-sleepers-waking.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-sleepers-waking",
     recorded: "September 2026",
+    downloadKey: "masters/the-sleepers-waking.mp3",
   },
   {
     id: "fragile-god",
