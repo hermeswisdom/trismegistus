@@ -30,11 +30,27 @@ describe("catalog master mapping", () => {
     }
   });
 
-  it("only lists The Sleepers Waking for sale until more masters are uploaded", () => {
+  it("enables Buy on the 98 Blob-backed slugs and leaves two without masters", () => {
     const forSale = (SOUNDCLOUD_TRACKS as Track[]).filter(trackIsForSale);
-    assert.equal(forSale.length, 1);
-    assert.equal(forSale[0]?.id, "the-sleepers-waking");
-    assert.equal(saleDownloadKey(forSale[0]!), "masters/the-sleepers-waking.mp3");
+    assert.equal(SOUNDCLOUD_TRACKS.length, 100);
+    assert.equal(forSale.length, 98);
+    assert.equal(
+      saleDownloadKey(forSale.find((row) => row.id === "the-sleepers-waking")!),
+      "masters/the-sleepers-waking.mp3",
+    );
+    const wallOnly = ["lift-me-up", "remember-who-you-are-mp3-1"];
+    for (const id of wallOnly) {
+      const track = SOUNDCLOUD_TRACKS.find((row) => row.id === id);
+      assert.ok(track, id);
+      assert.equal(trackIsForSale(track!), false);
+    }
+    for (const gone of ["starseed-child", "sunset-trap-15-09-2016-21-54"]) {
+      assert.equal(
+        SOUNDCLOUD_TRACKS.some((row) => row.id === gone || row.slug === gone),
+        false,
+        gone,
+      );
+    }
   });
 
   it("rejects path traversal and SoundCloud URLs as download keys", () => {
@@ -47,13 +63,13 @@ describe("catalog master mapping", () => {
   });
 
   it("enables extra slugs from MASTER_SALE_SLUGS without ripping streams", () => {
-    const track = SOUNDCLOUD_TRACKS.find((row) => row.id === "fragile-god")!;
+    const track = SOUNDCLOUD_TRACKS.find((row) => row.id === "lift-me-up")!;
     assert.equal(trackIsForSale(track), false);
     assert.equal(
-      resolveSaleDownloadKey(track, new Set(["fragile-god"])),
-      "masters/fragile-god.mp3",
+      resolveSaleDownloadKey(track, new Set(["lift-me-up"])),
+      "masters/lift-me-up.mp3",
     );
-    assert.equal(resolveSaleDownloadKey(track, "all"), "masters/fragile-god.mp3");
+    assert.equal(resolveSaleDownloadKey(track, "all"), "masters/lift-me-up.mp3");
   });
 });
 

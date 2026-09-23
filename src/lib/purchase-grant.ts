@@ -6,7 +6,7 @@ import {
   type RedeemOk,
 } from "@/lib/purchases";
 import { canRedeemPurchase, downloadsLeft, signDownloadToken } from "@/lib/download-token";
-import { FIXTURE_TRACK_ID, isDryRunSessionId } from "@/lib/masters";
+import { isDryRunSessionId } from "@/lib/masters";
 import { getTrack } from "@/lib/rooms";
 
 export async function grantFromExisting(
@@ -46,7 +46,7 @@ export async function grantFromExisting(
     expiresAt: row.expiresAt,
     downloadsLeft: downloadsLeft(row),
     license: MASTER_LICENSE_LINE,
-    fixture: row.trackId === FIXTURE_TRACK_ID,
+    fixture: false,
     dryRun: isDryRunSessionId(row.sessionId),
   };
 }

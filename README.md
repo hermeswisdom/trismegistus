@@ -97,7 +97,7 @@ After a file exists in Blob, add `downloadKey` on that row in `src/lib/soundclou
 }
 ```
 
-The Sleepers Waking is the HOLD fixture — it already has `downloadKey`. Other tablets show no Buy button until you add a key (or set `MASTER_SALE_SLUGS`).
+Ninety-eight catalog tablets already have `downloadKey`. **Lift Me Up** and **Remember-who-you Are V2** stay on the wall without a Buy button until their masters are uploaded. Starseed Child and Sunset Trap are off the wall.
 
 ### Upload a master (Vercel Blob)
 
@@ -107,13 +107,13 @@ Create a **Private** Blob store on the Vercel project. Vercel sets `BLOB_READ_WR
 # Real master you own — not a SoundCloud rip
 npm run masters:upload -- ~/Music/sleepers-master.mp3 the-sleepers-waking
 
-# Silent dry-run fixture only (already in fixtures/masters/)
+# Local silent file only — production uses private Blob masters
 npm run masters:fixture
 ```
 
 The script puts the file at `masters/<slug>.mp3` (`access: 'private'`, no random suffix) and prints the `downloadKey` snippet.
 
-Local files in `masters/` (gitignored) or `fixtures/masters/` are used when Blob is unset.
+The Sleepers Waking master is live in Blob (`masters/the-sleepers-waking.mp3`). Local `masters/` (gitignored) or `fixtures/masters/` are only used when Blob is unset.
 
 ### Stripe (test mode first)
 
@@ -137,7 +137,7 @@ Optional: create a Stripe Price for **£0.99 GBP** and set `STRIPE_PRICE_ID`. Wh
 | `DOWNLOAD_TOKEN_SECRET` | Recommended | Signs 10-minute download links. Falls back to `BETTER_AUTH_SECRET`. |
 | `BLOB_READ_WRITE_TOKEN` | Yes for real files | Private Blob. |
 | `BLOB_STORE_ID` | Optional | OIDC on Vercel. |
-| `MASTER_DRY_RUN` | Preview only | `1` skips Stripe and serves the silent fixture for the mapped track. |
+| `MASTER_DRY_RUN` | Preview only | `1` skips Stripe. Serves the Blob master when configured, otherwise a local fallback file. |
 | `MASTER_SALE_SLUGS` | No | Extra slugs (`fragile-god,awake`) or `*` to enable default paths. |
 | `DATABASE_URL` | Yes in production | Stores session id → track id receipts (`0008_mp3_purchases.sql`). |
 
@@ -147,10 +147,8 @@ Optional: create a Stripe Price for **£0.99 GBP** and set `STRIPE_PRICE_ID`. Wh
 MASTER_DRY_RUN=1 npm run dev
 ```
 
-Open The Sleepers Waking → **Download MP3 · £0.99**. Checkout skips Stripe and `/download?session_id=dry_…` starts the silent fixture. The file is a placeholder, not a master.
+Open a tablet with a Buy button → Checkout skips Stripe and `/download?session_id=dry_…` starts the file. Production uses the Blob master.
 
 Without `MASTER_DRY_RUN` and without `STRIPE_SECRET_KEY`, the Buy button explains that Checkout is not configured.
 
-### HOLD
-
-This feature ships behind a HOLD PR. Do not merge until Atman QC. Do not put live Stripe keys in git.
+Do not put live Stripe keys in git.

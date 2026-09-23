@@ -17,6 +17,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/fragile-god.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/fragile-god",
     recorded: "September 2026",
+    downloadKey: "masters/fragile-god.mp3",
   },
   {
     id: "wait-for-a-love-that-stays",
@@ -26,6 +27,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/wait-for-a-love-that-stays.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/wait-for-a-love-that-stays",
     recorded: "September 2026",
+    downloadKey: "masters/wait-for-a-love-that-stays.mp3",
   },
   {
     id: "now-i-see-you-blossom",
@@ -35,6 +37,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/now-i-see-you-blossom.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/now-i-see-you-blossom",
     recorded: "September 2026",
+    downloadKey: "masters/now-i-see-you-blossom.mp3",
   },
   {
     id: "the-endless-mirror",
@@ -44,6 +47,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-endless-mirror.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-endless-mirror",
     recorded: "July 2026",
+    downloadKey: "masters/the-endless-mirror.mp3",
   },
   {
     id: "old-mens-game",
@@ -53,6 +57,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/old-mens-game.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/old-mens-game",
     recorded: "July 2026",
+    downloadKey: "masters/old-mens-game.mp3",
   },
   {
     id: "me-and-eric",
@@ -62,6 +67,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/me-and-eric.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/me-and-eric",
     recorded: "July 2026",
+    downloadKey: "masters/me-and-eric.mp3",
   },
   {
     id: "fake-love-shadows",
@@ -71,6 +77,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/fake-love-shadows.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/fake-love-shadows",
     recorded: "July 2026",
+    downloadKey: "masters/fake-love-shadows.mp3",
   },
   {
     id: "bassline-serenade",
@@ -80,6 +87,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/bassline-serenade.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/bassline-serenade",
     recorded: "July 2026",
+    downloadKey: "masters/bassline-serenade.mp3",
   },
   {
     id: "dont-look-up",
@@ -89,6 +97,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/dont-look-up.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/dont-look-up",
     recorded: "July 2026",
+    downloadKey: "masters/dont-look-up.mp3",
   },
   {
     id: "whats-in-it-for-me",
@@ -98,6 +107,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/whats-in-it-for-me.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/whats-in-it-for-me",
     recorded: "July 2026",
+    downloadKey: "masters/whats-in-it-for-me.mp3",
   },
   {
     id: "nobody-can-stop-it",
@@ -107,6 +117,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/nobody-can-stop-it.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/nobody-can-stop-it",
     recorded: "July 2026",
+    downloadKey: "masters/nobody-can-stop-it.mp3",
   },
   {
     id: "djinn",
@@ -116,6 +127,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/djinn.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/djinn",
     recorded: "June 2026",
+    downloadKey: "masters/djinn.mp3",
   },
   {
     id: "subterranean-pulse",
@@ -125,6 +137,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/subterranean-pulse.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/subterranean-pulse",
     recorded: "June 2026",
+    downloadKey: "masters/subterranean-pulse.mp3",
   },
   {
     id: "neon-nostalgia",
@@ -134,6 +147,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/neon-nostalgia.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/neon-nostalgia",
     recorded: "June 2026",
+    downloadKey: "masters/neon-nostalgia.mp3",
   },
   {
     id: "neon-pulse",
@@ -143,6 +157,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/neon-pulse.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/neon-pulse",
     recorded: "June 2026",
+    downloadKey: "masters/neon-pulse.mp3",
   },
   {
     id: "shamanic-in-the-woods",
@@ -152,6 +167,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/shamanic-in-the-woods.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/shamanic-in-the-woods",
     recorded: "June 2026",
+    downloadKey: "masters/shamanic-in-the-woods.mp3",
   },
   {
     id: "shamanica",
@@ -161,6 +177,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/shamanica.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/shamanica",
     recorded: "June 2026",
+    downloadKey: "masters/shamanica.mp3",
   },
   {
     id: "shamanic-me-up",
@@ -170,6 +187,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/shamanic-me-up.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/shamanic-me-up",
     recorded: "June 2026",
+    downloadKey: "masters/shamanic-me-up.mp3",
   },
   {
     id: "the-worst-kind-of-heartache",
@@ -179,6 +197,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-worst-kind-of-heartache.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-worst-kind-of-heartache",
     recorded: "June 2026",
+    downloadKey: "masters/the-worst-kind-of-heartache.mp3",
   },
   {
     id: "i-tired",
@@ -188,6 +207,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/i-tired.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/i-tired",
     recorded: "June 2026",
+    downloadKey: "masters/i-tired.mp3",
   },
   {
     id: "solitudes-silent-flame",
@@ -197,6 +217,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/solitudes-silent-flame.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/solitudes-silent-flame",
     recorded: "June 2026",
+    downloadKey: "masters/solitudes-silent-flame.mp3",
   },
   {
     id: "hold-lightly",
@@ -206,6 +227,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/hold-lightly.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/hold-lightly",
     recorded: "June 2026",
+    downloadKey: "masters/hold-lightly.mp3",
   },
   {
     id: "marble-heartbeats",
@@ -215,6 +237,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/marble-heartbeats.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/marble-heartbeats",
     recorded: "June 2026",
+    downloadKey: "masters/marble-heartbeats.mp3",
   },
   {
     id: "7-signs-silent-danger",
@@ -224,6 +247,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/7-signs-silent-danger.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/7-signs-silent-danger",
     recorded: "June 2026",
+    downloadKey: "masters/7-signs-silent-danger.mp3",
   },
   {
     id: "bones-keep-score",
@@ -233,6 +257,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/bones-keep-score.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/bones-keep-score",
     recorded: "June 2026",
+    downloadKey: "masters/bones-keep-score.mp3",
   },
   {
     id: "broken-brick-rebuild",
@@ -242,6 +267,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/broken-brick-rebuild.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/broken-brick-rebuild",
     recorded: "June 2026",
+    downloadKey: "masters/broken-brick-rebuild.mp3",
   },
   {
     id: "half-way-heart-mp3",
@@ -251,6 +277,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/half-way-heart-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/half-way-heart-mp3",
     recorded: "June 2026",
+    downloadKey: "masters/half-way-heart-mp3.mp3",
   },
   {
     id: "miles-of-lies",
@@ -260,6 +287,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/miles-of-lies.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/miles-of-lies",
     recorded: "June 2026",
+    downloadKey: "masters/miles-of-lies.mp3",
   },
   {
     id: "makers-make",
@@ -269,6 +297,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/makers-make.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/makers-make",
     recorded: "June 2026",
+    downloadKey: "masters/makers-make.mp3",
   },
   {
     id: "that-sax-is-fine",
@@ -278,6 +307,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/that-sax-is-fine.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/that-sax-is-fine",
     recorded: "May 2026",
+    downloadKey: "masters/that-sax-is-fine.mp3",
   },
   {
     id: "two-blue-screens",
@@ -287,6 +317,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/two-blue-screens.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/two-blue-screens",
     recorded: "May 2026",
+    downloadKey: "masters/two-blue-screens.mp3",
   },
   {
     id: "throat-sing",
@@ -296,6 +327,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/throat-sing.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/throat-sing",
     recorded: "May 2026",
+    downloadKey: "masters/throat-sing.mp3",
   },
   {
     id: "piano-hands",
@@ -305,6 +337,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/piano-hands.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/piano-hands",
     recorded: "May 2026",
+    downloadKey: "masters/piano-hands.mp3",
   },
   {
     id: "bonefire-circle",
@@ -314,6 +347,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/bonefire-circle.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/bonefire-circle",
     recorded: "May 2026",
+    downloadKey: "masters/bonefire-circle.mp3",
   },
   {
     id: "quartz-pulse-ritual",
@@ -323,6 +357,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/quartz-pulse-ritual.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/quartz-pulse-ritual",
     recorded: "May 2026",
+    downloadKey: "masters/quartz-pulse-ritual.mp3",
   },
   {
     id: "saxatone",
@@ -332,6 +367,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/saxatone.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/saxatone",
     recorded: "May 2026",
+    downloadKey: "masters/saxatone.mp3",
   },
   {
     id: "babushka-on-fire",
@@ -341,6 +377,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/babushka-on-fire.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/babushka-on-fire",
     recorded: "May 2026",
+    downloadKey: "masters/babushka-on-fire.mp3",
   },
   {
     id: "dusty-shoe-bass",
@@ -350,6 +387,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/dusty-shoe-bass.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/dusty-shoe-bass",
     recorded: "May 2026",
+    downloadKey: "masters/dusty-shoe-bass.mp3",
   },
   {
     id: "scratch-on-the-floor",
@@ -359,6 +397,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/scratch-on-the-floor.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/scratch-on-the-floor",
     recorded: "May 2026",
+    downloadKey: "masters/scratch-on-the-floor.mp3",
   },
   {
     id: "let-that-fear-go",
@@ -368,6 +407,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/let-that-fear-go.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/let-that-fear-go",
     recorded: "May 2026",
+    downloadKey: "masters/let-that-fear-go.mp3",
   },
   {
     id: "the-last-one",
@@ -377,6 +417,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-last-one.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-last-one",
     recorded: "May 2026",
+    downloadKey: "masters/the-last-one.mp3",
   },
   {
     id: "paper-crown",
@@ -386,6 +427,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/paper-crown.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/paper-crown",
     recorded: "May 2026",
+    downloadKey: "masters/paper-crown.mp3",
   },
   {
     id: "gold-curtains",
@@ -395,6 +437,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/gold-curtains.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/gold-curtains",
     recorded: "May 2026",
+    downloadKey: "masters/gold-curtains.mp3",
   },
   {
     id: "spy-pigeons",
@@ -404,6 +447,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/spy-pigeons.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/spy-pigeons",
     recorded: "May 2026",
+    downloadKey: "masters/spy-pigeons.mp3",
   },
   {
     id: "bank-holiday-bloke",
@@ -413,6 +457,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/bank-holiday-bloke.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/bank-holiday-bloke",
     recorded: "May 2026",
+    downloadKey: "masters/bank-holiday-bloke.mp3",
   },
   {
     id: "steel-peach-bloom",
@@ -422,6 +467,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/steel-peach-bloom.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/steel-peach-bloom",
     recorded: "May 2026",
+    downloadKey: "masters/steel-peach-bloom.mp3",
   },
   {
     id: "saxamoan",
@@ -431,6 +477,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/saxamoan.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/saxamoan",
     recorded: "May 2026",
+    downloadKey: "masters/saxamoan.mp3",
   },
   {
     id: "lift-me-up",
@@ -449,6 +496,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/natures-plant.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/natures-plant",
     recorded: "May 2026",
+    downloadKey: "masters/natures-plant.mp3",
   },
   {
     id: "stone-chest",
@@ -458,6 +506,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/stone-chest.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/stone-chest",
     recorded: "May 2026",
+    downloadKey: "masters/stone-chest.mp3",
   },
   {
     id: "pocketful-umbrellas",
@@ -467,6 +516,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/pocketful-umbrellas.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/pocketful-umbrellas",
     recorded: "May 2026",
+    downloadKey: "masters/pocketful-umbrellas.mp3",
   },
   {
     id: "dodgy-sir-keir-scandal-after",
@@ -476,6 +526,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/dodgy-sir-keir-scandal-after.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/dodgy-sir-keir-scandal-after",
     recorded: "April 2026",
+    downloadKey: "masters/dodgy-sir-keir-scandal-after.mp3",
   },
   {
     id: "thats-life",
@@ -485,6 +536,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/thats-life.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/thats-life",
     recorded: "April 2026",
+    downloadKey: "masters/thats-life.mp3",
   },
   {
     id: "moonlit-handpan-groove-mp3",
@@ -494,6 +546,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/moonlit-handpan-groove-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/moonlit-handpan-groove-mp3",
     recorded: "April 2026",
+    downloadKey: "masters/moonlit-handpan-groove-mp3.mp3",
   },
   {
     id: "broken-britain-debt-bomb",
@@ -503,6 +556,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/broken-britain-debt-bomb.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/broken-britain-debt-bomb",
     recorded: "April 2026",
+    downloadKey: "masters/broken-britain-debt-bomb.mp3",
   },
   {
     id: "mo-bius-bowl-mp3",
@@ -512,6 +566,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/mo-bius-bowl-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/mo-bius-bowl-mp3",
     recorded: "April 2026",
+    downloadKey: "masters/mo-bius-bowl-mp3.mp3",
   },
   {
     id: "moon-circles-1",
@@ -521,6 +576,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/moon-circles-1.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/moon-circles-1",
     recorded: "April 2026",
+    downloadKey: "masters/moon-circles-1.mp3",
   },
   {
     id: "bamboo-kickback",
@@ -530,6 +586,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/bamboo-kickback.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/bamboo-kickback",
     recorded: "April 2026",
+    downloadKey: "masters/bamboo-kickback.mp3",
   },
   {
     id: "nine-completes",
@@ -539,6 +596,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/nine-completes.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/nine-completes",
     recorded: "April 2026",
+    downloadKey: "masters/nine-completes.mp3",
   },
   {
     id: "shadows-of-the-cross",
@@ -548,6 +606,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/shadows-of-the-cross.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/shadows-of-the-cross",
     recorded: "April 2026",
+    downloadKey: "masters/shadows-of-the-cross.mp3",
   },
   {
     id: "tracy-chapman-tape",
@@ -557,6 +616,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/tracy-chapman-tape.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/tracy-chapman-tape",
     recorded: "April 2026",
+    downloadKey: "masters/tracy-chapman-tape.mp3",
   },
   {
     id: "welcome-home-neville",
@@ -566,6 +626,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/welcome-home-neville.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/welcome-home-neville",
     recorded: "April 2026",
+    downloadKey: "masters/welcome-home-neville.mp3",
   },
   {
     id: "mirror-mirror-left-wing",
@@ -575,6 +636,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/mirror-mirror-left-wing.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/mirror-mirror-left-wing",
     recorded: "March 2026",
+    downloadKey: "masters/mirror-mirror-left-wing.mp3",
   },
   {
     id: "ego-overload-mp3",
@@ -584,6 +646,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/ego-overload-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/ego-overload-mp3",
     recorded: "March 2026",
+    downloadKey: "masters/ego-overload-mp3.mp3",
   },
   {
     id: "quantum-stage",
@@ -593,6 +656,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/quantum-stage.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/quantum-stage",
     recorded: "March 2026",
+    downloadKey: "masters/quantum-stage.mp3",
   },
   {
     id: "fiat-slaves-no-more",
@@ -602,6 +666,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/fiat-slaves-no-more.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/fiat-slaves-no-more",
     recorded: "March 2026",
+    downloadKey: "masters/fiat-slaves-no-more.mp3",
   },
   {
     id: "find-your-atman",
@@ -611,6 +676,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/find-your-atman.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/find-your-atman",
     recorded: "March 2026",
+    downloadKey: "masters/find-your-atman.mp3",
   },
   {
     id: "baguio-the-wrong-dam-room-mp3",
@@ -620,6 +686,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/baguio-the-wrong-dam-room-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/baguio-the-wrong-dam-room-mp3",
     recorded: "February 2026",
+    downloadKey: "masters/baguio-the-wrong-dam-room-mp3.mp3",
   },
   {
     id: "the-city-of-london",
@@ -629,6 +696,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-city-of-london.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-city-of-london",
     recorded: "January 2026",
+    downloadKey: "masters/the-city-of-london.mp3",
   },
   {
     id: "when-we-were-cool",
@@ -638,6 +706,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/when-we-were-cool.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/when-we-were-cool",
     recorded: "January 2026",
+    downloadKey: "masters/when-we-were-cool.mp3",
   },
   {
     id: "awake",
@@ -647,6 +716,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/awake.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/awake",
     recorded: "January 2026",
+    downloadKey: "masters/awake.mp3",
   },
   {
     id: "the-mushroom-alchemist",
@@ -656,6 +726,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-mushroom-alchemist.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-mushroom-alchemist",
     recorded: "January 2026",
+    downloadKey: "masters/the-mushroom-alchemist.mp3",
   },
   {
     id: "your-first-pill",
@@ -665,6 +736,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/your-first-pill.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/your-first-pill",
     recorded: "January 2026",
+    downloadKey: "masters/your-first-pill.mp3",
   },
   {
     id: "mr-oil-up-aaron-mp3",
@@ -674,6 +746,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/mr-oil-up-aaron-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/mr-oil-up-aaron-mp3",
     recorded: "January 2026",
+    downloadKey: "masters/mr-oil-up-aaron-mp3.mp3",
   },
   {
     id: "cockny-in-his-polish-tracksuit",
@@ -683,6 +756,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/cockny-in-his-polish-tracksuit.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/cockny-in-his-polish-tracksuit",
     recorded: "January 2026",
+    downloadKey: "masters/cockny-in-his-polish-tracksuit.mp3",
   },
   {
     id: "the-best-of-the-worst-mp3",
@@ -692,6 +766,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/the-best-of-the-worst-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-best-of-the-worst-mp3",
     recorded: "January 2026",
+    downloadKey: "masters/the-best-of-the-worst-mp3.mp3",
   },
   {
     id: "famous-aint-fun-anymore",
@@ -701,6 +776,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/famous-aint-fun-anymore.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/famous-aint-fun-anymore",
     recorded: "January 2026",
+    downloadKey: "masters/famous-aint-fun-anymore.mp3",
   },
   {
     id: "through-the-cracks",
@@ -710,6 +786,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/through-the-cracks.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/through-the-cracks",
     recorded: "January 2026",
+    downloadKey: "masters/through-the-cracks.mp3",
   },
   {
     id: "baguio-trip-mp3",
@@ -719,6 +796,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/baguio-trip-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/baguio-trip-mp3",
     recorded: "January 2026",
+    downloadKey: "masters/baguio-trip-mp3.mp3",
   },
   {
     id: "remember-who-you-are-mp3-1",
@@ -737,6 +815,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/hyperdimensional-dancefloor.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/hyperdimensional-dancefloor",
     recorded: "January 2026",
+    downloadKey: "masters/hyperdimensional-dancefloor.mp3",
   },
   {
     id: "remember-who-you-are-mp3",
@@ -746,6 +825,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/remember-who-you-are-mp3.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/remember-who-you-are-mp3",
     recorded: "January 2026",
+    downloadKey: "masters/remember-who-you-are-mp3.mp3",
   },
   {
     id: "infinite-spark-of-atoms-1",
@@ -755,6 +835,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/infinite-spark-of-atoms-1.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/infinite-spark-of-atoms-1",
     recorded: "January 2026",
+    downloadKey: "masters/infinite-spark-of-atoms-1.mp3",
   },
   {
     id: "infinite-spark-of-atoms",
@@ -764,6 +845,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/infinite-spark-of-atoms.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/infinite-spark-of-atoms",
     recorded: "January 2026",
+    downloadKey: "masters/infinite-spark-of-atoms.mp3",
   },
   {
     id: "puppets-on-a-string",
@@ -773,6 +855,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/puppets-on-a-string.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/puppets-on-a-string",
     recorded: "January 2026",
+    downloadKey: "masters/puppets-on-a-string.mp3",
   },
   {
     id: "warrington-boy-outside-the",
@@ -782,6 +865,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/warrington-boy-outside-the.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/warrington-boy-outside-the",
     recorded: "January 2026",
+    downloadKey: "masters/warrington-boy-outside-the.mp3",
   },
   {
     id: "hidden-circuits-of-the-one",
@@ -791,6 +875,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/hidden-circuits-of-the-one.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/hidden-circuits-of-the-one",
     recorded: "January 2026",
+    downloadKey: "masters/hidden-circuits-of-the-one.mp3",
   },
   {
     id: "michael-my-lil-legend",
@@ -800,6 +885,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/michael-my-lil-legend.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/michael-my-lil-legend",
     recorded: "January 2026",
+    downloadKey: "masters/michael-my-lil-legend.mp3",
   },
   {
     id: "el-chapo-lev",
@@ -809,6 +895,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/el-chapo-lev.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/el-chapo-lev",
     recorded: "January 2026",
+    downloadKey: "masters/el-chapo-lev.mp3",
   },
   {
     id: "cardboard-kingdom",
@@ -818,6 +905,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/cardboard-kingdom.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/cardboard-kingdom",
     recorded: "January 2026",
+    downloadKey: "masters/cardboard-kingdom.mp3",
   },
   {
     id: "amy-all-out-of-love",
@@ -827,6 +915,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/amy-all-out-of-love.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/amy-all-out-of-love",
     recorded: "January 2026",
+    downloadKey: "masters/amy-all-out-of-love.mp3",
   },
   {
     id: "funk-in-the-forest",
@@ -836,6 +925,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/funk-in-the-forest.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/funk-in-the-forest",
     recorded: "January 2026",
+    downloadKey: "masters/funk-in-the-forest.mp3",
   },
   {
     id: "paper-tigers-in-red-ties",
@@ -845,6 +935,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/paper-tigers-in-red-ties.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/paper-tigers-in-red-ties",
     recorded: "January 2026",
+    downloadKey: "masters/paper-tigers-in-red-ties.mp3",
   },
   {
     id: "still-on-the-graft",
@@ -854,6 +945,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/still-on-the-graft.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/still-on-the-graft",
     recorded: "January 2026",
+    downloadKey: "masters/still-on-the-graft.mp3",
   },
   {
     id: "trevor-the-beat-creator",
@@ -863,6 +955,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/trevor-the-beat-creator.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/trevor-the-beat-creator",
     recorded: "January 2026",
+    downloadKey: "masters/trevor-the-beat-creator.mp3",
   },
   {
     id: "beyond-the-body",
@@ -872,6 +965,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/beyond-the-body.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/beyond-the-body",
     recorded: "January 2026",
+    downloadKey: "masters/beyond-the-body.mp3",
   },
   {
     id: "critical-mass-in-warrington",
@@ -881,6 +975,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/critical-mass-in-warrington.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/critical-mass-in-warrington",
     recorded: "January 2026",
+    downloadKey: "masters/critical-mass-in-warrington.mp3",
   },
   {
     id: "still-not-retiring-in",
@@ -890,6 +985,7 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/still-not-retiring-in.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/still-not-retiring-in",
     recorded: "January 2026",
+    downloadKey: "masters/still-not-retiring-in.mp3",
   },
   {
     id: "i-never-left-you-i-left-the-i",
@@ -899,23 +995,6 @@ export const SOUNDCLOUD_TRACKS = [
     image: "/images/tracks/i-never-left-you-i-left-the-i.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/i-never-left-you-i-left-the-i",
     recorded: "February 2019",
-  },
-  {
-    id: "sunset-trap-15-09-2016-21-54",
-    title: "Sunset Trap",
-    soundId: "283089716",
-    slug: "sunset-trap-15-09-2016-21-54",
-    image: "/images/tracks/sunset-trap-15-09-2016-21-54.jpg",
-    permalink: "https://soundcloud.com/esoteric_vibrations/sunset-trap-15-09-2016-21-54",
-    recorded: "September 2016",
-  },
-  {
-    id: "starseed-child",
-    title: "Starseed Child",
-    soundId: "263912490",
-    slug: "starseed-child",
-    image: "/images/tracks/starseed-child.jpg",
-    permalink: "https://soundcloud.com/esoteric_vibrations/starseed-child",
-    recorded: "May 2016",
+    downloadKey: "masters/i-never-left-you-i-left-the-i.mp3",
   },
 ];

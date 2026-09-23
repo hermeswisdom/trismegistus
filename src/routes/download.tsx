@@ -97,14 +97,7 @@ function DownloadPage() {
             </p>
             {data.result.dryRun ? (
               <p className="mt-3 max-w-md text-sm text-accent">
-                Dry-run. No Stripe charge. The file may be the silent fixture
-                until you upload a private master.
-              </p>
-            ) : null}
-            {data.result.fixture && !data.result.dryRun ? (
-              <p className="mt-3 max-w-md text-sm text-muted">
-                Fixture track. Replace the silent placeholder with the real
-                master in Blob.
+                Dry-run. No Stripe charge. Production serves the Blob master.
               </p>
             ) : null}
             <div className="mt-10 flex flex-wrap gap-2">
