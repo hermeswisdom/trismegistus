@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { AccountLink } from "@/components/account-menu";
 import { HermesNote } from "@/components/hermes-note";
+import { VisitorBadge } from "@/components/visitor-badge";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/lib/player-store";
 
@@ -83,6 +84,9 @@ export function SiteHeader() {
             />
           </span>
         </button>
+      </div>
+      <div className="pointer-events-none -mt-1 flex justify-center px-5 pb-2 sm:-mt-2 sm:px-8">
+        <VisitorBadge className="pointer-events-auto" />
       </div>
       <div
         className={cn(
