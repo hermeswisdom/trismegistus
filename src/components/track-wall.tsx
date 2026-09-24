@@ -220,14 +220,6 @@ function TabletTile({
         {active ? (
           <span className="absolute inset-0 ring-2 ring-accent ring-inset" />
         ) : null}
-        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1">
-          {isDaily ? (
-            <span className="bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
-              Today
-            </span>
-          ) : null}
-          <BuyMasterButton track={track} variant="card" />
-        </div>
         <span className="absolute inset-x-0 bottom-0 z-[6] p-2.5 sm:p-4">
           <span className="block truncate font-display text-base leading-tight text-fg sm:text-xl">
             {track.title}
@@ -244,6 +236,21 @@ function TabletTile({
           </span>
         </span>
       </button>
+      {/*
+        Outside the tile <button>: the Buy control is itself a <button>, and a
+        button nested in a button is invalid HTML. The browser's parser splits
+        it out of the SSR markup, so the DOM no longer matched React's tree and
+        hydration failed (React #418). The wrapper lets taps on "Today" fall
+        through to the tile; only the Buy button takes pointer events.
+      */}
+      <div className="pointer-events-none absolute top-2 left-2 z-10 flex flex-col items-start gap-1 [&_button]:pointer-events-auto">
+        {isDaily ? (
+          <span className="bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
+            Today
+          </span>
+        ) : null}
+        <BuyMasterButton track={track} variant="card" />
+      </div>
       <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
         <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
         <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
