@@ -379,6 +379,14 @@
   }
 }
 
+/* Hidden SoundCloud host iframe (see now-playing.tsx): a real layout size so
+   the widget's waveform canvas is never 0×0, painted as a 20×20 corner only. */
+.sc-host-frame {
+  width: 320px;
+  height: 166px;
+  clip-path: inset(calc(100% - 20px) 0 0 calc(100% - 20px));
+}
+
 /* Live visitor badge: neon dot breathes like a broadcast light. */
 .visitor-dot {
   box-shadow: 0 0 8px rgb(214 226 74 / 85%);

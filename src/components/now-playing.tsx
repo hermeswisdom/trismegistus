@@ -134,12 +134,22 @@ export function NowPlaying() {
 
   return (
     <>
+    {/*
+      The SoundCloud widget draws its waveform on a canvas sized from the
+      iframe's layout box. At 20×20 that canvas is 0 wide and the widget's own
+      draw() throws "createPattern … width or height of 0" (~10× per load),
+      which we cannot catch across origins. So the iframe gets the widget's
+      natural 320×166 layout, and clip-path paints only the same 20×20
+      bottom-right corner as before. The visible footprint (kept on screen at
+      full opacity for iOS Safari autoplay) and z-order behind the dock are
+      unchanged.
+    */}
     <iframe
       ref={iframeRef}
       title="SoundCloud"
       src={initialSrc.current}
       allow="autoplay; encrypted-media"
-      className="pointer-events-none fixed right-0 bottom-0 z-30 size-5 opacity-100"
+      className="sc-host-frame pointer-events-none fixed right-0 bottom-0 z-30 opacity-100"
       loading="eager"
     />
     <div

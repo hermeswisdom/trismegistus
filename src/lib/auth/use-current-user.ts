@@ -1,3 +1,4 @@
+import { useHydrated } from "../use-hydrated";
 import { authClient, authEnabled } from "./client";
 
 /** Normalized user shape used across the app, auth on or off. */
@@ -57,7 +58,14 @@ export type CurrentUserState = {
 export function useCurrentUserState(): CurrentUserState {
   if (!authEnabled) return { user: DEV_USER, isPending: false };
   // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
+  const hydrated = useHydrated();
+  // eslint-disable-next-line react-hooks/rules-of-hooks -- authEnabled is constant for the app's lifetime
   const { data, isPending } = authClient.useSession();
+  // The server never knows the session, so SSR renders "pending". The client's
+  // session atom can already be resolved by the time React hydrates; reporting
+  // it on that first render made AccountNudge (and friends) differ from the
+  // server HTML -> React #418. Stay "pending" until hydration has finished.
+  if (!hydrated) return { user: null, isPending: true };
   const user = data?.user;
   return {
     user: user

@@ -123,6 +123,9 @@ export function MatrixRain({
       const mul = step ? speedMul * (fast ? 1.35 : 1) : 0;
       const font = `${compact ? 8 : simpleGlyphs ? 11 : 13}px ui-monospace, "SF Mono", Menlo, monospace`;
 
+      // Nothing to draw into until the host has a size (hidden gate, first
+      // layout pass); the ResizeObserver repaints as soon as it gets one.
+      if (width <= 0 || height <= 0 || cols.length === 0) return;
       gfx.clearRect(0, 0, width, height);
       gfx.textAlign = "center";
       gfx.textBaseline = "top";
