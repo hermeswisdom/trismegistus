@@ -379,6 +379,30 @@
   }
 }
 
+/* Live visitor badge: neon dot breathes like a broadcast light. */
+.visitor-dot {
+  box-shadow: 0 0 8px rgb(214 226 74 / 85%);
+  animation: visitor-dot-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes visitor-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgb(214 226 74 / 85%);
+  }
+  50% {
+    opacity: 0.45;
+    box-shadow: 0 0 2px rgb(214 226 74 / 40%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visitor-dot {
+    animation: none;
+  }
+}
+
 @media (max-width: 860px) {
   .atman-core {
     font-size: clamp(2.1rem, min(11svh, 11vh), 4.4rem);

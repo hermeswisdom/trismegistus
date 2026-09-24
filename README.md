@@ -20,6 +20,7 @@ Requires Node 22.
 - **Share** — Web Share / clipboard send an Atman Music title, verse line, and wall URL (not SoundCloud). Home and tablet links unfurl with cover art as the OG image. Today's tablet shares `/?daily=1`.
 - **The board** — every listen writes an anonymous mark (Postgres / PGLite). Rank is the count. Named comments stay private on the tablet. A recent pulse keeps the room inhabited. Soft cookie / IP rate limits keep the count from being gamed.
 - **First spin** — the first visit lands a tablet on the wheel so the axle is never empty. Returning visitors resume the last tablet (localStorage; Neon when signed in).
+- **Live visitors** — a header pill reads “● 3 listening now · 1,204 visitors”. Each browser keeps a random anonymous id in `localStorage` (no IPs, no personal data) and heartbeats every ~20s; online = a heartbeat in the last ~2 min. The all-time total counts a browser once per ~24h and lives in Neon (`site_visitor_total`, `site_presence` from `migrations/0009_site_visitors.sql`), so it survives deploys. Obvious bots are skipped. No DB → the pill hides.
 
 Auth stays optional. `VITE_AUTH_ENABLED=false` is the shipped path.
 
@@ -65,7 +66,7 @@ Copy `.env.example` and set `VITE_AUTH_ENABLED=true` plus a `BETTER_AUTH_SECRET`
 
 `npm run build` applies `migrations/*.sql` to `DATABASE_URL`. Preview/PGLite applies the same files on boot.
 
-If a Neon database missed the Vercel build step, run `0007_favorites_prefs.sql` once (creates `user_favorites` and `user_prefs`) and `0008_mp3_purchases.sql` for paid master receipts. Earlier files `0001`–`0006` should already be on production.
+If a Neon database missed the Vercel build step, run `0007_favorites_prefs.sql` once (creates `user_favorites` and `user_prefs`) `0008_mp3_purchases.sql` for paid master receipts, and `0009_site_visitors.sql` for the live visitor count. Earlier files `0001`–`0006` should already be on production.
 
 ## Paid master MP3s · £0.99
 
