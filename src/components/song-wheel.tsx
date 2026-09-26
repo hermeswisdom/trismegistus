@@ -157,7 +157,7 @@ export function SongWheel() {
             Press. A tablet lands.
           </h2>
           <p className="mt-4 max-w-md text-sm leading-relaxed text-muted sm:text-base">
-            One hundred and two covers on a hidden axle. The pointer does not
+            One hundred and one covers on a hidden axle. The pointer does not
             choose. The spin does.
           </p>
           {rite === "landed" && sealedLanded ? (
