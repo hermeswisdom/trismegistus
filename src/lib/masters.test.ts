@@ -9,6 +9,7 @@ import {
   dryRunSessionId,
   formatMasterPrice,
   isDryRunSessionId,
+  masterBuyCardLabel,
   masterBuyLabel,
   masterFilename,
   masterPricePence,
@@ -78,6 +79,7 @@ describe("master price", () => {
     assert.equal(masterPricePence(), 99);
     assert.equal(formatMasterPrice(), "£0.99");
     assert.equal(masterBuyLabel(), "Download MP3 · £0.99");
+    assert.equal(masterBuyCardLabel(), "Download · £0.99");
   });
 
   it("ignores nonsense env values", () => {

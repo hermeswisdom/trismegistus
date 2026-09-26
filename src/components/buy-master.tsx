@@ -4,6 +4,7 @@ import { startMasterCheckout } from "@/lib/master-checkout";
 import {
   MASTER_LICENSE_LINE,
   displayMasterPricePence,
+  masterBuyCardLabel,
   masterBuyLabel,
   trackIsForSale,
 } from "@/lib/masters";
@@ -22,7 +23,9 @@ export function BuyMasterButton({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!trackIsForSale(track)) return null;
-  const label = masterBuyLabel(displayMasterPricePence());
+  const price = displayMasterPricePence();
+  const label =
+    variant === "card" ? masterBuyCardLabel(price) : masterBuyLabel(price);
 
   async function begin(event: MouseEvent) {
     event.preventDefault();
@@ -52,7 +55,7 @@ export function BuyMasterButton({
           data-buy-master={track.id}
           onClick={begin}
           disabled={busy}
-          className="inline-flex h-7 max-w-full items-center gap-1 bg-accent px-2 text-[0.58rem] font-medium tracking-[0.12em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96] disabled:opacity-60 sm:h-8 sm:px-2.5 sm:text-[0.62rem]"
+          className="inline-flex h-7 w-full max-w-full items-center gap-1 bg-accent px-2 text-[0.58rem] font-medium tracking-[0.12em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96] disabled:opacity-60 sm:h-8 sm:w-auto sm:px-2.5 sm:text-[0.62rem]"
         >
           <Download className="size-3 shrink-0" />
           <span className="truncate">{busy ? "Opening…" : label}</span>
