@@ -83,6 +83,11 @@ export function masterBuyLabel(pence = DEFAULT_MASTER_PRICE_PENCE): string {
   return `Download MP3 · ${formatMasterPrice(pence)}`;
 }
 
+/** Compact wall-tile label — fits beside the icon strip on a 2-col phone tile. */
+export function masterBuyCardLabel(pence = DEFAULT_MASTER_PRICE_PENCE): string {
+  return `Download · ${formatMasterPrice(pence)}`;
+}
+
 export function masterFilename(track: Pick<Track, "title" | "slug">): string {
   const stem =
     track.title.replace(/[^\p{L}\p{N}\s'-]+/gu, "").replace(/\s+/g, " ").trim() ||

@@ -237,31 +237,50 @@ function TabletTile({
         </span>
       </button>
       {/*
-        Outside the tile <button>: the Buy control is itself a <button>, and a
-        button nested in a button is invalid HTML. The browser's parser splits
-        it out of the SSR markup, so the DOM no longer matched React's tree and
-        hydration failed (React #418). The wrapper lets taps on "Today" fall
-        through to the tile; only the Buy button takes pointer events.
+        Outside the tile <button> (Buy is itself a <button> — nesting caused
+        React #418). Row 1: Today | icon strip. Row 2: Buy full width under the
+        strip so it is never covered. Daily tiles pack four icons 2×2 on mobile.
+        pointer-events-none on the shell lets taps on Today fall through to play.
       */}
-      <div className="pointer-events-none absolute top-2 left-2 z-10 flex flex-col items-start gap-1 [&_button]:pointer-events-auto">
-        {isDaily ? (
-          <span className="bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
-            Today
-          </span>
-        ) : null}
-        <BuyMasterButton track={track} variant="card" />
-      </div>
-      <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
-        <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
-        <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
-        <ShareButton
-          track={track}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-1 gap-y-1.5 p-1.5 sm:p-2">
+        <div className="min-w-0">
+          {isDaily ? (
+            <span className="inline-block bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
+              Today
+            </span>
+          ) : null}
+        </div>
+        <div
           className={cn(
-            "size-10 bg-bg/55 text-fg sm:flex sm:size-11",
-            isDaily ? "flex" : "hidden",
+            "pointer-events-auto shrink-0 -mt-0.5 -mr-0.5 sm:mt-0 sm:mr-0",
+            // Four icons on a phone tile need a 2×2 pack; from sm a row fits.
+            isDaily ? "grid grid-cols-2 sm:flex" : "flex",
           )}
-        />
-        <MarkButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
+        >
+          <ReadButton
+            trackId={track.id}
+            className="size-8 bg-bg/55 text-fg sm:size-10"
+          />
+          <HeartButton
+            id={track.id}
+            className="size-8 bg-bg/55 text-fg sm:size-10"
+          />
+          <ShareButton
+            track={track}
+            className={cn(
+              "size-8 bg-bg/55 text-fg sm:size-10",
+              isDaily ? "flex" : "hidden",
+            )}
+          />
+          <MarkButton
+            trackId={track.id}
+            className="size-8 bg-bg/55 text-fg sm:size-10"
+          />
+        </div>
+        {/* Full-width under the icon row so the price is never clipped by the strip. */}
+        <div className="col-span-2 min-w-0 [&_button]:pointer-events-auto">
+          <BuyMasterButton track={track} variant="card" />
+        </div>
       </div>
     </li>
   );
