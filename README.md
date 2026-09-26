@@ -98,7 +98,7 @@ After a file exists in Blob, add `downloadKey` on that row in `src/lib/soundclou
 }
 ```
 
-Ninety-eight catalog tablets already have `downloadKey`. **Lift Me Up** and **Remember-who-you Are V2** stay on the wall without a Buy button until their masters are uploaded. Starseed Child and Sunset Trap are off the wall.
+Ninety-nine catalog tablets already have `downloadKey`. **Lift Me Up** and **Remember-who-you Are V2** stay on the wall without a Buy button until their masters are uploaded. Starseed Child and Sunset Trap are off the wall.
 
 ### Upload a master (Vercel Blob)
 

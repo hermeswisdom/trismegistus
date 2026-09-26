@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "the-shadow-learned-my-name",
+    title: "The Shadow Learned My Name",
+    soundId: "2408012085",
+    slug: "the-shadow-learned-my-name",
+    image: "/images/tracks/the-shadow-learned-my-name.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/the-shadow-learned-my-name",
+    recorded: "September 2026",
+    downloadKey: "masters/the-shadow-learned-my-name.mp3",
+  },
+  {
     id: "the-sleepers-waking",
     title: "The Sleepers Waking",
     soundId: "2403987975",
