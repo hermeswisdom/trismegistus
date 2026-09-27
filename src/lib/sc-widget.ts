@@ -462,6 +462,31 @@ function startPrime(soundId?: string) {
   return true;
 }
 
+/**
+ * Spin while a tablet sounds: hush it instead of pausing. A pause() within
+ * the first seconds of a start aborts SoundCloud's segment fetch and its
+ * widget throws an uncaught AbortError; volume 0 is silent and the landing
+ * takes over with skip() exactly like after a prime (12 s safety stop).
+ * Falls back to false (caller pauses) where volume is ignored (iOS).
+ */
+export function quietForSpin() {
+  if (!live || priming || !canPrimeSilently()) return false;
+  if (attempt.phase !== "playing" && attempt.phase !== "pending") return false;
+  try {
+    live.setVolume(0);
+  } catch {
+    return false;
+  }
+  queued = null;
+  dispatch({ type: "stop" });
+  // Resume, not restart, if the same tablet is played again.
+  primedSoundId = null;
+  priming = { startedAt: now(), flowing: true };
+  if (primeTimer !== null) clearTimeout(primeTimer);
+  primeTimer = later(() => endPriming({ pause: true }), PRIME_MAX_SILENT_MS);
+  return true;
+}
+
 export function isPriming() {
   return priming !== null;
 }

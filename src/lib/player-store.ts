@@ -11,6 +11,7 @@ import {
   getLiveWidget,
   noteUserGesture,
   primeForLaterPlay,
+  quietForSpin,
   subscribePlayback,
 } from "@/lib/sc-widget";
 import { wheelPlayOn } from "@/lib/wheel-rite";
@@ -173,7 +174,10 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       return;
     }
     if (get().playing || get().playPending) {
-      get().pause();
+      // Hush (volume 0) rather than pause where that is silent: an early
+      // pause() makes SoundCloud throw an AbortError. iOS still pauses.
+      if (quietForSpin()) set({ playing: false, playPending: false });
+      else get().pause();
     }
     // The winner sounds on landing, ~4s after this tap and outside it. Start
     // the widget silently now (inside the tap) so iOS allows that later play.

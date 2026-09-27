@@ -10,6 +10,7 @@ import {
   noteUserGesture,
   PRIME_MAX_SILENT_MS,
   primeForLaterPlay,
+  quietForSpin,
   resetPlaybackForTests,
   setCatalogSoundIds,
   setLiveIframe,
@@ -385,6 +386,52 @@ describe("sc-widget: one widget, one tap", () => {
     assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
     assert.equal(getAttemptPhase(), "pending");
     resetPlaybackForTests();
+  });
+
+  it("a spin while playing hushes instead of pausing, and the landing skips over it", () => {
+    const { widget, calls } = readyWidget("555");
+    const types = collect();
+    applyPlayback(cmd);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 900 });
+    assert.equal(getAttemptPhase(), "playing");
+    calls.length = 0;
+    assert.equal(quietForSpin(), true);
+    assert.deepEqual(calls, ["vol:0"]);
+    assert.equal(getAttemptPhase(), "idle");
+    // Old tablet keeps running silently; its events change nothing.
+    widget.fire("playProgress", { soundId: 555, currentPosition: 2000 });
+    widget.fire("pause", { soundId: 555, currentPosition: 2100 });
+    assert.equal(types.includes("pause"), false);
+    // Landing on 777: skip, play; volume only once 777 flows.
+    applyPlayback({ ...cmd, soundId: "777" });
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play"]);
+    widget.fire("playProgress", { soundId: 777, currentPosition: 40 });
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("replaying the hushed tablet resumes it (no seek) at full volume", () => {
+    const { widget, calls } = readyWidget("555");
+    applyPlayback(cmd);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 900 });
+    quietForSpin();
+    calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["vol:100", "play"]);
+  });
+
+  it("does not hush where volume is ignored (iOS pauses instead)", () => {
+    setPrimeSupportForTests(false);
+    const { widget } = readyWidget("555");
+    applyPlayback(cmd);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 900 });
+    assert.equal(quietForSpin(), false);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("does not hush when nothing is sounding", () => {
+    readyWidget("555");
+    assert.equal(quietForSpin(), false);
   });
 
   it("pause stops the attempt and pauses the widget", () => {
