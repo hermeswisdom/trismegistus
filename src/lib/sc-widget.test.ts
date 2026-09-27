@@ -8,6 +8,7 @@ import {
   isAudioUnlocked,
   isPriming,
   noteUserGesture,
+  PRIME_MAX_SILENT_MS,
   primeForLaterPlay,
   resetPlaybackForTests,
   setCatalogSoundIds,
@@ -122,7 +123,7 @@ describe("sc-widget: one widget, one tap", () => {
     setLiveIframe(iframe);
     const { calls } = readyWidget();
     applyPlayback(cmd);
-    assert.deepEqual(calls, ["vol:100", "skip:1", "play"]);
+    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
     assert.equal(iframe.src, "https://w.soundcloud.com/player/?url=users");
     assert.equal(calls.some((c) => c.startsWith("load")), false);
   });
@@ -190,8 +191,13 @@ describe("sc-widget: one widget, one tap", () => {
     assert.deepEqual(fake.calls, ["vol:0", "play"]);
     assert.equal(isPriming(), true);
     setPlaylistForTests(PLAYLIST);
-    assert.deepEqual(fake.calls.slice(2), ["vol:100", "skip:1", "play"]);
+    // The prime may still be sounding (at 0) on the old sound: no volume yet.
+    assert.deepEqual(fake.calls.slice(2), ["skip:1", "play"]);
     assert.equal(isPriming(), false);
+    fake.widget.fire("playProgress", { soundId: 900, currentPosition: 3000 });
+    assert.equal(fake.calls.includes("vol:100"), false);
+    fake.widget.fire("playProgress", { soundId: 555, currentPosition: 40 });
+    assert.deepEqual(fake.calls.slice(4), ["vol:100"]);
     resetPlaybackForTests();
   });
 
@@ -204,22 +210,26 @@ describe("sc-widget: one widget, one tap", () => {
     assert.deepEqual(fake.calls, ["vol:100", "play"]);
   });
 
-  it("primes the wheel winner silently and pauses once audio flows", () => {
+  it("primes the wheel winner silently and hands over to the landing without a pause", () => {
     const { widget, calls } = readyWidget();
     const types = collect();
     assert.equal(primeForLaterPlay("777"), true);
     assert.deepEqual(calls, ["vol:0", "skip:2", "play"]);
     widget.fire("play", { soundId: 777, currentPosition: 0 });
     widget.fire("playProgress", { soundId: 777, currentPosition: 120 });
-    // Teardown is a bare pause: no seek, no volume restore (Rivet QC blip).
-    assert.deepEqual(calls.slice(3), ["pause"]);
+    // Not paused: a pause() while SoundCloud is still fetching aborts its
+    // segment fetch and its widget throws an uncaught AbortError. The prime
+    // keeps running at volume 0 (no seek, no volume restore either).
+    assert.deepEqual(calls.slice(3), []);
+    assert.equal(isPriming(), true);
     assert.deepEqual(types, []);
     assert.equal(isAudioUnlocked(), true);
-    // Landing: same sound is cued; volume comes back only now, right before
-    // the real play, and the primed sound restarts from 0.
+    assert.ok(PRIME_MAX_SILENT_MS >= 8000);
+    // Landing: same sound; restart from 0, and only then volume back up.
     calls.length = 0;
     applyPlayback({ ...cmd, soundId: "777" });
-    assert.deepEqual(calls, ["vol:100", "seek:0", "play"]);
+    assert.deepEqual(calls, ["seek:0", "vol:100", "play"]);
+    assert.equal(isPriming(), false);
     // Once unlocked, priming is a no-op.
     assert.equal(primeForLaterPlay("555"), false);
   });
@@ -229,7 +239,7 @@ describe("sc-widget: one widget, one tap", () => {
     primeForLaterPlay("777");
     calls.length = 0;
     applyPlayback({ ...cmd, soundId: "777" });
-    assert.deepEqual(calls, ["vol:100", "seek:0", "play"]);
+    assert.deepEqual(calls, ["seek:0", "vol:100", "play"]);
     resetPlaybackForTests();
   });
 
@@ -244,13 +254,29 @@ describe("sc-widget: one widget, one tap", () => {
     resetPlaybackForTests();
   });
 
-  it("a different tablet after a prime restores volume before skip + play", () => {
+  it("a different tablet after a prime restores volume only once the new sound flows", () => {
     const { widget, calls } = readyWidget();
     primeForLaterPlay("777");
     widget.fire("playProgress", { soundId: 777, currentPosition: 90 });
     calls.length = 0;
     applyPlayback(cmd);
-    assert.deepEqual(calls, ["vol:100", "skip:1", "play"]);
+    // The silently running prime keeps sounding for a few ms after skip().
+    assert.deepEqual(calls, ["skip:1", "play"]);
+    widget.fire("playProgress", { soundId: 777, currentPosition: 3400 });
+    assert.deepEqual(calls, ["skip:1", "play"]);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 30 });
+    assert.deepEqual(calls, ["skip:1", "play", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("a refused start after a prime still restores volume (for the Tap to play tap)", () => {
+    const { widget, calls } = readyWidget();
+    primeForLaterPlay("777");
+    calls.length = 0;
+    applyPlayback(cmd);
+    widget.fire("error");
+    assert.equal(getAttemptPhase(), "blocked");
+    assert.deepEqual(calls, ["skip:1", "play", "vol:100"]);
   });
 
   it("skips the silent prime where media volume is ignored (iOS)", () => {
@@ -261,7 +287,7 @@ describe("sc-widget: one widget, one tap", () => {
     assert.deepEqual(calls, []);
     // The real play still goes out inside the tap.
     applyPlayback({ ...cmd, soundId: "777" });
-    assert.deepEqual(calls, ["vol:100", "skip:2", "play"]);
+    assert.deepEqual(calls, ["skip:2", "vol:100", "play"]);
   });
 
   it("does not prime a queued play on iOS either", () => {
@@ -275,7 +301,7 @@ describe("sc-widget: one widget, one tap", () => {
     applyPlayback(cmd);
     assert.deepEqual(fake.calls, []);
     setPlaylistForTests(PLAYLIST);
-    assert.deepEqual(fake.calls, ["vol:100", "skip:1", "play"]);
+    assert.deepEqual(fake.calls, ["skip:1", "vol:100", "play"]);
     resetPlaybackForTests();
   });
 
@@ -286,7 +312,7 @@ describe("sc-widget: one widget, one tap", () => {
     assert.equal(getAttemptPhase(), "blocked");
     calls.length = 0;
     widget.fire("play", { soundId: 900, currentPosition: 0 });
-    assert.deepEqual(calls, ["vol:100", "skip:1", "play"]);
+    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
     widget.fire("playProgress", { soundId: 555, currentPosition: 200 });
     assert.equal(getAttemptPhase(), "playing");
   });

@@ -475,3 +475,9 @@
   pointer-events: auto;
   cursor: pointer;
 }
+
+/* The wheel's "Tap to play" shows only once the overlay covers it (the
+   hook sets html[data-sc-tap-ready]); until then it keeps its layout box. */
+html:not([data-sc-tap-ready="wheel"]) [data-sc-tap-target="wheel"] {
+  visibility: hidden;
+}

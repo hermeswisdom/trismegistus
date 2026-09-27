@@ -42,9 +42,12 @@ function useTapOverlay(
   active: boolean,
   iframeRef: RefObject<HTMLIFrameElement | null>,
 ) {
-  useEffect(() => {
+  // Layout effect: the overlay is placed in the same commit that shows the
+  // Tap to play face, before the browser paints it.
+  useLayoutEffect(() => {
     const iframe = iframeRef.current;
     if (!active || !iframe) return;
+    const root = document.documentElement;
     let hovered: "wheel" | "dock" | null = null;
     let frame = 0;
 
@@ -69,6 +72,7 @@ function useTapOverlay(
       );
       if (!target) {
         iframe.removeAttribute("data-sc-tap-overlay");
+        delete root.dataset.scTapReady;
         return;
       }
       const spot = tapOverlayPlacement(target.rect);
@@ -76,11 +80,17 @@ function useTapOverlay(
       iframe.style.left = `${spot.left}px`;
       iframe.style.top = `${spot.top}px`;
       iframe.style.clipPath = spot.clipPath;
+      // The wheel's Tap to play face stays hidden (styles.css) until the
+      // overlay really sits on it, so a tap can't beat the overlay.
+      root.dataset.scTapReady = target.kind;
     };
     const schedule = () => {
       if (!frame) frame = window.requestAnimationFrame(place);
     };
     const onMove = (e: PointerEvent) => {
+      // Mouse only. On touch, pointerover fires on touchstart; moving the
+      // iframe then made WebKit drop the tap's click entirely.
+      if (e.pointerType !== "mouse") return;
       const hit = (e.target as Element | null)?.closest?.("[data-sc-tap-target]") as HTMLElement | null;
       const next = hit ? (hit.dataset.scTapTarget === "wheel" ? "wheel" : "dock") : hovered;
       if (next !== hovered) {
@@ -104,6 +114,7 @@ function useTapOverlay(
       document.removeEventListener("pointermove", onMove, { capture: true });
       document.removeEventListener("pointerover", onMove, { capture: true });
       iframe.removeAttribute("data-sc-tap-overlay");
+      delete root.dataset.scTapReady;
       iframe.style.left = "";
       iframe.style.top = "";
       iframe.style.clipPath = "";
