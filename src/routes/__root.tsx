@@ -38,6 +38,9 @@ export const Route = createRootRoute({
         <meta charSet="utf-8" />
         <meta name="viewport" content={DEFAULT_VIEWPORT} />
         <script dangerouslySetInnerHTML={{ __html: PHONE_VIEWPORT_BOOT }} />
+        {/* SoundCloud widget API, loaded early: it must be listening before the
+            player iframe posts READY (see now-playing.tsx). */}
+        <script async src="https://w.soundcloud.com/player/api.js" />
         <HeadContent />
       </head>
       <body className="bg-bg text-fg font-sans">
