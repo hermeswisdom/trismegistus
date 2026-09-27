@@ -312,8 +312,9 @@ describe("sc-widget: one widget, one tap", () => {
     assert.equal(getAttemptPhase(), "blocked");
     calls.length = 0;
     widget.fire("play", { soundId: 900, currentPosition: 0 });
-    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
+    assert.deepEqual(calls, ["vol:0", "skip:1", "play"]);
     widget.fire("playProgress", { soundId: 555, currentPosition: 200 });
+    assert.deepEqual(calls, ["vol:0", "skip:1", "play", "vol:100"]);
     assert.equal(getAttemptPhase(), "playing");
   });
 
@@ -328,6 +329,62 @@ describe("sc-widget: one widget, one tap", () => {
     assert.deepEqual(calls, []);
     assert.ok(types.includes("play"));
     assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("after a refused prime, later starts go straight to Tap to play without a doomed play()", async () => {
+    const { widget, calls } = readyWidget("900");
+    const types = collect();
+    primeForLaterPlay("777");
+    widget.fire("play", { soundId: 777, currentPosition: 0 });
+    widget.fire("pause", { soundId: 777, currentPosition: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    assert.equal(isPriming(), false);
+    // Already paused by the browser: no extra pause() either.
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play"]);
+    calls.length = 0;
+    applyPlayback(cmd); // landing on 555, cued is 777
+    // No play(): only cue the target and bring volume back for the overlay tap.
+    assert.deepEqual(calls, ["skip:1", "vol:100"]);
+    assert.equal(getAttemptPhase(), "blocked");
+    assert.equal(types.at(-1), "blocked");
+    // The skip's own refused start is ignored while blocked.
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    widget.fire("pause", { soundId: 555, currentPosition: 0 });
+    assert.equal(getAttemptPhase(), "blocked");
+    // The overlay tap inside SoundCloud plays the cued target.
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    widget.fire("playProgress", { soundId: 555, currentPosition: 60 });
+    assert.deepEqual(calls, ["skip:1", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+    // Unlocked now: the next start is sent normally.
+    calls.length = 0;
+    applyPlayback({ ...cmd, soundId: "900" });
+    assert.deepEqual(calls, ["skip:0", "vol:100", "play"]);
+    resetPlaybackForTests();
+  });
+
+  it("a refused prime on the target just restores volume for the overlay tap", async () => {
+    const { widget, calls } = readyWidget("900");
+    primeForLaterPlay("555");
+    widget.fire("pause", { soundId: 555, currentPosition: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["vol:100"]);
+    assert.equal(getAttemptPhase(), "blocked");
+    resetPlaybackForTests();
+  });
+
+  it("a slow prime (still loading, no pause) is not treated as refused", async () => {
+    const { widget, calls } = readyWidget("900");
+    primeForLaterPlay("777");
+    widget.fire("play", { soundId: 777, currentPosition: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
+    assert.equal(getAttemptPhase(), "pending");
+    resetPlaybackForTests();
   });
 
   it("pause stops the attempt and pauses the widget", () => {
@@ -359,7 +416,8 @@ describe("player-store: retry sends before any state update", () => {
     for (const name of ["retryPlay", "play"]) {
       const b = body(name);
       assert.ok(b.includes("startWidget("), name);
-      assert.ok(b.indexOf("startWidget(") < b.indexOf("set({"), `${name}: startWidget before set`);
+      assert.ok(b.indexOf("set(") > 0, name);
+      assert.ok(b.indexOf("startWidget(") < b.indexOf("set("), `${name}: startWidget before set`);
       assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(b.slice(0, b.indexOf("startWidget("))), false);
     }
   });
