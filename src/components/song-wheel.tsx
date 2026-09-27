@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { TRACKS, getMeaning, getTrack, type Track } from "@/lib/rooms";
+import { autoFirstSpin } from "@/lib/first-spin";
+import { PLAY_BLOCKED_COPY } from "@/lib/playback";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
 import {
@@ -45,6 +47,9 @@ export function SongWheel() {
   const spinTablet = usePlayer((s) => s.spinTablet);
   const entered = usePlayer((s) => s.entered);
   const currentId = usePlayer((s) => s.currentId);
+  const resumedOnEnter = usePlayer((s) => s.resumedOnEnter);
+  const playError = usePlayer((s) => s.playError);
+  const retryPlay = usePlayer((s) => s.retryPlay);
   const nonce = useWheelSpin((s) => s.nonce);
   const winnerId = useWheelSpin((s) => s.winnerId);
   const busy = useWheelSpin((s) => s.busy);
@@ -64,20 +69,22 @@ export function SongWheel() {
   }, [angle]);
 
   useLayoutEffect(() => {
-    if (!entered || firstSpinRef.current) return;
-    if (search.daily || search.tablet) {
-      firstSpinRef.current = true;
+    const action = autoFirstSpin({
+      entered,
+      alreadyHandled: firstSpinRef.current,
+      hasDeepLink: Boolean(search.daily || search.tablet),
+      resumedOnEnter,
+      spinStarted: nonce > 0 || busy,
+    });
+    if (action === "wait") return;
+    firstSpinRef.current = true;
+    if (action === "show-current") {
       const focused = getTrack(currentId);
       if (focused) setLanded(focused);
       return;
     }
-    if (nonce > 0 || busy) {
-      firstSpinRef.current = true;
-      return;
-    }
-    firstSpinRef.current = true;
-    spinTablet({ force: true });
-  }, [entered, nonce, busy, currentId, search.daily, search.tablet, spinTablet]);
+    if (action === "spin") spinTablet({ force: true });
+  }, [entered, nonce, busy, currentId, resumedOnEnter, search.daily, search.tablet, spinTablet]);
 
   useLayoutEffect(() => {
     if (nonce === 0 || !winnerId) return;
@@ -140,6 +147,8 @@ export function SongWheel() {
   }
 
   const sealedLanded = landed ?? (landedId ? getTrack(landedId) : null);
+  // Browser refused the landing play (no gesture yet): ask for one tap.
+  const landedBlocked = Boolean(playError && sealedLanded && sealedLanded.id === currentId);
   const rite = wheelRiteCopy({
     entered,
     landedId: sealedLanded?.id ?? null,
@@ -169,6 +178,20 @@ export function SongWheel() {
               <span className="mt-2 block line-clamp-4 whitespace-pre-line text-sm font-sans font-light tracking-normal text-muted not-italic normal-case">
                 {getMeaning(sealedLanded.id)}
               </span>
+              {landedBlocked ? (
+                <button
+                  type="button"
+                  onPointerDown={noteUserGesture}
+                  onClick={() => {
+                    noteUserGesture();
+                    retryPlay();
+                  }}
+                  className="mt-4 inline-flex h-11 items-center bg-accent px-6 font-sans text-xs font-medium tracking-[0.2em] text-bg not-italic uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"
+                  data-wheel-tap-to-play=""
+                >
+                  {PLAY_BLOCKED_COPY}
+                </button>
+              ) : null}
             </p>
           ) : rite === "turning" ? (
             <p className="mt-8 text-sm text-subtle" data-wheel-turning="">

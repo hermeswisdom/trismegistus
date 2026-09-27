@@ -1,25 +1,33 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  IDLE_ATTEMPT,
   PLAY_BLOCKED_COPY,
+  PLAY_BLOCKED_POSITION_MS,
+  PLAY_BLOCKED_SETTLE_MS,
   PLAY_PENDING_COPY,
-  embedNeedsRewrite,
+  SC_USER_ID,
   planPlayback,
   playControlAria,
   playControlFace,
   playControlShowsPause,
+  playlistCovers,
+  reduceAttempt,
   resolvePlayTap,
-  shouldRewriteEmbed,
   soundcloudPlayerSrc,
+  soundcloudPlaylistSrc,
+  type AttemptEvent,
+  type AttemptState,
+  type PlaybackSurface,
 } from "./playback.ts";
 
-const surface = {
-  widgetReady: false,
-  hasWidget: false,
-  hasIframe: false,
-  liveSoundId: null as string | null,
-  unlocked: false,
-  heardPlay: false,
+const ready: PlaybackSurface = {
+  hasWidget: true,
+  widgetReady: true,
+  liveSoundId: "999",
+  soundIndex: -1,
+  soundsComplete: true,
+  audioUnlocked: false,
 };
 
 const playCmd = {
@@ -28,99 +36,207 @@ const playCmd = {
   permalink: "https://soundcloud.com/esoteric_vibrations/x",
 };
 
-describe("planPlayback", () => {
-  it("plays the live sound through a ready widget", () => {
-    const plan = planPlayback(playCmd, {
-      ...surface,
-      hasWidget: true,
-      widgetReady: true,
-      liveSoundId: "111",
+describe("planPlayback (one widget, profile playlist)", () => {
+  it("plays the cued sound with a plain play()", () => {
+    assert.deepEqual(planPlayback(playCmd, { ...ready, liveSoundId: "111" }), { op: "play" });
+  });
+
+  it("skips to another sound in the playlist and plays in the same turn", () => {
+    assert.deepEqual(planPlayback(playCmd, { ...ready, soundIndex: 7 }), {
+      op: "skip-play",
+      index: 7,
     });
-    assert.equal(plan.widgetOp, "play");
-    assert.equal(plan.iframeSoundId, null);
-    assert.equal(plan.expectPlayEvent, true);
   });
 
-  it("loads a new sound with autoplay when the widget is ready", () => {
-    const plan = planPlayback(playCmd, {
-      ...surface,
-      hasWidget: true,
-      widgetReady: true,
-      liveSoundId: "222",
+  it("never rewrites the iframe for a catalog sound", () => {
+    const ops = [
+      planPlayback(playCmd, { ...ready, soundIndex: 0 }),
+      planPlayback(playCmd, { ...ready, liveSoundId: "111" }),
+      planPlayback(playCmd, { ...ready, soundIndex: -1, soundsComplete: false }),
+    ].map((plan) => plan.op);
+    assert.equal(ops.includes("load"), false);
+  });
+
+  it("queues until the widget is ready", () => {
+    assert.deepEqual(planPlayback(playCmd, { ...ready, widgetReady: false }), {
+      op: "wait",
+      prime: false,
     });
-    assert.equal(plan.widgetOp, "load");
-    assert.equal(plan.loadAutoplay, true);
-    assert.equal(plan.iframeSoundId, null);
-  });
-
-  it("rewrites the iframe src in the same turn when the widget is not ready", () => {
-    const plan = planPlayback(playCmd, {
-      ...surface,
-      hasIframe: true,
-      hasWidget: true,
-      widgetReady: false,
+    assert.deepEqual(planPlayback(playCmd, { ...ready, hasWidget: false }), {
+      op: "wait",
+      prime: false,
     });
-    assert.equal(plan.widgetOp, null);
-    assert.equal(plan.iframeSoundId, "111");
-    assert.equal(plan.iframeAutoplay, true);
-    assert.equal(plan.expectPlayEvent, true);
   });
 
-  it("does not reload a ready widget on a normal play tap", () => {
-    const ready = {
-      ...surface,
-      hasIframe: true,
-      hasWidget: true,
-      widgetReady: true,
-      heardPlay: true,
-      liveSoundId: "111",
-    };
-    const plan = planPlayback({ ...playCmd, forceEmbed: true }, ready);
-    assert.equal(plan.iframeSoundId, null);
-    assert.equal(plan.widgetOp, "play");
-    assert.equal(shouldRewriteEmbed({ ...playCmd, forceEmbed: true }, ready), false);
-  });
-
-  it("rewrites the iframe on a blocked retry so iOS can take a fresh gesture", () => {
-    const plan = planPlayback(
-      { ...playCmd, forceEmbed: true, retry: true },
-      {
-        ...surface,
-        hasIframe: true,
-        hasWidget: true,
-        widgetReady: true,
-        heardPlay: false,
-        liveSoundId: "111",
-      },
+  it("queues while the playlist loads and primes inside the tap if audio is still locked", () => {
+    assert.deepEqual(planPlayback(playCmd, { ...ready, soundsComplete: false }), {
+      op: "wait",
+      prime: true,
+    });
+    assert.deepEqual(
+      planPlayback(playCmd, { ...ready, soundsComplete: false, audioUnlocked: true }),
+      { op: "wait", prime: false },
     );
-    assert.equal(plan.iframeSoundId, "111");
-    assert.equal(plan.iframeAutoplay, true);
-    assert.equal(plan.widgetOp, null);
   });
 
-  it("pauses the widget without touching the iframe", () => {
-    const plan = planPlayback(
-      { ...playCmd, intent: "pause" },
-      { ...surface, hasWidget: true, widgetReady: true, liveSoundId: "111" },
-    );
-    assert.equal(plan.widgetOp, "pause");
-    assert.equal(plan.expectPlayEvent, false);
-    assert.equal(plan.iframeSoundId, null);
+  it("falls back to a single-track load only for a sound missing from a complete playlist", () => {
+    assert.deepEqual(planPlayback(playCmd, ready), { op: "load" });
+  });
+
+  it("pauses whenever a widget exists", () => {
+    const pause = { ...playCmd, intent: "pause" as const };
+    assert.deepEqual(planPlayback(pause, ready), { op: "pause" });
+    assert.deepEqual(planPlayback(pause, { ...ready, hasWidget: false }), { op: "none" });
   });
 });
 
-describe("embedNeedsRewrite", () => {
-  it("treats equivalent query orders as the same embed", () => {
-    const a = soundcloudPlayerSrc("1", true);
-    const b = soundcloudPlayerSrc("1", true);
-    assert.equal(embedNeedsRewrite(a, b), false);
-    assert.equal(embedNeedsRewrite(a, soundcloudPlayerSrc("1", false)), true);
+describe("playlistCovers", () => {
+  it("is complete only when every catalog id is present", () => {
+    assert.equal(playlistCovers(["1", "2", "3"], ["1", "3"]), true);
+    assert.equal(playlistCovers(["1", "2"], ["1", "3"]), false);
+    assert.equal(playlistCovers([], ["1"]), false);
+  });
+});
+
+function runAttempt(events: AttemptEvent[], start: AttemptState = IDLE_ATTEMPT) {
+  let state = start;
+  const notices: string[] = [];
+  const effects: string[] = [];
+  for (const event of events) {
+    const result = reduceAttempt(state, event);
+    state = result.state;
+    if (result.notice) notices.push(result.notice);
+    effects.push(...result.effects);
+  }
+  return { state, notices, effects };
+}
+
+describe("reduceAttempt (honest play state)", () => {
+  const t0 = 1_000_000;
+
+  it("stays pending on PLAY and confirms only on progress > 0", () => {
+    const run = runAttempt([
+      { type: "start", soundId: "111", now: t0 },
+      { type: "widget-play", soundId: "111", now: t0 + 50 },
+    ]);
+    assert.deepEqual(run.notices, ["pending"]);
+    assert.equal(run.state.phase, "pending");
+
+    const zero = runAttempt(
+      [{ type: "widget-progress", soundId: "111", position: 0 }],
+      run.state,
+    );
+    assert.equal(zero.state.phase, "pending");
+
+    const live = runAttempt(
+      [{ type: "widget-progress", soundId: "111", position: 180 }],
+      run.state,
+    );
+    assert.deepEqual(live.notices, ["play"]);
+    assert.equal(live.state.phase, "playing");
+  });
+
+  it("treats a PAUSE at ~0 with no PLAY behind it as blocked", () => {
+    const run = runAttempt([
+      { type: "start", soundId: "111", now: t0 },
+      { type: "widget-play", soundId: "111", now: t0 + 40 },
+      { type: "widget-pause", soundId: "111", position: 0, now: t0 + 400 },
+    ]);
+    assert.deepEqual(run.effects.filter((e) => e === "arm-settle"), ["arm-settle"]);
+    const settled = reduceAttempt(run.state, {
+      type: "settle-timeout",
+      now: t0 + 400 + PLAY_BLOCKED_SETTLE_MS,
+    });
+    assert.equal(settled.notice, "blocked");
+    assert.equal(settled.state.phase, "blocked");
+  });
+
+  it("does not block on the PLAY/PAUSE/PLAY burst a normal skip produces", () => {
+    const run = runAttempt([
+      { type: "start", soundId: "111", now: t0 },
+      { type: "widget-play", soundId: "111", now: t0 + 20 },
+      { type: "widget-pause", soundId: "111", position: 0, now: t0 + 30 },
+      { type: "widget-play", soundId: "111", now: t0 + 60 },
+      { type: "settle-timeout", now: t0 + 30 + PLAY_BLOCKED_SETTLE_MS },
+      { type: "widget-progress", soundId: "111", position: 190 },
+    ]);
+    assert.deepEqual(run.notices, ["pending", "play"]);
+  });
+
+  it("ignores events from the sound being skipped away from", () => {
+    const playing: AttemptState = { phase: "playing", soundId: "old", startedAt: t0, suspectSince: null };
+    const run = runAttempt(
+      [
+        { type: "start", soundId: "new", now: t0 + 10 },
+        { type: "widget-pause", soundId: "old", position: 6111, now: t0 + 20 },
+        { type: "widget-progress", soundId: "old", position: 6200 },
+      ],
+      playing,
+    );
+    assert.deepEqual(run.notices, ["pending"]);
+    assert.equal(run.state.phase, "pending");
+  });
+
+  it("a PAUSE well past zero while pending is not a refusal", () => {
+    const run = runAttempt([
+      { type: "start", soundId: "111", now: t0 },
+      { type: "widget-pause", soundId: "111", position: PLAY_BLOCKED_POSITION_MS + 500, now: t0 + 100 },
+    ]);
+    assert.equal(run.effects.includes("arm-settle"), false);
+  });
+
+  it("reports a real pause and finish only after confirmed playback", () => {
+    const playing: AttemptState = { phase: "playing", soundId: "111", startedAt: t0, suspectSince: null };
+    assert.equal(
+      reduceAttempt(playing, { type: "widget-pause", soundId: "111", position: 5000, now: t0 }).notice,
+      "pause",
+    );
+    assert.equal(reduceAttempt(playing, { type: "widget-finish", soundId: "111" }).notice, "finish");
+    assert.equal(
+      reduceAttempt(IDLE_ATTEMPT, { type: "widget-pause", soundId: "111", position: 0, now: t0 }).notice,
+      null,
+    );
+  });
+
+  it("blocks on a widget error or the confirm timeout while pending", () => {
+    const pending = runAttempt([{ type: "start", soundId: "111", now: t0 }]).state;
+    assert.equal(reduceAttempt(pending, { type: "widget-error" }).notice, "blocked");
+    assert.equal(reduceAttempt(pending, { type: "confirm-timeout" }).notice, "blocked");
+  });
+
+  it("a late progress after blocked recovers to playing", () => {
+    const blocked: AttemptState = { phase: "blocked", soundId: "111", startedAt: t0, suspectSince: null };
+    assert.equal(
+      reduceAttempt(blocked, { type: "widget-progress", soundId: "111", position: 400 }).notice,
+      "play",
+    );
+  });
+
+  it("stop (user pause) goes idle without a notice", () => {
+    const pending = runAttempt([{ type: "start", soundId: "111", now: t0 }]).state;
+    const stopped = reduceAttempt(pending, { type: "stop" });
+    assert.equal(stopped.state.phase, "idle");
+    assert.equal(stopped.notice, null);
+  });
+});
+
+describe("embed urls", () => {
+  it("hosts the whole esoteric_vibrations profile, never auto-playing", () => {
+    const src = new URL(soundcloudPlaylistSrc());
+    assert.equal(src.origin, "https://w.soundcloud.com");
+    assert.equal(src.searchParams.get("url"), `https://api.soundcloud.com/users/${SC_USER_ID}`);
+    assert.equal(src.searchParams.get("auto_play"), "false");
+    assert.equal(src.searchParams.get("visual"), "false");
+  });
+
+  it("still builds single-track urls", () => {
+    assert.match(soundcloudPlayerSrc("1", true), /tracks%2F1/);
   });
 });
 
 describe("copy", () => {
-  it("keeps the blocked-play rite in brand voice", () => {
-    assert.match(PLAY_BLOCKED_COPY, /tablet did not sound/i);
+  it("asks for a tap when the browser refused to start", () => {
+    assert.equal(PLAY_BLOCKED_COPY, "Tap to play");
     assert.match(PLAY_PENDING_COPY, /sounding/i);
   });
 });
@@ -161,7 +277,8 @@ describe("resolvePlayTap", () => {
 describe("playControlFace", () => {
   const rest = { playing: false, playPending: false, playError: null as string | null };
 
-  it("shows Pause as soon as play is pending or live", () => {
+  it("pending is its own face; Pause only once confirmed playing", () => {
+    assert.equal(playControlFace({ ...rest, playPending: true }), "pending");
     assert.equal(playControlFace({ ...rest, playPending: true, playing: true }), "pending");
     assert.equal(playControlShowsPause(playControlFace({ ...rest, playPending: true, playing: true })), true);
     assert.equal(playControlAria(playControlFace({ ...rest, playPending: true, playing: true })), "Pause");

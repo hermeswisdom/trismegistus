@@ -3,15 +3,23 @@ import { Pause, Play, SkipForward, Dices } from "lucide-react";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
-import { PLAY_PENDING_COPY, playControlAria, playControlFace, playControlShowsPause } from "@/lib/playback";
-import { FEATURED_ID, embedSrc, getMeaning, getTrack } from "@/lib/rooms";
+import {
+  PLAY_PENDING_COPY,
+  playControlAria,
+  playControlFace,
+  playControlShowsPause,
+  soundcloudPlaylistSrc,
+} from "@/lib/playback";
+import { TRACKS, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
 import { usePlayer } from "@/lib/player-store";
 import {
   bindLiveWidget,
   getLiveWidget,
+  getPlaybackSurface,
   loadSoundCloudApi,
   noteUserGesture,
+  setCatalogSoundIds,
   setLiveIframe,
   setLiveWidget,
   subscribePlayback,
@@ -35,7 +43,9 @@ export function NowPlaying() {
   const setTiming = usePlayer((s) => s.setTiming);
   const hydrateHearts = useHearts((s) => s.hydrate);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const initialSrc = useRef(embedSrc(getTrack(FEATURED_ID)?.soundId ?? "", false));
+  // One widget for the page life: the whole profile as a playlist. Never
+  // rewritten per tablet (a reloaded iframe has no gesture, so iOS refused it).
+  const initialSrc = useRef(soundcloudPlaylistSrc());
   const current = getTrack(currentId);
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
   const face = playControlFace({ playing, playPending, playError });
@@ -49,27 +59,30 @@ export function NowPlaying() {
     const iframe = iframeRef.current;
     if (!iframe) return;
     setLiveIframe(iframe);
+    setCatalogSoundIds(TRACKS.map((track) => track.soundId));
     let cancelled = false;
+    let readyCheck = 0;
 
-    const attach = () => {
-      void loadSoundCloudApi()
-        .then((SC) => {
-          if (cancelled || !iframeRef.current) return;
-          const widget = SC.Widget(iframeRef.current);
-          bindLiveWidget(
-            widget,
-            SC.Widget.Events,
-            getTrack(usePlayer.getState().currentId)?.soundId ?? null,
-          );
-          hydrateWaveform(widget);
-        })
-        .catch(() => {
-          /* iframe src fallback still starts playback without the API */
-        });
-    };
+    // api.js is loaded async from <head> so it is listening before the
+    // player posts READY. This iframe is never reloaded per tablet any more,
+    // so if READY was still missed, reload the idle widget once.
+    void loadSoundCloudApi()
+      .then((SC) => {
+        const el = iframeRef.current;
+        if (cancelled || !el) return;
+        const widget = SC.Widget(el);
+        bindLiveWidget(widget, SC.Widget.Events);
+        hydrateWaveform(widget);
+        readyCheck = window.setTimeout(() => {
+          if (!cancelled && !getPlaybackSurface().widgetReady) {
+            el.setAttribute("src", initialSrc.current);
+          }
+        }, 8000);
+      })
+      .catch(() => {
+        /* no SoundCloud API: a play shows "Tap to play" after the timeout */
+      });
 
-    attach();
-    iframe.addEventListener("load", attach);
     const off = subscribePlayback((notice) => {
       if (notice.type === "play" || notice.type === "ready") {
         const widget = getLiveWidget();
@@ -90,8 +103,8 @@ export function NowPlaying() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(readyCheck);
       off();
-      iframe.removeEventListener("load", attach);
       setLiveWidget(null, null);
       setLiveIframe(null);
     };
