@@ -19,6 +19,10 @@ import {
   type AttemptEvent,
   type AttemptState,
   type PlaybackSurface,
+  SC_PLAY_BUTTON,
+  mediaVolumeIgnored,
+  pickTapTarget,
+  tapOverlayPlacement,
 } from "./playback.ts";
 
 const ready: PlaybackSurface = {
@@ -289,5 +293,56 @@ describe("playControlFace", () => {
     assert.equal(playControlFace({ ...rest, playError: PLAY_BLOCKED_COPY }), "retry");
     assert.equal(playControlAria(playControlFace({ ...rest, playError: PLAY_BLOCKED_COPY })), "Retry play");
     assert.equal(playControlFace(rest), "play");
+  });
+});
+
+describe("mediaVolumeIgnored", () => {
+  const base = { platform: "", maxTouchPoints: 0, coarsePointer: false, volumeSticks: true };
+  it("flags iPhone / iPad / iPod", () => {
+    const ua = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15";
+    assert.equal(mediaVolumeIgnored({ ...base, userAgent: ua, maxTouchPoints: 5 }), true);
+  });
+  it("flags iPadOS posing as a Mac", () => {
+    const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17.0 Safari/605.1.15";
+    assert.equal(mediaVolumeIgnored({ ...base, userAgent: ua, platform: "MacIntel", maxTouchPoints: 5 }), true);
+    assert.equal(mediaVolumeIgnored({ ...base, userAgent: ua, platform: "MacIntel" }), false);
+  });
+  it("flags any browser whose volume does not stick", () => {
+    assert.equal(mediaVolumeIgnored({ ...base, userAgent: "X11; Linux", volumeSticks: false }), true);
+  });
+  it("leaves desktop Chrome and Android alone", () => {
+    assert.equal(mediaVolumeIgnored({ ...base, userAgent: "Mozilla/5.0 (X11; Linux x86_64) Chrome/140" }), false);
+    assert.equal(
+      mediaVolumeIgnored({ ...base, userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/140 Mobile", maxTouchPoints: 5, coarsePointer: true }),
+      false,
+    );
+  });
+});
+
+describe("tap overlay", () => {
+  it("centres SoundCloud's play button on the control", () => {
+    const spot = tapOverlayPlacement({ left: 1164, top: 814, width: 44, height: 44 });
+    assert.equal(spot.left + SC_PLAY_BUTTON.x, 1186);
+    assert.equal(spot.top + SC_PLAY_BUTTON.y, 836);
+    assert.match(spot.clipPath, /^circle\(20px at 29px 32px\)$/);
+  });
+  it("keeps the clip inside a small control", () => {
+    assert.match(tapOverlayPlacement({ left: 0, top: 0, width: 30, height: 30 }).clipPath, /circle\(15px/);
+  });
+  const vp = { width: 1440, height: 900, dockTop: 780 };
+  const dock = { kind: "dock" as const, rect: { left: 1164, top: 814, width: 44, height: 44 } };
+  const wheel = { kind: "wheel" as const, rect: { left: 600, top: 500, width: 160, height: 44 } };
+  it("prefers the wheel's Tap to play when fully on screen", () => {
+    assert.equal(pickTapTarget([dock, wheel], vp)?.kind, "wheel");
+  });
+  it("falls back to the dock when the wheel button is off screen or under the dock", () => {
+    assert.equal(pickTapTarget([dock, { ...wheel, rect: { ...wheel.rect, top: -60 } }], vp)?.kind, "dock");
+    assert.equal(pickTapTarget([dock, { ...wheel, rect: { ...wheel.rect, top: 760 } }], vp)?.kind, "dock");
+  });
+  it("follows the control under the pointer", () => {
+    assert.equal(pickTapTarget([dock, wheel], vp, "dock")?.kind, "dock");
+  });
+  it("returns null with nothing visible", () => {
+    assert.equal(pickTapTarget([], vp), null);
   });
 });

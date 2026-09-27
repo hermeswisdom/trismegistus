@@ -183,11 +183,12 @@ export function SongWheel() {
                   type="button"
                   onPointerDown={noteUserGesture}
                   onClick={() => {
-                    noteUserGesture();
                     retryPlay();
+                    noteUserGesture();
                   }}
                   className="mt-4 inline-flex h-11 items-center bg-accent px-6 font-sans text-xs font-medium tracking-[0.2em] text-bg not-italic uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"
                   data-wheel-tap-to-play=""
+                  data-sc-tap-target="wheel"
                 >
                   {PLAY_BLOCKED_COPY}
                 </button>

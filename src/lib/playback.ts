@@ -290,3 +290,96 @@ export function playControlAria(face: PlayControlFace) {
   if (face === "pending" || face === "pause") return "Pause";
   return "Play";
 }
+
+// ---------------------------------------------------------------------------
+// Device capability
+// ---------------------------------------------------------------------------
+
+export type MediaVolumeProbe = {
+  userAgent: string;
+  platform?: string;
+  maxTouchPoints: number;
+  coarsePointer: boolean;
+  /** An <audio> element kept a volume of 0.5 (null = could not test). */
+  volumeSticks: boolean | null;
+};
+
+/**
+ * True where `HTMLMediaElement.volume` is ignored (iOS / iPadOS), so a
+ * volume-0 "silent prime" would be heard.
+ */
+export function mediaVolumeIgnored(probe: MediaVolumeProbe) {
+  if (probe.volumeSticks === false) return true;
+  if (/\b(iPhone|iPad|iPod)\b/.test(probe.userAgent)) return true;
+  // iPadOS 13+ reports a desktop Mac UA; touch gives it away.
+  const macLike = /Macintosh|MacIntel/.test(`${probe.userAgent} ${probe.platform ?? ""}`);
+  if (macLike && probe.maxTouchPoints > 1) return true;
+  if (macLike && probe.coarsePointer) return true;
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// "Tap to play" overlay
+// ---------------------------------------------------------------------------
+
+/**
+ * SoundCloud's own play button inside the 320×166 classic widget
+ * (visual=false, show_artwork=false): a ~42px circle centred here.
+ */
+export const SC_PLAY_BUTTON = { x: 29, y: 32, radius: 20 } as const;
+
+export type TapTargetRect = { left: number; top: number; width: number; height: number };
+
+/**
+ * Where to put the widget iframe so SoundCloud's play button sits over a
+ * "Tap to play" control. Strict autoplay (Chrome with a user-gesture policy,
+ * Android) only lets a cross-origin iframe start audio from a tap inside
+ * that iframe; a tap on our button is not enough.
+ */
+export function tapOverlayPlacement(target: TapTargetRect) {
+  const cx = target.left + target.width / 2;
+  const cy = target.top + target.height / 2;
+  const radius = Math.max(
+    12,
+    Math.min(SC_PLAY_BUTTON.radius, Math.floor(Math.min(target.width, target.height) / 2)),
+  );
+  return {
+    left: Math.round(cx - SC_PLAY_BUTTON.x),
+    top: Math.round(cy - SC_PLAY_BUTTON.y),
+    clipPath: `circle(${radius}px at ${SC_PLAY_BUTTON.x}px ${SC_PLAY_BUTTON.y}px)`,
+  };
+}
+
+export type TapTargetCandidate = {
+  kind: "wheel" | "dock";
+  rect: TapTargetRect;
+};
+
+/**
+ * Pick the control to cover: the one the pointer is on, else the wheel's
+ * "Tap to play" when it is fully on screen above the dock, else the dock.
+ */
+export function pickTapTarget(
+  candidates: TapTargetCandidate[],
+  viewport: { width: number; height: number; dockTop: number },
+  hovered?: "wheel" | "dock" | null,
+): TapTargetCandidate | null {
+  const visible = candidates.filter(
+    (c) =>
+      c.rect.width > 0 &&
+      c.rect.height > 0 &&
+      c.rect.left >= 0 &&
+      c.rect.top >= 0 &&
+      c.rect.left + c.rect.width <= viewport.width &&
+      c.rect.top + c.rect.height <= viewport.height,
+  );
+  if (hovered) {
+    const h = visible.find((c) => c.kind === hovered);
+    if (h) return h;
+  }
+  const wheel = visible.find(
+    (c) => c.kind === "wheel" && c.rect.top + c.rect.height <= viewport.dockTop,
+  );
+  if (wheel) return wheel;
+  return visible.find((c) => c.kind === "dock") ?? null;
+}
