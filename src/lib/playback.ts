@@ -383,3 +383,21 @@ export function pickTapTarget(
   if (wheel) return wheel;
   return visible.find((c) => c.kind === "dock") ?? null;
 }
+
+/**
+ * Scroll delta that brings the wheel's Tap to play fully on screen above the
+ * dock when it landed just behind it (long meanings push it down on phones).
+ * 0 when it is already clear or too far away to be what the user is on.
+ */
+export function tapTargetNudge(
+  rect: TapTargetRect,
+  viewport: { height: number; dockTop: number },
+  margin = 16,
+  reach = 320,
+) {
+  const bottom = rect.top + rect.height;
+  if (rect.top >= 0 && bottom <= viewport.dockTop) return 0;
+  if (rect.top > viewport.height + reach || bottom < -reach) return 0;
+  if (bottom > viewport.dockTop) return Math.ceil(bottom - (viewport.dockTop - margin));
+  return Math.floor(rect.top - margin);
+}

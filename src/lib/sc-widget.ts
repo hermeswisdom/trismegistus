@@ -123,10 +123,48 @@ let attempt: AttemptState = IDLE_ATTEMPT;
 /** A play that could not run this turn (widget or playlist not ready). */
 let queued: PlayCommand | null = null;
 /** Silent in-gesture start so a later, gesture-less play is allowed (iOS). */
-let priming: { startedAt: number } | null = null;
+let priming: { startedAt: number; flowing: boolean } | null = null;
+/**
+ * A prime that has started flowing is not paused: it keeps running at
+ * volume 0 until the real play takes it over (landing, ~4 s later). A
+ * pause() while SoundCloud is still fetching its first segments aborts that
+ * fetch, and SoundCloud's widget then throws an uncaught "AbortError: signal
+ * is aborted without reason" inside its frame. skip() and seekTo() don't.
+ * This is only a safety stop if no real play ever comes.
+ */
+export const PRIME_MAX_SILENT_MS = 12000;
 let primeTimer: ReturnType<typeof setTimeout> | null = null;
 /** Sound a prime left paused a few hundred ms in (restart it from 0 on play). */
 let primedSoundId: string | null = null;
+/** The next run() takes over from a prime that may still be sounding (at 0). */
+let primeHandoff = false;
+/**
+ * After skipping away from a running prime, volume comes back only once the
+ * new sound reports progress: until then the old one can still be heard.
+ */
+let restoreVolumeFor: string | null = null;
+/**
+ * A prime sent inside a tap was refused by the browser (it never flowed and
+ * SoundCloud paused itself). Strict autoplay then refuses every start the
+ * page sends until a tap lands inside the SoundCloud frame, so later starts
+ * go straight to "Tap to play" instead of sending a doomed play(): each
+ * refused play over partly loaded media makes SoundCloud's widget throw an
+ * uncaught AbortError in its frame.
+ */
+let primeRefused = false;
+/** Last widget event seen while priming. */
+let primeLastEvent: "play" | "pause" | null = null;
+/** Attempt start time we already moved off a wrong cue for (once only). */
+let rescuedAttemptAt: number | null = null;
+
+function restoreVolume() {
+  restoreVolumeFor = null;
+  try {
+    live?.setVolume(100);
+  } catch {
+    /* iframe gone */
+  }
+}
 /** null = detect on first use; tests override. */
 let primeSupported: boolean | null = null;
 
@@ -253,6 +291,7 @@ function dispatch(event: AttemptEvent) {
     }
   }
   if (result.notice === "play") audioUnlocked = true;
+  if (result.notice === "blocked" && restoreVolumeFor !== null) restoreVolume();
   if (result.notice === "blocked") {
     queued = null;
     emit({ type: "blocked", message: PLAY_BLOCKED_COPY });
@@ -412,8 +451,39 @@ function startPrime(soundId?: string) {
     return false;
   }
   primedSoundId = liveSoundId;
-  priming = { startedAt: now() };
-  primeTimer = later(() => endPriming({ pause: true }), 3000);
+  priming = { startedAt: now(), flowing: false };
+  primeLastEvent = null;
+  primeTimer = later(() => {
+    const refused = priming !== null && !priming.flowing && primeLastEvent === "pause";
+    if (refused) primeRefused = true;
+    // A refused prime is already paused; don't poke it again.
+    endPriming({ pause: !refused });
+  }, 3000);
+  return true;
+}
+
+/**
+ * Spin while a tablet sounds: hush it instead of pausing. A pause() within
+ * the first seconds of a start aborts SoundCloud's segment fetch and its
+ * widget throws an uncaught AbortError; volume 0 is silent and the landing
+ * takes over with skip() exactly like after a prime (12 s safety stop).
+ * Falls back to false (caller pauses) where volume is ignored (iOS).
+ */
+export function quietForSpin() {
+  if (!live || priming || !canPrimeSilently()) return false;
+  if (attempt.phase !== "playing" && attempt.phase !== "pending") return false;
+  try {
+    live.setVolume(0);
+  } catch {
+    return false;
+  }
+  queued = null;
+  dispatch({ type: "stop" });
+  // Resume, not restart, if the same tablet is played again.
+  primedSoundId = null;
+  priming = { startedAt: now(), flowing: true };
+  if (primeTimer !== null) clearTimeout(primeTimer);
+  primeTimer = later(() => endPriming({ pause: true }), PRIME_MAX_SILENT_MS);
   return true;
 }
 
@@ -427,22 +497,32 @@ export function isPriming() {
 
 function run(cmd: PlayCommand, op: PlaybackOp) {
   const widget = live;
+  const handoff = primeHandoff;
+  primeHandoff = false;
   if (!widget) return;
+  if (op.op !== "skip-play") restoreVolumeFor = null;
   try {
     if (op.op === "pause") {
       widget.pause();
     } else if (op.op === "play") {
       // Volume back up only now, right before the real play (a prime left
-      // it at 0). A primed sound sits a few hundred ms in: restart it.
-      widget.setVolume(100);
+      // it at 0, possibly still running). A primed sound restarts from 0.
       if (primedSoundId !== null && primedSoundId === cmd.soundId) widget.seekTo(0);
+      widget.setVolume(100);
       primedSoundId = null;
       widget.play();
     } else if (op.op === "skip-play") {
-      widget.setVolume(100);
       primedSoundId = null;
       widget.skip?.(op.index);
       liveSoundId = cmd.soundId;
+      if (handoff) {
+        // A prime may still be running silently on another sound, which keeps
+        // playing for a few ms after skip(). Volume returns on the new
+        // sound's first progress (or if the start is refused).
+        restoreVolumeFor = cmd.soundId;
+      } else {
+        widget.setVolume(100);
+      }
       widget.play();
     } else if (op.op === "load") {
       // Not in the profile playlist (removed / private on SoundCloud).
@@ -467,7 +547,10 @@ function runQueued() {
   const op = planPlayback(cmd, getPlaybackSurface(cmd.soundId));
   if (op.op === "wait") return;
   queued = null;
-  if (priming) endPriming({ pause: false });
+  if (priming) {
+    primeHandoff = true;
+    endPriming({ pause: false });
+  }
   run(cmd, op);
 }
 
@@ -486,6 +569,28 @@ export function applyPlayback(cmd: PlayCommand): PlaybackOp {
   }
 
   const op = planPlayback(cmd, getPlaybackSurface(cmd.soundId));
+
+  if (primeRefused && !audioUnlocked && (op.op === "play" || op.op === "skip-play")) {
+    queued = null;
+    if (priming) endPriming({ pause: false });
+    restoreVolumeFor = null;
+    dispatch({ type: "start", soundId: cmd.soundId, now: now() });
+    dispatch({ type: "widget-error" });
+    // The overlay tap plays whatever is cued, so cue the target now. skip()
+    // alone is refused like any start, but nothing has loaded yet, so
+    // SoundCloud has no fetch to abort. Then volume up for that tap.
+    try {
+      if (op.op === "skip-play") {
+        live?.skip?.(op.index);
+        liveSoundId = cmd.soundId;
+      }
+    } catch {
+      /* iframe gone */
+    }
+    restoreVolume();
+    return { op: "none" };
+  }
+
   dispatch({ type: "start", soundId: cmd.soundId, now: now() });
 
   if (op.op === "wait") {
@@ -495,7 +600,10 @@ export function applyPlayback(cmd: PlayCommand): PlaybackOp {
   }
 
   queued = null;
-  if (priming) endPriming({ pause: false });
+  if (priming) {
+    primeHandoff = true;
+    endPriming({ pause: false });
+  }
   run(cmd, op);
   return op;
 }
@@ -562,17 +670,32 @@ export function bindLiveWidget(widget: SCWidget, events: SCEvents) {
   widget.bind(events.PLAY, (raw) => {
     const sid = eventSound(raw);
     if (sid) liveSoundId = sid;
-    if (priming) return;
-    if (attempt.phase === "blocked" && sid && attempt.soundId && sid !== attempt.soundId) {
+    if (priming) {
+      primeLastEvent = "play";
+      return;
+    }
+    if (
+      attempt.phase === "blocked" &&
+      sid &&
+      attempt.soundId &&
+      sid !== attempt.soundId &&
+      rescuedAttemptAt !== attempt.startedAt
+    ) {
+      // SoundCloud fires several PLAY events per start; skip only once, or the
+      // repeated skips abort the new sound's fetch.
+      rescuedAttemptAt = attempt.startedAt;
       // A tap on SoundCloud's own button (the "Tap to play" overlay) started
       // whatever it had cued; that tap unlocked the frame, so move it on.
       const index = playlist.indexOf(attempt.soundId);
       if (index >= 0 && widget.skip) {
         try {
-          widget.setVolume(100);
+          // Hush the wrong sound, move on, and bring volume back once the
+          // right one flows.
+          widget.setVolume(0);
           widget.skip(index);
           widget.play();
           liveSoundId = attempt.soundId;
+          restoreVolumeFor = attempt.soundId;
         } catch {
           /* ignore */
         }
@@ -582,7 +705,10 @@ export function bindLiveWidget(widget: SCWidget, events: SCEvents) {
   });
 
   widget.bind(events.PAUSE, (raw) => {
-    if (priming) return;
+    if (priming) {
+      primeLastEvent = "pause";
+      return;
+    }
     dispatch({
       type: "widget-pause",
       soundId: eventSound(raw),
@@ -600,12 +726,16 @@ export function bindLiveWidget(widget: SCWidget, events: SCEvents) {
     const sid = eventSound(raw);
     const position = eventPosition(raw);
     if (priming) {
-      if (position > 0) {
+      if (position > 0 && !priming.flowing) {
         audioUnlocked = true;
-        endPriming({ pause: true });
+        primeRefused = false;
+        priming.flowing = true;
+        if (primeTimer !== null) clearTimeout(primeTimer);
+        primeTimer = later(() => endPriming({ pause: true }), PRIME_MAX_SILENT_MS);
       }
       return;
     }
+    if (restoreVolumeFor !== null && sid === restoreVolumeFor && position > 0) restoreVolume();
     if (attempt.soundId && sid && sid !== attempt.soundId) return;
     dispatch({ type: "widget-progress", soundId: sid, position });
     if (attempt.phase === "playing") emit({ type: "progress", raw });
@@ -644,6 +774,11 @@ export function resetPlaybackForTests() {
   if (primeTimer !== null) clearTimeout(primeTimer);
   primeTimer = null;
   primedSoundId = null;
+  primeHandoff = false;
+  restoreVolumeFor = null;
+  primeRefused = false;
+  primeLastEvent = null;
+  rescuedAttemptAt = null;
   primeSupported = null;
   clearTimers();
   listeners.clear();

@@ -4,12 +4,14 @@ import { readLastTablet, resolveEnterIntent, writeLastTablet } from "@/lib/last-
 import { FEATURED_ID, getTrack, nextTrack, randomTrack } from "@/lib/rooms";
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
-import { resolvePlayTap } from "@/lib/playback";
+import { PLAY_BLOCKED_COPY, resolvePlayTap } from "@/lib/playback";
 import {
   applyPlayback,
+  getAttemptPhase,
   getLiveWidget,
   noteUserGesture,
   primeForLaterPlay,
+  quietForSpin,
   subscribePlayback,
 } from "@/lib/sc-widget";
 import { wheelPlayOn } from "@/lib/wheel-rite";
@@ -50,6 +52,19 @@ type PlayerState = {
  * Sends skip + play to the one widget in this call stack, so a tap handler
  * that reaches here synchronously keeps its user gesture.
  */
+/**
+ * UI state right after startWidget: normally pending, but a start the widget
+ * already knows will be refused comes back blocked synchronously.
+ */
+function afterStart() {
+  const blocked = getAttemptPhase() === "blocked";
+  return {
+    playing: false,
+    playPending: !blocked,
+    playError: blocked ? PLAY_BLOCKED_COPY : null,
+  };
+}
+
 function startWidget(nextId: string) {
   const track = getTrack(nextId);
   if (!track) return;
@@ -159,7 +174,10 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       return;
     }
     if (get().playing || get().playPending) {
-      get().pause();
+      // Hush (volume 0) rather than pause where that is silent: an early
+      // pause() makes SoundCloud throw an AbortError. iOS still pauses.
+      if (quietForSpin()) set({ playing: false, playPending: false });
+      else get().pause();
     }
     // The winner sounds on landing, ~4s after this tap and outside it. Start
     // the widget silently now (inside the tap) so iOS allows that later play.
@@ -192,9 +210,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     set({
       ...(opts?.markEntered || get().entered ? { entered: true } : {}),
       currentId: nextId,
-      playing: false,
-      playPending: true,
-      playError: null,
+      ...afterStart(),
       elapsed: reset ? 0 : get().elapsed,
       duration: reset ? 0 : get().duration,
     });
@@ -246,7 +262,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     startWidget(id);
     ensurePlaybackBridge();
     noteUserGesture();
-    set({ playing: false, playPending: true, playError: null });
+    set(afterStart());
   },
 
   seek: (ratio) => {
