@@ -11,6 +11,7 @@ import {
   pickTapTarget,
   soundcloudPlaylistSrc,
   tapOverlayPlacement,
+  tapTargetNudge,
   type TapTargetCandidate,
 } from "@/lib/playback";
 import { TRACKS, getMeaning, getTrack } from "@/lib/rooms";
@@ -50,6 +51,7 @@ function useTapOverlay(
     const root = document.documentElement;
     let hovered: "wheel" | "dock" | null = null;
     let frame = 0;
+    let nudged = false;
 
     const place = () => {
       frame = 0;
@@ -61,13 +63,22 @@ function useTapOverlay(
         candidates.push({ kind, rect: { left: r.left, top: r.top, width: r.width, height: r.height } });
       });
       const dock = document.querySelector<HTMLElement>("[data-player-current]");
+      const dockTop = dock?.getBoundingClientRect().top ?? window.innerHeight;
+      const wheel = candidates.find((c) => c.kind === "wheel");
+      if (wheel && !nudged) {
+        // Once per refusal: if the wheel's Tap to play landed just behind the
+        // dock (phones, long meanings), bring it clear so it can be covered.
+        nudged = true;
+        const delta = tapTargetNudge(wheel.rect, { height: window.innerHeight, dockTop });
+        if (delta !== 0) {
+          window.scrollBy({ top: delta, behavior: "instant" as ScrollBehavior });
+          place();
+          return;
+        }
+      }
       const target = pickTapTarget(
         candidates,
-        {
-          width: window.innerWidth,
-          height: window.innerHeight,
-          dockTop: dock?.getBoundingClientRect().top ?? window.innerHeight,
-        },
+        { width: window.innerWidth, height: window.innerHeight, dockTop },
         hovered,
       );
       if (!target) {

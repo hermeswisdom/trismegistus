@@ -23,6 +23,7 @@ import {
   mediaVolumeIgnored,
   pickTapTarget,
   tapOverlayPlacement,
+  tapTargetNudge,
 } from "./playback.ts";
 
 const ready: PlaybackSurface = {
@@ -344,5 +345,23 @@ describe("tap overlay", () => {
   });
   it("returns null with nothing visible", () => {
     assert.equal(pickTapTarget([], vp), null);
+  });
+});
+
+describe("tapTargetNudge", () => {
+  const vp = { height: 664, dockTop: 542 };
+  it("leaves a clear button alone", () => {
+    assert.equal(tapTargetNudge({ left: 20, top: 300, width: 146, height: 44 }, vp), 0);
+  });
+  it("lifts a button stuck behind the dock", () => {
+    assert.equal(tapTargetNudge({ left: 20, top: 605, width: 146, height: 44 }, vp), 605 + 44 - (542 - 16));
+    assert.equal(tapTargetNudge({ left: 20, top: 505, width: 146, height: 44 }, vp), 505 + 44 - 526);
+  });
+  it("lowers a button just above the top", () => {
+    assert.equal(tapTargetNudge({ left: 20, top: -30, width: 146, height: 44 }, vp), -46);
+  });
+  it("ignores a button far away", () => {
+    assert.equal(tapTargetNudge({ left: 20, top: 3000, width: 146, height: 44 }, vp), 0);
+    assert.equal(tapTargetNudge({ left: 20, top: -2000, width: 146, height: 44 }, vp), 0);
   });
 });
