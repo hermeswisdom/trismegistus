@@ -463,3 +463,15 @@
     animation: none;
   }
 }
+
+/* "Tap to play": the widget sits over the refused control, clipped to
+   SoundCloud's own play button (position + clip set inline). Invisible,
+   but it takes the tap, so strict autoplay sees a tap inside the player. */
+.sc-host-frame[data-sc-tap-overlay] {
+  right: auto;
+  bottom: auto;
+  z-index: 60;
+  opacity: 0.01;
+  pointer-events: auto;
+  cursor: pointer;
+}

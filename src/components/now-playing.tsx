@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { Pause, Play, SkipForward, Dices } from "lucide-react";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
@@ -8,7 +8,10 @@ import {
   playControlAria,
   playControlFace,
   playControlShowsPause,
+  pickTapTarget,
   soundcloudPlaylistSrc,
+  tapOverlayPlacement,
+  type TapTargetCandidate,
 } from "@/lib/playback";
 import { TRACKS, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
@@ -26,6 +29,87 @@ import {
 } from "@/lib/sc-widget";
 import { hydrateWaveform } from "@/lib/waveform";
 import { cn } from "@/lib/utils";
+
+/**
+ * While a start is refused ("Tap to play"), lift the widget iframe over the
+ * visible Tap to play / Retry control, clipped to SoundCloud's own play
+ * button and invisible. The user's tap then lands inside the SoundCloud
+ * frame, which is the only tap strict autoplay (Chrome's user-gesture
+ * policy, Android) accepts for a cross-origin player; the widget is already
+ * cued on the right tablet. Mouse users get the control under the pointer.
+ */
+function useTapOverlay(
+  active: boolean,
+  iframeRef: RefObject<HTMLIFrameElement | null>,
+) {
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!active || !iframe) return;
+    let hovered: "wheel" | "dock" | null = null;
+    let frame = 0;
+
+    const place = () => {
+      frame = 0;
+      const els = document.querySelectorAll<HTMLElement>("[data-sc-tap-target]");
+      const candidates: TapTargetCandidate[] = [];
+      els.forEach((el) => {
+        const kind = el.dataset.scTapTarget === "wheel" ? "wheel" : "dock";
+        const r = el.getBoundingClientRect();
+        candidates.push({ kind, rect: { left: r.left, top: r.top, width: r.width, height: r.height } });
+      });
+      const dock = document.querySelector<HTMLElement>("[data-player-current]");
+      const target = pickTapTarget(
+        candidates,
+        {
+          width: window.innerWidth,
+          height: window.innerHeight,
+          dockTop: dock?.getBoundingClientRect().top ?? window.innerHeight,
+        },
+        hovered,
+      );
+      if (!target) {
+        iframe.removeAttribute("data-sc-tap-overlay");
+        return;
+      }
+      const spot = tapOverlayPlacement(target.rect);
+      iframe.setAttribute("data-sc-tap-overlay", target.kind);
+      iframe.style.left = `${spot.left}px`;
+      iframe.style.top = `${spot.top}px`;
+      iframe.style.clipPath = spot.clipPath;
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(place);
+    };
+    const onMove = (e: PointerEvent) => {
+      const hit = (e.target as Element | null)?.closest?.("[data-sc-tap-target]") as HTMLElement | null;
+      const next = hit ? (hit.dataset.scTapTarget === "wheel" ? "wheel" : "dock") : hovered;
+      if (next !== hovered) {
+        hovered = next;
+        // Synchronously, so the press that follows this move hits the frame.
+        place();
+      }
+    };
+
+    place();
+    const poll = window.setInterval(schedule, 250);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    document.addEventListener("pointermove", onMove, { capture: true, passive: true });
+    document.addEventListener("pointerover", onMove, { capture: true, passive: true });
+    return () => {
+      window.clearInterval(poll);
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      document.removeEventListener("pointermove", onMove, { capture: true });
+      document.removeEventListener("pointerover", onMove, { capture: true });
+      iframe.removeAttribute("data-sc-tap-overlay");
+      iframe.style.left = "";
+      iframe.style.top = "";
+      iframe.style.clipPath = "";
+    };
+  }, [active, iframeRef]);
+}
 
 export function NowPlaying() {
   const entered = usePlayer((s) => s.entered);
@@ -50,6 +134,7 @@ export function NowPlaying() {
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
+  useTapOverlay(Boolean(playError) && entered, iframeRef);
 
   useEffect(() => {
     hydrateHearts();
@@ -140,9 +225,10 @@ export function NowPlaying() {
   }
 
   function onPlayToggle() {
-    noteUserGesture();
+    // Widget command first, in the click's own turn; bookkeeping after.
     if (playError) retryPlay();
     else toggle();
+    noteUserGesture();
   }
 
   return (
@@ -241,6 +327,7 @@ export function NowPlaying() {
           onClick={onPlayToggle}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
           aria-label={playControlAria(face)}
+          data-sc-tap-target={playError ? "dock" : undefined}
         >
           {showPause ? (
             <Pause className="size-4" fill="currentColor" />

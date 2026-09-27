@@ -184,6 +184,9 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const prevId = get().currentId;
     const wasPlaying = get().playing;
     const reset = nextId !== prevId;
+    // The skip + play postMessage leaves first, before any state update or
+    // re-render, so it rides the tap's user activation.
+    startWidget(nextId);
     // Honest UI: pending until the widget reports real progress (see
     // reduceAttempt). `playing` flips on the first PLAY_PROGRESS > 0.
     set({
@@ -195,7 +198,6 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       elapsed: reset ? 0 : get().elapsed,
       duration: reset ? 0 : get().duration,
     });
-    startWidget(nextId);
     writeLastTablet(nextId);
     if (reset || !wasPlaying) {
       countPlay(nextId);
@@ -235,15 +237,16 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   retryPlay: () => {
-    ensurePlaybackBridge();
-    noteUserGesture();
     const id = get().currentId;
     const track = getTrack(id);
     if (!track) return;
-    // Same one widget, same turn as the tap: a cued tablet gets a plain
-    // play(), anything else skip + play. No iframe rewrite.
-    set({ playing: false, playPending: true, playError: null });
+    // Same one widget, same turn as the tap, and before anything else: a
+    // cued tablet gets a plain play(), anything else skip + play. No await,
+    // no state update and no iframe rewrite ahead of the postMessage.
     startWidget(id);
+    ensurePlaybackBridge();
+    noteUserGesture();
+    set({ playing: false, playPending: true, playError: null });
   },
 
   seek: (ratio) => {

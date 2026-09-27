@@ -4,6 +4,7 @@ import {
   PLAY_BLOCKED_SETTLE_MS,
   PLAY_CONFIRM_MS,
   PLAYLIST_WAIT_MS,
+  mediaVolumeIgnored,
   planPlayback,
   playlistCovers,
   reduceAttempt,
@@ -124,6 +125,10 @@ let queued: PlayCommand | null = null;
 /** Silent in-gesture start so a later, gesture-less play is allowed (iOS). */
 let priming: { startedAt: number } | null = null;
 let primeTimer: ReturnType<typeof setTimeout> | null = null;
+/** Sound a prime left paused a few hundred ms in (restart it from 0 on play). */
+let primedSoundId: string | null = null;
+/** null = detect on first use; tests override. */
+let primeSupported: boolean | null = null;
 
 let settleTimer: ReturnType<typeof setTimeout> | null = null;
 let confirmTimer: ReturnType<typeof setTimeout> | null = null;
@@ -325,20 +330,59 @@ export function getPlaybackSurface(soundId?: string): PlaybackSurface {
 // Priming — a silent start inside a tap so the wheel can sound on landing.
 // ---------------------------------------------------------------------------
 
+/**
+ * Stop a prime. Only pause: the widget stays at volume 0 until the real
+ * play restores it (see `run`). Seeking or restoring volume here made
+ * SoundCloud resume for 60–150 ms at full volume (Rivet QC on #26).
+ */
 function endPriming(opts: { pause: boolean }) {
   if (!priming) return;
   priming = null;
   if (primeTimer !== null) clearTimeout(primeTimer);
   primeTimer = null;
+  if (!opts.pause) return;
   try {
-    if (opts.pause) {
-      live?.pause();
-      live?.seekTo(0);
-    }
-    live?.setVolume(100);
+    live?.pause();
   } catch {
     /* iframe gone */
   }
+}
+
+/**
+ * Whether a silent (volume 0) prime is really silent here. iOS ignores
+ * media volume, so a prime there would be heard: skip it and rely on
+ * skip + play inside the tap ("Tap to play" if a later start is refused).
+ */
+export function canPrimeSilently() {
+  if (primeSupported !== null) return primeSupported;
+  if (typeof window === "undefined" || typeof navigator === "undefined") return false;
+  let volumeSticks: boolean | null = null;
+  try {
+    const probe = document.createElement("audio");
+    probe.volume = 0.5;
+    volumeSticks = Math.abs(probe.volume - 0.5) < 0.01;
+  } catch {
+    volumeSticks = null;
+  }
+  let coarsePointer = false;
+  try {
+    coarsePointer = window.matchMedia?.("(pointer: coarse)").matches ?? false;
+  } catch {
+    /* ignore */
+  }
+  primeSupported = !mediaVolumeIgnored({
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    maxTouchPoints: navigator.maxTouchPoints ?? 0,
+    coarsePointer,
+    volumeSticks,
+  });
+  return primeSupported;
+}
+
+/** Test hook: force the silent-prime capability (null = detect). */
+export function setPrimeSupportForTests(value: boolean | null) {
+  primeSupported = value;
 }
 
 /**
@@ -355,6 +399,7 @@ export function primeForLaterPlay(soundId?: string) {
 
 function startPrime(soundId?: string) {
   if (audioUnlocked || priming || !live || !widgetReady) return false;
+  if (!canPrimeSilently()) return false;
   try {
     live.setVolume(0);
     const index = soundId ? playlist.indexOf(soundId) : -1;
@@ -366,6 +411,7 @@ function startPrime(soundId?: string) {
   } catch {
     return false;
   }
+  primedSoundId = liveSoundId;
   priming = { startedAt: now() };
   primeTimer = later(() => endPriming({ pause: true }), 3000);
   return true;
@@ -386,8 +432,15 @@ function run(cmd: PlayCommand, op: PlaybackOp) {
     if (op.op === "pause") {
       widget.pause();
     } else if (op.op === "play") {
+      // Volume back up only now, right before the real play (a prime left
+      // it at 0). A primed sound sits a few hundred ms in: restart it.
+      widget.setVolume(100);
+      if (primedSoundId !== null && primedSoundId === cmd.soundId) widget.seekTo(0);
+      primedSoundId = null;
       widget.play();
     } else if (op.op === "skip-play") {
+      widget.setVolume(100);
+      primedSoundId = null;
       widget.skip?.(op.index);
       liveSoundId = cmd.soundId;
       widget.play();
@@ -400,6 +453,7 @@ function run(cmd: PlayCommand, op: PlaybackOp) {
       stopPlaylistPoll();
       liveSoundId = cmd.soundId;
       widgetReady = false;
+      primedSoundId = null;
       widget.load(cmd.permalink, { auto_play: true });
     }
   } catch {
@@ -441,16 +495,8 @@ export function applyPlayback(cmd: PlayCommand): PlaybackOp {
   }
 
   queued = null;
-  const wasPriming = priming !== null;
-  if (wasPriming) endPriming({ pause: false });
+  if (priming) endPriming({ pause: false });
   run(cmd, op);
-  if (wasPriming && op.op === "play") {
-    try {
-      live?.seekTo(0);
-    } catch {
-      /* ignore */
-    }
-  }
   return op;
 }
 
@@ -491,6 +537,14 @@ export function bindLiveWidget(widget: SCWidget, events: SCEvents) {
 
   widget.bind(events.READY, () => {
     widgetReady = true;
+    if (singleMode) {
+      // A single-track load starts itself; make sure it is not left muted.
+      try {
+        widget.setVolume(100);
+      } catch {
+        /* ignore */
+      }
+    }
     try {
       widget.getCurrentSound((sound) => {
         if (sound?.id !== undefined && liveSoundId === null) {
@@ -509,6 +563,21 @@ export function bindLiveWidget(widget: SCWidget, events: SCEvents) {
     const sid = eventSound(raw);
     if (sid) liveSoundId = sid;
     if (priming) return;
+    if (attempt.phase === "blocked" && sid && attempt.soundId && sid !== attempt.soundId) {
+      // A tap on SoundCloud's own button (the "Tap to play" overlay) started
+      // whatever it had cued; that tap unlocked the frame, so move it on.
+      const index = playlist.indexOf(attempt.soundId);
+      if (index >= 0 && widget.skip) {
+        try {
+          widget.setVolume(100);
+          widget.skip(index);
+          widget.play();
+          liveSoundId = attempt.soundId;
+        } catch {
+          /* ignore */
+        }
+      }
+    }
     dispatch({ type: "widget-play", soundId: sid, now: now() });
   });
 
@@ -574,6 +643,8 @@ export function resetPlaybackForTests() {
   priming = null;
   if (primeTimer !== null) clearTimeout(primeTimer);
   primeTimer = null;
+  primedSoundId = null;
+  primeSupported = null;
   clearTimers();
   listeners.clear();
   if (gestureCtx) {
