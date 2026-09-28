@@ -3,17 +3,21 @@
  * heartbeat server function (src/lib/visitors.ts) and the badge component.
  */
 
-/** A browser is "listening now" if it sent a heartbeat this recently. */
-export const ONLINE_WINDOW_SECONDS = 120;
+/**
+ * A browser is "listening now" if it sent a heartbeat this recently. Wide
+ * enough to cover a 90s heartbeat plus a late / resumed ping.
+ */
+export const ONLINE_WINDOW_SECONDS = 240;
 /** A browser adds to the all-time total at most once per this window. */
 export const COUNT_WINDOW_HOURS = 24;
 /** Presence rows older than this are deleted (must exceed COUNT_WINDOW_HOURS). */
 export const PRUNE_AFTER_HOURS = 26;
 /** Roughly one heartbeat in N runs the prune, keeping the hot path to one query. */
 export const PRUNE_ONE_IN = 25;
-/** Client heartbeat cadence while the tab is visible / hidden. */
-export const HEARTBEAT_MS = 20_000;
-export const HIDDEN_HEARTBEAT_MS = 60_000;
+/** Client heartbeat cadence; only while the tab is visible (none while hidden). */
+export const HEARTBEAT_MS = 90_000;
+/** On return to a visible tab, ping at once only if the last ping is this old. */
+export const RESUME_PING_AFTER_MS = 60_000;
 /** localStorage key for the random anonymous browser id. */
 export const VISITOR_ID_KEY = "atman_visitor_id";
 
@@ -74,6 +78,26 @@ export function shouldPrune(random: number = Math.random()): boolean {
 export function shouldCountVisit(countedAtMs: number | null, nowMs: number): boolean {
   if (countedAtMs == null) return true;
   return nowMs - countedAtMs >= COUNT_WINDOW_HOURS * 3600 * 1000;
+}
+
+/**
+ * How long until the next heartbeat, or null for "none" (hidden tab).
+ * First ping of a visible tab is immediate (a new visitor counts at once);
+ * afterwards every HEARTBEAT_MS. Coming back to a visible tab pings straight
+ * away only when the last ping is RESUME_PING_AFTER_MS or older, otherwise it
+ * waits out the rest of the interval.
+ */
+export function nextHeartbeatDelay(opts: {
+  hidden: boolean;
+  lastPingAt: number | null;
+  now: number;
+  resumed?: boolean;
+}): number | null {
+  if (opts.hidden) return null;
+  if (opts.lastPingAt == null) return 0;
+  const since = opts.now - opts.lastPingAt;
+  if (opts.resumed && since >= RESUME_PING_AFTER_MS) return 0;
+  return Math.max(0, HEARTBEAT_MS - since);
 }
 
 /** Is a heartbeat at `lastSeenMs` still "online" at `nowMs`? */
