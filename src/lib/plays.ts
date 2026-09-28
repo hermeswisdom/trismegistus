@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { evaluateMarkRate, type RateWindow } from "@/lib/mark-rate-limit";
+import { shouldCountRequest } from "@/lib/qc-traffic";
 import { TRACKS } from "@/lib/rooms";
+import { createTtlMemo } from "@/lib/ttl-memo";
 import { chooseVisitorKey, extractClientIp } from "@/lib/visitor-key";
 
 export type PlayRow = {
@@ -60,6 +62,20 @@ async function readBoard(): Promise<MarksBoard> {
     return { rows, recent };
   } catch {
     return EMPTY_BOARD;
+  }
+}
+
+/** Board reads are shared per server instance for ~30s; writes bust it. */
+const BOARD_TTL_MS = 30_000;
+const boardCache = createTtlMemo(readBoard, BOARD_TTL_MS);
+
+/** Production-only, and never for automated QC traffic (see qc-traffic.ts). */
+async function mayCount(): Promise<boolean> {
+  try {
+    const { getRequest } = await import("@tanstack/react-start/server");
+    return shouldCountRequest(getRequest() ?? null, process.env.VERCEL_ENV);
+  } catch {
+    return false;
   }
 }
 
@@ -143,25 +159,27 @@ async function writeRateWindow(hash: string, next: RateWindow): Promise<void> {
 }
 
 export const getMarksBoard = createServerFn({ method: "GET" }).handler(
-  async () => readBoard(),
+  async () => boardCache.get(),
 );
 
 export const getPlayLeaderboard = createServerFn({ method: "GET" }).handler(
-  async () => (await readBoard()).rows,
+  async () => (await boardCache.get()).rows,
 );
 
 export const recordPlay = createServerFn({ method: "POST" })
   .validator((id: string) => id)
   .handler(async ({ data: id }): Promise<MarksBoard> => {
-    if (!KNOWN.has(id)) return readBoard();
+    if (!KNOWN.has(id)) return boardCache.get();
+    if (!(await mayCount())) return boardCache.get();
     try {
       const hash = await visitorHash();
       const now = Date.now();
       const decision = evaluateMarkRate(await readRateWindow(hash), now);
-      if (!decision.allowed) return readBoard();
+      if (!decision.allowed) return boardCache.get();
 
       const { getSql } = await import("@/lib/db");
       const sql = await getSql();
+      boardCache.invalidate();
       await sql`
         insert into track_plays (track_id, plays, last_played_at)
         values (${id}, 1, now())
@@ -181,5 +199,6 @@ export const recordPlay = createServerFn({ method: "POST" })
     } catch {
       /* preview without a live DB still serves the page */
     }
-    return readBoard();
+    boardCache.invalidate();
+    return boardCache.get();
   });

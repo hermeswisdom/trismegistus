@@ -6,14 +6,20 @@ import {
   shouldPrune,
   type VisitorCounts,
 } from "@/lib/visitor-count";
+import { shouldCountRequest } from "@/lib/qc-traffic";
 import { HEARTBEAT_SQL, PRUNE_SQL, READ_SQL } from "@/lib/visitor-sql";
 
-async function requestUserAgent(): Promise<string | null> {
+/** Returns the UA and whether this request may write presence counts. */
+async function requestContext(): Promise<{ ua: string | null; count: boolean }> {
   try {
     const { getRequest } = await import("@tanstack/react-start/server");
-    return getRequest()?.headers.get("user-agent") ?? null;
+    const request = getRequest() ?? null;
+    return {
+      ua: request?.headers.get("user-agent") ?? null,
+      count: shouldCountRequest(request, process.env.VERCEL_ENV),
+    };
   } catch {
-    return null;
+    return { ua: null, count: false };
   }
 }
 
@@ -21,8 +27,9 @@ async function pulse(id: string | null): Promise<VisitorCounts | null> {
   try {
     const { getSql } = await import("@/lib/db");
     const sql = await getSql();
-    const ua = await requestUserAgent();
-    const record = id != null && !isBotUserAgent(ua);
+    const { ua, count } = await requestContext();
+    // Preview deploys, QC runs and bots only read the counts.
+    const record = id != null && count && !isBotUserAgent(ua);
     const rows = record
       ? await sql.query(HEARTBEAT_SQL, [id])
       : await sql.query(READ_SQL);

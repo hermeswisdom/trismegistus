@@ -4,6 +4,7 @@ import { readLastTablet, resolveEnterIntent, writeLastTablet } from "@/lib/last-
 import { FEATURED_ID, getTrack, nextTrack, randomTrack } from "@/lib/rooms";
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
+import { isQcBrowser } from "@/lib/qc-client";
 import { PLAY_BLOCKED_COPY, resolvePlayTap } from "@/lib/playback";
 import {
   applyPlayback,
@@ -76,6 +77,8 @@ const countedAt = new Map<string, number>();
 function countPlay(id: string) {
   const now = Date.now();
   if ((countedAt.get(id) ?? 0) > now - 8000) return;
+  // Automated QC (?qc=1, headless / emulated test browsers) never counts.
+  if (isQcBrowser()) return;
   countedAt.set(id, now);
   void recordPlay({ data: id })
     .then((board) => {
