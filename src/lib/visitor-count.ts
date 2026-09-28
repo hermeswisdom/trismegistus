@@ -20,7 +20,7 @@ export const VISITOR_ID_KEY = "atman_visitor_id";
 export type VisitorCounts = { online: number; total: number };
 
 const BOT_UA =
-  /bot\b|bot\/|crawl|spider|slurp|facebookexternalhit|embedly|quora link preview|linkpreview|headless|lighthouse|pagespeed|phantomjs|puppeteer|playwright|selenium|curl\/|wget\/|python-requests|python-urllib|go-http-client|axios\/|node-fetch|okhttp|java\/|libwww|httpclient|scrapy|monitor|uptime|pingdom|vercel-screenshot|vercelbot/i;
+  /bot\b|bot\/|crawl|spider|slurp|facebookexternalhit|embedly|quora link preview|linkpreview|headless|headlesschrome|iphone os 15_0.*version\/26|lighthouse|pagespeed|phantomjs|puppeteer|playwright|selenium|curl\/|wget\/|python-requests|python-urllib|go-http-client|axios\/|node-fetch|okhttp|java\/|libwww|httpclient|scrapy|monitor|uptime|pingdom|vercel-screenshot|vercelbot/i;
 
 /** Obvious non-human user agents (crawlers, link unfurlers, headless tooling). */
 export function isBotUserAgent(ua: string | null | undefined): boolean {

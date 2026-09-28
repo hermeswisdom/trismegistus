@@ -9,6 +9,7 @@ import {
   totalLabel,
   type VisitorCounts,
 } from "@/lib/visitor-count";
+import { isQcBrowser } from "@/lib/qc-client";
 import { visitorHeartbeat } from "@/lib/visitors";
 
 function browserStore(): Storage | null {
@@ -28,7 +29,8 @@ export function VisitorBadge({ className }: { className?: string }) {
   const [counts, setCounts] = useState<VisitorCounts | null>(null);
 
   useEffect(() => {
-    const id = readOrCreateVisitorId(browserStore());
+    // QC browsers read the counts without registering presence.
+    const id = isQcBrowser() ? undefined : readOrCreateVisitorId(browserStore());
     let cancelled = false;
     let inFlight = false;
     let failures = 0;
