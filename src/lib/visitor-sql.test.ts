@@ -62,8 +62,13 @@ describe("visitor SQL (PGLite)", () => {
     assert.deepEqual(await beat(B), { online: 2, total: 2 });
   });
 
-  it("drops a browser from online after ~2 minutes of silence", async () => {
+  it("keeps a browser online across a 90s heartbeat gap (~4 minute window)", async () => {
     await age(B, "last_seen", "3 minutes");
+    assert.deepEqual(await beat(A), { online: 2, total: 2 });
+  });
+
+  it("drops a browser from online after ~4 minutes of silence", async () => {
+    await age(B, "last_seen", "2 minutes");
     assert.deepEqual(await beat(A), { online: 1, total: 2 });
   });
 

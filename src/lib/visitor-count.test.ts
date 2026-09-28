@@ -1,6 +1,10 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  HEARTBEAT_MS,
+  nextHeartbeatDelay,
+  ONLINE_WINDOW_SECONDS,
+  RESUME_PING_AFTER_MS,
   badgeText,
   COUNT_WINDOW_HOURS,
   isBotUserAgent,
@@ -69,10 +73,13 @@ describe("counting windows", () => {
     assert.equal(shouldCountVisit(t0, t0 + 23.9 * HOUR), false);
     assert.equal(shouldCountVisit(t0, t0 + COUNT_WINDOW_HOURS * HOUR), true);
   });
-  it("treats heartbeats within ~2 minutes as online", () => {
-    assert.equal(isOnline(0, 119_000), true);
+  it("treats heartbeats within ~4 minutes as online", () => {
+    assert.equal(ONLINE_WINDOW_SECONDS, 240);
     assert.equal(isOnline(0, 120_000), true);
-    assert.equal(isOnline(0, 121_000), false);
+    assert.equal(isOnline(0, 240_000), true);
+    assert.equal(isOnline(0, 241_000), false);
+    // Covers the 90s heartbeat with room for a late ping.
+    assert.ok(ONLINE_WINDOW_SECONDS * 1000 >= 2 * HEARTBEAT_MS);
   });
   it("keeps presence rows past the count window before pruning", () => {
     assert.ok(PRUNE_AFTER_HOURS > COUNT_WINDOW_HOURS);
@@ -149,5 +156,24 @@ describe("anonymous id", () => {
     };
     assert.ok(isValidVisitorId(readOrCreateVisitorId(broken)));
     assert.ok(isValidVisitorId(readOrCreateVisitorId(null)));
+  });
+});
+
+describe("nextHeartbeatDelay", () => {
+  it("pings every 90s while visible, first ping immediately (new visitors count at once)", () => {
+    assert.equal(HEARTBEAT_MS, 90_000);
+    assert.equal(nextHeartbeatDelay({ hidden: false, lastPingAt: null, now: 5 }), 0);
+    assert.equal(nextHeartbeatDelay({ hidden: false, lastPingAt: 0, now: 0 }), 90_000);
+    assert.equal(nextHeartbeatDelay({ hidden: false, lastPingAt: 0, now: 30_000 }), 60_000);
+  });
+  it("never schedules while hidden", () => {
+    assert.equal(nextHeartbeatDelay({ hidden: true, lastPingAt: null, now: 0 }), null);
+    assert.equal(nextHeartbeatDelay({ hidden: true, lastPingAt: 0, now: 1e9, resumed: true }), null);
+  });
+  it("on return to visible, pings at once only if the last ping is 60s+ old", () => {
+    assert.equal(RESUME_PING_AFTER_MS, 60_000);
+    assert.equal(nextHeartbeatDelay({ hidden: false, lastPingAt: 0, now: 59_999, resumed: true }), 30_001);
+    assert.equal(nextHeartbeatDelay({ hidden: false, lastPingAt: 0, now: 60_000, resumed: true }), 0);
+    assert.equal(nextHeartbeatDelay({ hidden: false, lastPingAt: 0, now: 500_000, resumed: true }), 0);
   });
 });

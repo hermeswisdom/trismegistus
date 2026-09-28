@@ -1,77 +1,17 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import {
-  HEARTBEAT_MS,
-  HIDDEN_HEARTBEAT_MS,
-  onlineLabel,
-  parseCounts,
-  readOrCreateVisitorId,
-  totalLabel,
-  type VisitorCounts,
-} from "@/lib/visitor-count";
-import { isQcBrowser } from "@/lib/qc-client";
-import { visitorHeartbeat } from "@/lib/visitors";
-
-function browserStore(): Storage | null {
-  try {
-    return window.localStorage;
-  } catch {
-    return null;
-  }
-}
+import { subscribeVisitorCounts } from "@/lib/heartbeat-client";
+import { onlineLabel, totalLabel, type VisitorCounts } from "@/lib/visitor-count";
 
 /**
- * "● 3 listening now · 1,204 visitors". Sends an anonymous heartbeat every
- * ~20s (slower while the tab is hidden) and hides itself whenever the count
- * store is unavailable.
+ * "● 3 listening now · 1,204 visitors". The tab's single heartbeat
+ * (heartbeat-client.ts) pings every 90s while visible and never while hidden;
+ * the badge hides whenever the count store is unavailable.
  */
 export function VisitorBadge({ className }: { className?: string }) {
   const [counts, setCounts] = useState<VisitorCounts | null>(null);
 
-  useEffect(() => {
-    // QC browsers read the counts without registering presence.
-    const id = isQcBrowser() ? undefined : readOrCreateVisitorId(browserStore());
-    let cancelled = false;
-    let inFlight = false;
-    let failures = 0;
-    let timer: number | undefined;
-
-    const schedule = () => {
-      window.clearTimeout(timer);
-      if (cancelled) return;
-      timer = window.setTimeout(beat, document.hidden ? HIDDEN_HEARTBEAT_MS : HEARTBEAT_MS);
-    };
-
-    async function beat() {
-      if (cancelled || inFlight) return;
-      inFlight = true;
-      try {
-        const next = parseCounts(await visitorHeartbeat({ data: { id } }));
-        failures = 0;
-        if (!cancelled) setCounts(next);
-      } catch {
-        // One network blip keeps the last reading; a second hides the badge.
-        failures += 1;
-        if (!cancelled && failures >= 2) setCounts(null);
-      } finally {
-        inFlight = false;
-        schedule();
-      }
-    }
-
-    const onVisibility = () => {
-      if (document.hidden) schedule();
-      else void beat();
-    };
-
-    void beat();
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, []);
+  useEffect(() => subscribeVisitorCounts(setCounts), []);
 
   if (!counts) return null;
   const online = onlineLabel(counts.online);
