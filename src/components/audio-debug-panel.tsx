@@ -76,7 +76,8 @@ export function AudioDebugPanel() {
     window.addEventListener("blur", onWin);
     window.addEventListener("focus", onWin);
     const session = (navigator as Navigator & { audioSession?: EventTarget & { state?: string } }).audioSession;
-    const onSession = () => debugEvent("audioSession", `state=${session?.state}`);
+    const onSession = () =>
+      debugEvent("audioSession", `statechange (type=${(session as { type?: string } | undefined)?.type ?? "?"}, state=${session?.state ?? "n/a"})`);
     session?.addEventListener?.("statechange", onSession);
     return () => {
       unsub();
@@ -93,7 +94,9 @@ export function AudioDebugPanel() {
   if (!on) return null;
   const a = getNativeElement();
   const last = getLastPause();
-  const log = getDebugLog().slice(-14).reverse();
+  const log = getDebugLog().slice(-30).reverse();
+  const iframes = document.querySelectorAll('iframe[title^="SoundCloud"]').length;
+  const via = new URLSearchParams(window.location.search).get("stream") === "direct" ? "direct (cross-origin)" : "same-origin";
   const engine = player.backend === "native" ? "NATIVE <audio>" : "SOUNDCLOUD iframe";
   const state = player.playing ? "playing" : player.pending ? "pending" : player.error ? "blocked (Tap to play)" : "paused";
   const lines = [
@@ -101,10 +104,11 @@ export function AudioDebugPanel() {
     a
       ? `audio: ${a.paused ? "PAUSED" : "running"} t=${a.currentTime.toFixed(1)}/${Number.isFinite(a.duration) ? a.duration.toFixed(0) : "?"} muted=${a.muted} rs=${a.readyState} ns=${a.networkState} inDOM=${a.isConnected} playsinline=${a.hasAttribute("playsinline")} phase=${nativePhase()}`
       : "audio: (not created yet)",
-    `sc widget: ${getAttemptPhase()} · AudioContext: ${gestureAudioContextState()} · audioSession: ${sessionInfo()}`,
+    `sc widget: ${getAttemptPhase()} · SC iframe: ${iframes ? "LOADED" : "none"} · AudioContext: ${gestureAudioContextState()} · audioSession: ${sessionInfo()}`,
+    `stream: ${via}${a?.currentSrc ? ` · ${a.currentSrc.replace(/^https?:\/\/([^/]+).*/, "$1")}` : ""}`,
     `page: ${document.visibilityState} · ${displayMode()} · ${shortUa()}`,
     last
-      ? `LAST PAUSE ${hhmmss(last.at)}: ${pauseLabel(last)} — ${last.reason} [page ${last.visibility}, t=${last.time.toFixed(1)}]${last.stack ? ` @ ${last.stack}` : ""}`
+      ? `LAST PAUSE ${hhmmss(last.at)}: ${pauseLabel(last)} — ${last.reason} [page ${last.visibility}, t=${last.time.toFixed(1)}${last.media ? ` ${last.media}` : ""}]${last.stack ? ` @ ${last.stack}` : ""}`
       : "LAST PAUSE: none",
   ];
   const text = [...lines, "", ...log.map((e) => `${hhmmss(e.at)} ${e.kind} ${e.detail ?? ""}`)].join("\n");

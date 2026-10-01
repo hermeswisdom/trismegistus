@@ -17,6 +17,8 @@ export type PauseRecord = {
   visibility: string;
   time: number;
   stack?: string;
+  /** Element state at the pause (readyState, networkState, buffered end). */
+  media?: string;
 };
 
 const FLAG_KEY = "atman-audio-debug";
@@ -143,7 +145,7 @@ export function debugEvent(kind: string, detail?: string) {
 export function recordPause(rec: PauseRecord) {
   lastPause = rec;
   if (!isAudioDebug()) return;
-  debugEvent("pause-reason", `${pauseLabel(rec)}: ${rec.reason} [page ${rec.visibility}, t=${rec.time.toFixed(1)}]`);
+  debugEvent("pause-reason", `${pauseLabel(rec)}: ${rec.reason} [page ${rec.visibility}, t=${rec.time.toFixed(1)}${rec.media ? ` ${rec.media}` : ""}]`);
 }
 
 /** OURS (our code), END (track finished) or SYSTEM (browser / OS). */

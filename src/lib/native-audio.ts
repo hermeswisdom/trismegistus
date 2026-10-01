@@ -11,6 +11,7 @@
  * locked). A stream that cannot load falls back to SoundCloud ("fallback").
  */
 import { classifyPlayRejection, streamUrl, type NativePhase } from "./streams.ts";
+import { streamVia } from "./stream-proxy.ts";
 import {
   classifyPause,
   debugEvent,
@@ -49,6 +50,16 @@ let primeTimer: ReturnType<typeof setTimeout> | null = null;
 /** One silent reload per tablet when its signed URL lapses / the network drops. */
 let reloadedFor: string | null = null;
 const failed = new Set<string>();
+
+/** The element's src for a tablet: /api/stream/<slug>, plus ?via=direct for the A/B. */
+function srcFor(slug: string, extra?: Record<string, string>): string | null {
+  const base = streamUrl(slug);
+  if (!base) return null;
+  const q = new URLSearchParams(extra);
+  if (typeof window !== "undefined" && streamVia(window.location.search) === "direct") q.set("via", "direct");
+  const qs = q.toString();
+  return qs ? `${base}?${qs}` : base;
+}
 /** Last time our code paused the element or swapped its src, and why. */
 let pauseCall: PauseCall | null = null;
 
@@ -178,9 +189,16 @@ function ensureEl(): HTMLAudioElement | null {
   });
   a.addEventListener("pause", () => {
     const why = classifyPause({ now: Date.now(), call: pauseCall, visibility: visibility(), ended: a.ended });
+    let buffered = "";
+    try {
+      buffered = a.buffered && a.buffered.length ? ` buf=${a.buffered.end(a.buffered.length - 1).toFixed(0)}s` : " buf=0";
+    } catch {
+      /* ignore */
+    }
     recordPause({
       at: Date.now(),
       reason: priming ? `${why.reason} (muted prime)` : why.reason,
+      media: `rs=${a.readyState} ns=${a.networkState}${buffered}`,
       ours: why.ours,
       visibility: visibility(),
       time: a.currentTime || 0,
@@ -216,10 +234,10 @@ function ensureEl(): HTMLAudioElement | null {
     if (reloadedFor !== slug) {
       // Expired signed URL / dropped connection: fetch a fresh redirect once.
       reloadedFor = slug;
-      const url = streamUrl(slug);
+      const url = srcFor(slug, { r: String(Date.now()) });
       if (url) {
         notePauseCall(`stream reload after load error (${slug})`);
-        a.src = `${url}?r=${Date.now()}`;
+        a.src = url;
         try {
           if (at > 0) a.currentTime = at;
         } catch {
@@ -237,7 +255,7 @@ function ensureEl(): HTMLAudioElement | null {
 
 function cue(a: HTMLAudioElement, track: NativeTrack): boolean {
   if (activeId === track.id && a.getAttribute("src")) return false;
-  const url = streamUrl(track.slug);
+  const url = srcFor(track.slug);
   if (!url) return false;
   notePauseCall(`src change to ${track.slug}`);
   a.src = url;
@@ -384,3 +402,6 @@ export function resetNativeForTests() {
   failed.clear();
   listeners.clear();
 }
+
+// Declare playback audio before any tap (and again right before each play()).
+if (typeof window !== "undefined") claimPlaybackAudioSession();
