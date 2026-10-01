@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import { usePlayer } from "@/lib/player-store";
 import { atmanGlow } from "@/lib/atman-glow";
 import { getTrack } from "@/lib/rooms";
-import { getLiveWidget } from "@/lib/sc-widget";
-import { hydrateWaveform, sampleWave, useWaveform, waveBars } from "@/lib/waveform";
+import { getLiveWidget, waveformUrlFor } from "@/lib/sc-widget";
+import { hydrateWaveform, loadWaveform, sampleWave, useWaveform, waveBars } from "@/lib/waveform";
 import { cn } from "@/lib/utils";
 
 const BAR_COUNT = 36;
@@ -36,6 +36,12 @@ export function AtmanWord({
   const liveLook = playing || playPending;
 
   useEffect(() => {
+    // Native playback leaves the widget cued elsewhere: use the playlist's url.
+    const url = waveformUrlFor(soundId);
+    if (soundId && url) {
+      void loadWaveform(soundId, url);
+      return;
+    }
     const widget = getLiveWidget();
     if (widget) hydrateWaveform(widget);
   }, [soundId, playing, playPending]);

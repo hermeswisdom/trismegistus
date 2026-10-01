@@ -452,7 +452,7 @@ describe("sc-widget: one widget, one tap", () => {
 });
 
 describe("player-store: retry sends before any state update", () => {
-  it("retryPlay and play call startWidget before set()", async () => {
+  it("retryPlay and play call startTrack (native play() / widget postMessage) before set()", async () => {
     const { readFile } = await import("node:fs/promises");
     const src = await readFile(new URL("./player-store.ts", import.meta.url), "utf8");
     const body = (name: string) => {
@@ -462,10 +462,14 @@ describe("player-store: retry sends before any state update", () => {
     };
     for (const name of ["retryPlay", "play"]) {
       const b = body(name);
-      assert.ok(b.includes("startWidget("), name);
+      assert.ok(b.includes("startTrack("), name);
       assert.ok(b.indexOf("set(") > 0, name);
-      assert.ok(b.indexOf("startWidget(") < b.indexOf("set("), `${name}: startWidget before set`);
-      assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(b.slice(0, b.indexOf("startWidget("))), false);
+      assert.ok(b.indexOf("startTrack(") < b.indexOf("set("), `${name}: startTrack before set`);
+      assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(b.slice(0, b.indexOf("startTrack("))), false);
     }
+    // startTrack itself starts synchronously on both backends.
+    const st = src.slice(src.indexOf("function startTrack("), src.indexOf("\n}\n", src.indexOf("function startTrack(")));
+    assert.ok(st.includes("nativePlay(track)") && st.includes("applyPlayback("));
+    assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(st), false);
   });
 });

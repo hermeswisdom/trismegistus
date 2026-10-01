@@ -477,7 +477,8 @@
 }
 
 /* The wheel's "Tap to play" shows only once the overlay covers it (the
-   hook sets html[data-sc-tap-ready]); until then it keeps its layout box. */
-html:not([data-sc-tap-ready="wheel"]) [data-sc-tap-target="wheel"] {
+   hook sets html[data-sc-tap-ready]); until then it keeps its layout box.
+   The native player needs no overlay: a tap on the button itself plays. */
+html:not([data-sc-tap-ready="wheel"]):not([data-player-backend="native"]) [data-sc-tap-target="wheel"] {
   visibility: hidden;
 }

@@ -139,6 +139,7 @@ export function NowPlaying() {
   const playing = usePlayer((s) => s.playing);
   const playError = usePlayer((s) => s.playError);
   const playPending = usePlayer((s) => s.playPending);
+  const backend = usePlayer((s) => s.backend);
   const elapsed = usePlayer((s) => s.elapsed);
   const duration = usePlayer((s) => s.duration);
   const toggle = usePlayer((s) => s.toggle);
@@ -156,7 +157,13 @@ export function NowPlaying() {
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
-  useTapOverlay(Boolean(playError) && entered, iframeRef);
+  // The iframe overlay is only for a refused SoundCloud start. A refused
+  // native start is retried by a plain tap on our own button.
+  useTapOverlay(Boolean(playError) && entered && backend === "sc", iframeRef);
+
+  useEffect(() => {
+    document.documentElement.dataset.playerBackend = backend;
+  }, [backend]);
 
   useEffect(() => {
     hydrateHearts();
@@ -195,7 +202,7 @@ export function NowPlaying() {
         const widget = getLiveWidget();
         if (widget) hydrateWaveform(widget);
       }
-      if (notice.type === "progress") {
+      if (notice.type === "progress" && usePlayer.getState().backend === "sc") {
         const pos =
           ((notice.raw as { currentPosition?: number } | undefined)?.currentPosition ?? 0) /
           1000;
@@ -218,7 +225,8 @@ export function NowPlaying() {
   }, [setTiming]);
 
   useEffect(() => {
-    if (!playing) return;
+    // The native player reports its own timing (native-audio.ts progress).
+    if (!playing || backend !== "sc") return;
     const id = window.setInterval(() => {
       const widget = getLiveWidget();
       if (!widget) return;
@@ -233,7 +241,7 @@ export function NowPlaying() {
       }
     }, 800);
     return () => window.clearInterval(id);
-  }, [playing, setTiming]);
+  }, [playing, backend, setTiming]);
 
   if (!current) return null;
 
@@ -283,6 +291,7 @@ export function NowPlaying() {
       data-player-pending={playPending ? "true" : "false"}
       data-player-blocked={playError ? "true" : "false"}
       data-player-face={face}
+      data-player-backend={backend}
     >
       <button
         type="button"
@@ -349,7 +358,7 @@ export function NowPlaying() {
           onClick={onPlayToggle}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
           aria-label={playControlAria(face)}
-          data-sc-tap-target={playError ? "dock" : undefined}
+          data-sc-tap-target={playError && backend === "sc" ? "dock" : undefined}
         >
           {showPause ? (
             <Pause className="size-4" fill="currentColor" />
@@ -360,7 +369,7 @@ export function NowPlaying() {
         <button
           type="button"
           onPointerDown={noteUserGesture}
-          onClick={playNext}
+          onClick={() => playNext()}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center text-muted transition-colors duration-150 hover:text-fg"
           aria-label="Next tablet"
         >
