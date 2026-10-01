@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Lock-screen audio lab</title>
+<style>
+  body { background:#111; color:#ddd; font:14px/1.4 -apple-system, system-ui, sans-serif; margin:12px; }
+  h1 { font-size:17px; margin:0 0 6px; } fieldset { border:1px solid #444; margin:8px 0; padding:6px 8px; }
+  label { display:block; margin:4px 0; } button { font-size:16px; padding:10px 14px; margin:4px 4px 4px 0; }
+  #go { background:#d8e05a; color:#111; border:0; font-weight:600; } audio { width:100%; margin:6px 0; }
+  pre { background:#000; color:#b8f5b0; font:11px/1.35 ui-monospace, Menlo, monospace; padding:6px; white-space:pre-wrap; max-height:55vh; overflow:auto; }
+  .verdict { font-weight:700; color:#fff; }
+</style>
+</head>
+<body>
+<h1>Lock-screen audio lab</h1>
+<p>Temporary test page (no SoundCloud, no app code). Pick options, tap <b>Play test</b>, lock the phone for ~30&nbsp;s, unlock, and screenshot the log.</p>
+<fieldset><legend>Stream</legend>
+  <label><input type="radio" name="via" value="same" checked /> Same-origin (/media/streams/…)</label>
+  <label><input type="radio" name="via" value="direct" /> Cross-origin redirect to Blob (old)</label>
+</fieldset>
+<fieldset><legend>Options</legend>
+  <label><input type="checkbox" id="session" checked /> navigator.audioSession.type = "playback"</label>
+  <label><input type="checkbox" id="meta" checked /> Media Session metadata + handlers</label>
+  <label><input type="checkbox" id="sc" /> Also load the SoundCloud widget iframe (idle)</label>
+</fieldset>
+<button id="go" type="button">Play test</button><button id="stop" type="button">Pause</button><button id="clear" type="button">Clear log</button><button id="copy" type="button">Copy</button>
+<audio id="a" controls playsinline preload="auto"></audio>
+<div id="sc-slot"></div>
+<pre id="log"></pre>
+<script>
+(() => {
+  const KEY = "atman-lock-lab-log";
+  const a = document.getElementById("a");
+  const out = document.getElementById("log");
+  let lines = [];
+  try { lines = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch { lines = []; }
+  const ts = () => new Date().toTimeString().slice(0, 8);
+  const render = () => { out.textContent = lines.slice().reverse().join("\n"); };
+  const log = (msg) => { lines.push(`${ts()} ${msg}`); if (lines.length > 200) lines = lines.slice(-200); try { localStorage.setItem(KEY, JSON.stringify(lines)); } catch {} render(); };
+  const ua = navigator.userAgent;
+  const s = navigator.audioSession;
+  log(`page load · ${/OS ([\d_]+) like Mac/.exec(ua)?.[1]?.replace(/_/g, ".") ? "iOS " + /OS ([\d_]+) like Mac/.exec(ua)[1].replace(/_/g, ".") : navigator.platform} · audioSession ${s ? "type=" + s.type : "unsupported"} · ${navigator.standalone ? "home-screen app" : "browser tab"}`);
+  for (const t of ["loadstart", "play", "playing", "pause", "waiting", "stalled", "ended", "error", "emptied", "abort"]) {
+    a.addEventListener(t, () => log(`audio:${t} t=${a.currentTime.toFixed(1)} rs=${a.readyState} ns=${a.networkState}${t === "error" && a.error ? " code=" + a.error.code : ""} [${document.visibilityState}]`));
+  }
+  let hiddenAt = null, tAtHide = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { hiddenAt = Date.now(); tAtHide = a.currentTime; log(`page hidden (t=${tAtHide.toFixed(1)}, ${a.paused ? "paused" : "playing"})`); return; }
+    if (hiddenAt === null) { log("page visible"); return; }
+    const wall = (Date.now() - hiddenAt) / 1000, played = a.currentTime - tAtHide;
+    const verdict = played >= wall - 3 ? "KEPT PLAYING while locked" : played > 0.5 ? `STOPPED after ~${played.toFixed(0)}s of ${wall.toFixed(0)}s locked` : `STOPPED at lock (${wall.toFixed(0)}s locked)`;
+    log(`page visible · locked ${wall.toFixed(0)}s · audio advanced ${played.toFixed(1)}s → ${verdict}`);
+    hiddenAt = null;
+  });
+  for (const t of ["pagehide", "pageshow", "blur", "focus"]) window.addEventListener(t, () => log(`page:${t} [${document.visibilityState}]`));
+  for (const t of ["freeze", "resume"]) document.addEventListener(t, () => log(`page:${t}`));
+  s?.addEventListener?.("statechange", () => log(`audioSession statechange type=${s.type} state=${s.state ?? "n/a"}`));
+  document.getElementById("sc").addEventListener("change", (e) => {
+    const slot = document.getElementById("sc-slot");
+    slot.innerHTML = e.target.checked ? '<iframe title="SoundCloud" width="300" height="120" allow="autoplay" src="https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Fusers%2F190466185&auto_play=false"></iframe>' : "";
+    log(`SoundCloud iframe ${e.target.checked ? "loaded" : "removed"}`);
+  });
+  document.getElementById("go").addEventListener("click", () => {
+    // Everything synchronous inside the tap.
+    const via = document.querySelector('input[name="via"]:checked').value;
+    const useSession = document.getElementById("session").checked;
+    const useMeta = document.getElementById("meta").checked;
+    if (useSession && s) { try { s.type = "playback"; } catch (e) { log("audioSession set failed " + e); } }
+    if (useMeta && "mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({ title: "Lock lab · Awake", artist: "Atman", album: "Atman Music", artwork: [{ src: location.origin + "/images/tracks/awake.jpg", sizes: "500x500", type: "image/jpeg" }] });
+        navigator.mediaSession.setActionHandler("play", () => { log("mediaSession play"); a.play(); });
+        navigator.mediaSession.setActionHandler("pause", () => { log("mediaSession pause"); a.pause(); });
+      } catch (e) { log("mediaSession failed " + e); }
+    }
+    a.src = "/api/stream/awake" + (via === "direct" ? "?via=direct" : "") + (via === "direct" ? "&" : "?") + "lab=" + Date.now();
+    log(`PLAY TEST · stream=${via} · session=${useSession ? (s ? s.type : "unsupported") : "off"} · meta=${useMeta ? "on" : "off"} · scIframe=${document.getElementById("sc").checked ? "on" : "off"}`);
+    a.play().catch((e) => log("play() rejected " + e.name));
+  });
+  document.getElementById("stop").addEventListener("click", () => { log("Pause tapped"); a.pause(); });
+  document.getElementById("clear").addEventListener("click", () => { lines = []; try { localStorage.removeItem(KEY); } catch {} render(); });
+  document.getElementById("copy").addEventListener("click", () => navigator.clipboard?.writeText(lines.join("\n")));
+  render();
+})();
+</script>
+</body>
+</html>

@@ -110,3 +110,23 @@ export function mediaArtwork(image: string, origin: string) {
     { src, sizes: "512x512", type: "image/jpeg" },
   ];
 }
+
+/**
+ * Next tablet in catalogue order that `playable` accepts (auto-advance and
+ * lock-screen "next" while the native player is in use skip tablets without a
+ * stream: a SoundCloud start there would end lock-screen playback). Falls back
+ * to the plain next tablet when nothing else is playable.
+ */
+export function nextPlayable(
+  order: readonly { id: string; slug: string }[],
+  currentId: string,
+  playable: (slug: string) => boolean,
+): string | undefined {
+  if (order.length === 0) return undefined;
+  const i = order.findIndex((t) => t.id === currentId);
+  for (let step = 1; step <= order.length; step++) {
+    const t = order[(Math.max(i, -1) + step + order.length) % order.length];
+    if (t && t.id !== currentId && playable(t.slug)) return t.id;
+  }
+  return order[(i + 1 + order.length) % order.length]?.id;
+}

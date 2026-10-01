@@ -34,6 +34,7 @@ import {
 } from "@/lib/media-session";
 import {
   nativeAudioAllowed,
+  nextPlayable,
   pickBackend,
   popHistoryTo,
   pushHistory,
@@ -64,6 +65,15 @@ type PlayerState = {
   backend: PlayerBackend;
   /** Tablets played before the current one (lock-screen "previous"). */
   history: string[];
+  /**
+   * Whether the SoundCloud widget iframe is mounted. Not while only the
+   * native player is used: the idle iframe still creates its own media
+   * elements in this page (an extra media session on iOS). Mounted for good
+   * on the first tablet that needs SoundCloud, or at load with ?player=sc.
+   */
+  scNeeded: boolean;
+  /** Client mount: pick the initial engine (native unless ?player=sc). */
+  initEngine: () => void;
   enter: () => void;
   play: (id?: string, opts?: { markEntered?: boolean; fromHistory?: boolean }) => void;
   pause: () => void;
@@ -127,6 +137,10 @@ function startTrack(nextId: string): PlayerBackend | null {
     if (nativePlay(track)) return "native";
   } else {
     nativePause(`switched to SoundCloud for ${track.slug} (no stream)`);
+    if (!usePlayer.getState().scNeeded) {
+      debugEvent("engine", "mounting the SoundCloud iframe");
+      usePlayer.setState({ scNeeded: true });
+    }
   }
   applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
   return "sc";
@@ -227,7 +241,7 @@ function ensurePlaybackBridge() {
         const track = getTrack(id);
         if (!track) return;
         debugEvent("engine", `fallback to SoundCloud: ${track.slug}`);
-        usePlayer.setState({ backend: "sc" });
+        usePlayer.setState({ backend: "sc", scNeeded: true });
         applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
         usePlayer.setState(afterStart("sc"));
         return;
@@ -260,6 +274,15 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   resumedOnEnter: false,
   backend: "sc",
   history: [],
+  scNeeded: false,
+
+  initEngine: () => {
+    if (!nativeAllowed()) {
+      set({ scNeeded: true });
+      return;
+    }
+    if (!get().entered && get().backend !== "native") set({ backend: "native" });
+  },
 
   enter: () => {
     ensurePlaybackBridge();
@@ -336,6 +359,8 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const prevId = get().currentId;
     const wasPlaying = get().playing;
     const reset = nextId !== prevId;
+    // Lock-screen metadata first, so iOS has it when playback starts.
+    setMediaSessionTrack(track);
     // The start (native play() or the widget's skip + play postMessage)
     // leaves first, before any state update or re-render, so it rides the
     // tap's user activation.
@@ -354,7 +379,6 @@ export const usePlayer = create<PlayerState>((set, get) => ({
         ? { history: pushHistory(get().history, prevId) }
         : {}),
     });
-    setMediaSessionTrack(track);
     writeLastTablet(nextId);
     if (reset || !wasPlaying) {
       countPlay(nextId);
@@ -397,7 +421,12 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   playNext: () => {
-    const next = nextTrack(get().currentId);
+    const next = nativeAllowed()
+      ? nextPlayable(TRACKS, get().currentId, (slug) => {
+          const t = TRACKS.find((x) => x.slug === slug);
+          return Boolean(t && backendFor(t) === "native");
+        })
+      : nextTrack(get().currentId);
     if (next) get().play(next);
   },
 

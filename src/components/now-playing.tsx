@@ -140,6 +140,8 @@ export function NowPlaying() {
   const playError = usePlayer((s) => s.playError);
   const playPending = usePlayer((s) => s.playPending);
   const backend = usePlayer((s) => s.backend);
+  const scNeeded = usePlayer((s) => s.scNeeded);
+  const initEngine = usePlayer((s) => s.initEngine);
   const elapsed = usePlayer((s) => s.elapsed);
   const duration = usePlayer((s) => s.duration);
   const toggle = usePlayer((s) => s.toggle);
@@ -168,6 +170,10 @@ export function NowPlaying() {
   useEffect(() => {
     hydrateHearts();
   }, [hydrateHearts]);
+
+  useEffect(() => {
+    initEngine();
+  }, [initEngine]);
 
   useLayoutEffect(() => {
     const iframe = iframeRef.current;
@@ -222,7 +228,7 @@ export function NowPlaying() {
       setLiveWidget(null, null);
       setLiveIframe(null);
     };
-  }, [setTiming]);
+  }, [setTiming, scNeeded]);
 
   useEffect(() => {
     // The native player reports its own timing (native-audio.ts progress).
@@ -273,14 +279,17 @@ export function NowPlaying() {
       full opacity for iOS Safari autoplay) and z-order behind the dock are
       unchanged.
     */}
-    <iframe
-      ref={iframeRef}
-      title="SoundCloud"
-      src={initialSrc.current}
-      allow="autoplay; encrypted-media"
-      className="sc-host-frame pointer-events-none fixed right-0 bottom-0 z-30 opacity-100"
-      loading="eager"
-    />
+    {scNeeded ? (
+      <iframe
+        ref={iframeRef}
+        title="SoundCloud"
+        src={initialSrc.current}
+        allow="autoplay; encrypted-media"
+        className="sc-host-frame pointer-events-none fixed right-0 bottom-0 z-30 opacity-100"
+        loading="eager"
+        data-sc-host=""
+      />
+    ) : null}
     <div
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",

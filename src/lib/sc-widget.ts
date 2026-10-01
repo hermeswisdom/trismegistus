@@ -1,3 +1,4 @@
+import { WAVEFORM_URLS } from "./waveform-urls.ts";
 import { nativeAudioAllowed } from "./streams.ts";
 import {
   IDLE_ATTEMPT,
@@ -269,7 +270,7 @@ export function getLiveWidget() {
 }
 
 export function waveformUrlFor(soundId: string | null | undefined) {
-  return soundId ? (waveformUrls.get(soundId) ?? null) : null;
+  return soundId ? (waveformUrls.get(soundId) ?? WAVEFORM_URLS[soundId] ?? null) : null;
 }
 
 export function getLiveSoundId() {

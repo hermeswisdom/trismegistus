@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  nextPlayable,
   classifyPlayRejection,
   hasStream,
   mediaArtwork,
@@ -89,5 +90,21 @@ describe("media artwork", () => {
   it("makes cover paths absolute", () => {
     assert.equal(mediaArtwork("/images/tracks/awake.jpg", "https://atmanmusic.app/")[0].src, "https://atmanmusic.app/images/tracks/awake.jpg");
     assert.equal(mediaArtwork("https://cdn.x/a.jpg", "https://atmanmusic.app")[0].src, "https://cdn.x/a.jpg");
+  });
+});
+
+describe("nextPlayable", () => {
+  const order = [
+    { id: "a", slug: "a" },
+    { id: "b", slug: "b" },
+    { id: "c", slug: "c" },
+  ];
+  it("skips tablets the native player cannot play", () => {
+    assert.equal(nextPlayable(order, "a", (s) => s !== "b"), "c");
+    assert.equal(nextPlayable(order, "c", () => true), "a");
+  });
+  it("falls back to the plain next tablet when nothing else is playable", () => {
+    assert.equal(nextPlayable(order, "a", () => false), "b");
+    assert.equal(nextPlayable([], "a", () => true), undefined);
   });
 });
