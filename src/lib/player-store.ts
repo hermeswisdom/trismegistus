@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { readFirstSpinDone, writeFirstSpinDone } from "@/lib/first-spin";
 import { readLastTablet, resolveEnterIntent, writeLastTablet } from "@/lib/last-tablet";
-import { FEATURED_ID, getTrack, nextTrack, randomTrack } from "@/lib/rooms";
+import { FEATURED_ID, TRACKS, getTrack, nextTrack, randomTrack, type Track } from "@/lib/rooms";
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
 import { isQcBrowser } from "@/lib/qc-client";
@@ -10,11 +10,37 @@ import {
   applyPlayback,
   getAttemptPhase,
   getLiveWidget,
+  isPriming,
   noteUserGesture,
   primeForLaterPlay,
   quietForSpin,
   subscribePlayback,
 } from "@/lib/sc-widget";
+import {
+  failedStreams,
+  nativePause,
+  nativePhase,
+  nativePlay,
+  nativePrime,
+  nativeSeek,
+  subscribeNative,
+} from "@/lib/native-audio";
+import {
+  configureMediaSession,
+  registerMediaSessionActions,
+  setMediaSessionPlaying,
+  setMediaSessionPosition,
+  setMediaSessionTrack,
+} from "@/lib/media-session";
+import {
+  nativeAudioAllowed,
+  pickBackend,
+  popHistoryTo,
+  pushHistory,
+  resolvePrevious,
+  type PlayerBackend,
+} from "@/lib/streams";
+import { debugEvent } from "@/lib/audio-debug";
 import { wheelPlayOn } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
 
@@ -34,12 +60,17 @@ type PlayerState = {
   playError: string | null;
   /** Enter resumed the last tablet, so the wheel skips its automatic first spin. */
   resumedOnEnter: boolean;
+  /** What plays the current tablet: native <audio> stream, or the SoundCloud widget. */
+  backend: PlayerBackend;
+  /** Tablets played before the current one (lock-screen "previous"). */
+  history: string[];
   enter: () => void;
-  play: (id?: string, opts?: { markEntered?: boolean }) => void;
+  play: (id?: string, opts?: { markEntered?: boolean; fromHistory?: boolean }) => void;
   pause: () => void;
   toggle: () => void;
   toggleTrack: (id: string) => void;
   playNext: () => void;
+  playPrevious: () => void;
   retryPlay: () => void;
   spinTablet: (opts?: { force?: boolean; markEntered?: boolean }) => void;
   landSpin: (id: string) => void;
@@ -49,16 +80,25 @@ type PlayerState = {
   setPlayError: (value: string | null) => void;
 };
 
+let nativeAllowedCache: boolean | null = null;
+
+function nativeAllowed() {
+  if (typeof window === "undefined") return false;
+  if (nativeAllowedCache === null) nativeAllowedCache = nativeAudioAllowed(window.location.search);
+  return nativeAllowedCache;
+}
+
+function backendFor(track: Track): PlayerBackend {
+  return pickBackend({ slug: track.slug, allowNative: nativeAllowed(), failed: failedStreams() });
+}
+
 /**
- * Sends skip + play to the one widget in this call stack, so a tap handler
- * that reaches here synchronously keeps its user gesture.
- */
-/**
- * UI state right after startWidget: normally pending, but a start the widget
+ * UI state right after a start: normally pending, but a start the widget
  * already knows will be refused comes back blocked synchronously.
  */
-function afterStart() {
-  const blocked = getAttemptPhase() === "blocked";
+function afterStart(backend: PlayerBackend) {
+  const blocked =
+    backend === "native" ? nativePhase() === "blocked" : getAttemptPhase() === "blocked";
   return {
     playing: false,
     playPending: !blocked,
@@ -66,10 +106,38 @@ function afterStart() {
   };
 }
 
-function startWidget(nextId: string) {
+/** Stop the SoundCloud widget only if it is (or may be) sounding. */
+function hushWidget(track: Track | undefined) {
+  const phase = getAttemptPhase();
+  if (phase !== "pending" && phase !== "playing" && !isPriming()) return;
+  applyPlayback({ intent: "pause", soundId: track?.soundId ?? "", permalink: track?.permalink ?? "" });
+}
+
+/**
+ * Starts the tablet on its backend in this call stack, so a tap handler (or
+ * the native `ended` event) that reaches here synchronously keeps its user
+ * gesture / media session. Returns the backend used.
+ */
+function startTrack(nextId: string): PlayerBackend | null {
   const track = getTrack(nextId);
-  if (!track) return;
+  if (!track) return null;
+  const backend = backendFor(track);
+  if (backend === "native") {
+    hushWidget(track);
+    if (nativePlay(track)) return "native";
+  } else {
+    nativePause(`switched to SoundCloud for ${track.slug} (no stream)`);
+  }
   applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
+  return "sc";
+}
+
+/** Why the next store pause() happens (debug trace); default is a pause tap. */
+let pauseReason: string | null = null;
+
+function pauseWith(reason: string) {
+  pauseReason = reason;
+  usePlayer.getState().pause();
 }
 
 const countedAt = new Map<string, number>();
@@ -95,6 +163,9 @@ function ensurePlaybackBridge() {
   if (bridged) return;
   bridged = true;
   subscribePlayback((notice) => {
+    if (notice.type !== "progress") debugEvent(`sc:${notice.type}`, usePlayer.getState().backend === "sc" ? undefined : "(ignored: native engine)");
+    // The widget can report on a sound we already moved off to the native player.
+    if (usePlayer.getState().backend !== "sc") return;
     if (notice.type === "pending") {
       usePlayer.setState({ playPending: true, playError: null });
       return;
@@ -120,6 +191,62 @@ function ensurePlaybackBridge() {
       });
     }
   });
+  subscribeNative((notice) => {
+    const state = usePlayer.getState();
+    if (state.backend !== "native" || notice.id !== state.currentId) return;
+    switch (notice.type) {
+      case "pending":
+        usePlayer.setState({ playPending: true, playError: null });
+        return;
+      case "play":
+        usePlayer.setState({ playing: true, playPending: false, playError: null });
+        setMediaSessionPlaying(true);
+        registerMediaSessionActions();
+        return;
+      case "pause":
+        usePlayer.setState({ playing: false, playPending: false });
+        setMediaSessionPlaying(false);
+        return;
+      case "progress":
+        usePlayer.setState({ elapsed: notice.elapsed, duration: notice.duration });
+        setMediaSessionPosition(notice.elapsed, notice.duration);
+        return;
+      case "finish":
+        // Synchronously, inside the element's `ended` event: iOS lets the
+        // same element start the next src here even with the screen locked.
+        usePlayer.setState({ playing: false, playPending: false });
+        usePlayer.getState().playNext();
+        return;
+      case "blocked":
+        usePlayer.setState({ playing: false, playPending: false, playError: PLAY_BLOCKED_COPY });
+        setMediaSessionPlaying(false);
+        return;
+      case "fallback": {
+        // Stream missing / unplayable: this tablet plays through SoundCloud.
+        const id = notice.id;
+        const track = getTrack(id);
+        if (!track) return;
+        debugEvent("engine", `fallback to SoundCloud: ${track.slug}`);
+        usePlayer.setState({ backend: "sc" });
+        applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
+        usePlayer.setState(afterStart("sc"));
+        return;
+      }
+    }
+  });
+  configureMediaSession({
+    play: () => {
+      const s = usePlayer.getState();
+      if (!s.playing) s.play();
+    },
+    pause: () => pauseWith("Media Session pause/stop (lock screen, headphones, car)"),
+    next: () => usePlayer.getState().playNext(),
+    previous: () => usePlayer.getState().playPrevious(),
+    seekTo: (seconds) => {
+      const { duration } = usePlayer.getState();
+      if (duration > 0) usePlayer.getState().seek(seconds / duration);
+    },
+  });
 }
 
 export const usePlayer = create<PlayerState>((set, get) => ({
@@ -131,6 +258,8 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   duration: 0,
   playError: null,
   resumedOnEnter: false,
+  backend: "sc",
+  history: [],
 
   enter: () => {
     ensurePlaybackBridge();
@@ -177,15 +306,17 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       return;
     }
     if (get().playing || get().playPending) {
-      // Hush (volume 0) rather than pause where that is silent: an early
-      // pause() makes SoundCloud throw an AbortError. iOS still pauses.
-      if (quietForSpin()) set({ playing: false, playPending: false });
-      else get().pause();
+      // SoundCloud: hush (volume 0) rather than pause where that is silent:
+      // an early pause() makes SoundCloud throw an AbortError. iOS still
+      // pauses. The native element just pauses.
+      if (get().backend === "sc" && quietForSpin()) set({ playing: false, playPending: false });
+      else pauseWith("wheel spin (pause until it lands)");
     }
     // The winner sounds on landing, ~4s after this tap and outside it. Start
-    // the widget silently now (inside the tap) so iOS allows that later play.
+    // it silently now (inside the tap) so iOS allows that later play.
     // No-op once real audio has been heard this page life.
-    primeForLaterPlay(winner.soundId);
+    if (backendFor(winner) === "native") nativePrime(winner);
+    else primeForLaterPlay(winner.soundId);
   },
 
   landSpin: (id) => {
@@ -205,18 +336,25 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const prevId = get().currentId;
     const wasPlaying = get().playing;
     const reset = nextId !== prevId;
-    // The skip + play postMessage leaves first, before any state update or
-    // re-render, so it rides the tap's user activation.
-    startWidget(nextId);
-    // Honest UI: pending until the widget reports real progress (see
-    // reduceAttempt). `playing` flips on the first PLAY_PROGRESS > 0.
+    // The start (native play() or the widget's skip + play postMessage)
+    // leaves first, before any state update or re-render, so it rides the
+    // tap's user activation.
+    const backend = startTrack(nextId) ?? get().backend;
+    debugEvent("engine", `${backend} ${track.slug}`);
+    // Honest UI: pending until audio really flows (see reduceAttempt and
+    // native-audio.ts). `playing` flips on the first real progress.
     set({
       ...(opts?.markEntered || get().entered ? { entered: true } : {}),
       currentId: nextId,
-      ...afterStart(),
+      backend,
+      ...afterStart(backend),
       elapsed: reset ? 0 : get().elapsed,
       duration: reset ? 0 : get().duration,
+      ...(reset && get().entered && !opts?.fromHistory
+        ? { history: pushHistory(get().history, prevId) }
+        : {}),
     });
+    setMediaSessionTrack(track);
     writeLastTablet(nextId);
     if (reset || !wasPlaying) {
       countPlay(nextId);
@@ -225,6 +363,14 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   pause: () => {
     const track = getTrack(get().currentId);
+    const reason = pauseReason ?? "pause tap (dock / wheel / tracklist)";
+    pauseReason = null;
+    if (get().backend === "native") {
+      nativePause(reason);
+      set({ playing: false, playPending: false });
+      setMediaSessionPlaying(false);
+      return;
+    }
     applyPlayback({
       intent: "pause",
       soundId: track?.soundId ?? "",
@@ -255,24 +401,42 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     if (next) get().play(next);
   },
 
+  playPrevious: () => {
+    const state = get();
+    const step = resolvePrevious({
+      elapsed: state.elapsed,
+      history: state.history,
+      currentId: state.currentId,
+      order: TRACKS.map((t) => t.id),
+    });
+    if (step.action === "restart") {
+      state.seek(0);
+      if (!state.playing) state.play();
+      return;
+    }
+    set({ history: popHistoryTo(state.history, step.id) });
+    state.play(step.id, { fromHistory: true });
+  },
+
   retryPlay: () => {
     const id = get().currentId;
     const track = getTrack(id);
     if (!track) return;
-    // Same one widget, same turn as the tap, and before anything else: a
-    // cued tablet gets a plain play(), anything else skip + play. No await,
-    // no state update and no iframe rewrite ahead of the postMessage.
-    startWidget(id);
+    // Same turn as the tap, and before anything else: native play(), or for
+    // the widget a plain play() / skip + play. No await, no state update and
+    // no iframe rewrite ahead of it.
+    const backend = startTrack(id) ?? get().backend;
     ensurePlaybackBridge();
     noteUserGesture();
-    set(afterStart());
+    set({ backend, ...afterStart(backend) });
   },
 
   seek: (ratio) => {
     const { duration } = get();
     if (duration <= 0) return;
     const next = Math.min(1, Math.max(0, ratio)) * duration;
-    getLiveWidget()?.seekTo(next * 1000);
+    if (get().backend === "native") nativeSeek(next);
+    else getLiveWidget()?.seekTo(next * 1000);
     set({ elapsed: next });
   },
 

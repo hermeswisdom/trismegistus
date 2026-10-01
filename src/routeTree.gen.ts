@@ -14,6 +14,7 @@ import { Route as DownloadRouteImport } from './routes/download'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiMastersDownloadRouteImport } from './routes/api/masters/download'
+import { Route as ApiStreamSlugRouteImport } from './routes/api/stream/$slug'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const ApiMastersDownloadRoute = ApiMastersDownloadRouteImport.update({
   path: '/api/masters/download',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStreamSlugRoute = ApiStreamSlugRouteImport.update({
+  id: '/api/stream/$slug',
+  path: '/api/stream/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   id: '/api/stripe/webhook',
   path: '/api/stripe/webhook',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
+  '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
+  '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
+  '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/auth/$'
     | '/api/masters/download'
+    | '/api/stream/$slug'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/auth/$'
     | '/api/masters/download'
+    | '/api/stream/$slug'
     | '/api/stripe/webhook'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/api/auth/$'
     | '/api/masters/download'
+    | '/api/stream/$slug'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +117,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMastersDownloadRoute: typeof ApiMastersDownloadRoute
+  ApiStreamSlugRoute: typeof ApiStreamSlugRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
 
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMastersDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stream/$slug': {
+      id: '/api/stream/$slug'
+      path: '/api/stream/$slug'
+      fullPath: '/api/stream/$slug'
+      preLoaderRoute: typeof ApiStreamSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stripe/webhook': {
       id: '/api/stripe/webhook'
       path: '/api/stripe/webhook'
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMastersDownloadRoute: ApiMastersDownloadRoute,
+  ApiStreamSlugRoute: ApiStreamSlugRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
 export const routeTree = rootRouteImport

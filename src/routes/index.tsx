@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { About } from "@/components/about";
+import { AudioDebugPanel } from "@/components/audio-debug-panel";
 import { EnterGate } from "@/components/enter-gate";
 import { FavoritesSync } from "@/components/favorites-sync";
 import { LastTabletSync } from "@/components/last-tablet-sync";
@@ -71,6 +72,7 @@ function Home() {
       </main>
       <SiteFooter />
       <NowPlaying />
+      <AudioDebugPanel />
       <MarksSheet />
       <MeaningSheet />
     </>

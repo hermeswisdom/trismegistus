@@ -1,3 +1,4 @@
+import { nativeAudioAllowed } from "./streams.ts";
 import {
   IDLE_ATTEMPT,
   PLAY_BLOCKED_COPY,
@@ -109,6 +110,8 @@ let widgetReady = false;
 let liveSoundId: string | null = null;
 /** Playlist order from `getSounds`, as string ids. */
 let playlist: string[] = [];
+/** Waveform JSON/PNG url per sound id, from the playlist (the native player has no widget cue). */
+const waveformUrls = new Map<string, string>();
 let catalogIds: string[] = [];
 let soundsComplete = false;
 /** A single-track `load` replaced the playlist; later sounds load one by one. */
@@ -197,6 +200,14 @@ function later(fn: () => void, ms: number) {
 
 function resumeWebAudio() {
   if (typeof window === "undefined") return;
+  // Native <audio> player in use: no AudioContext at all. On iOS a page
+  // AudioContext is a separate Web Audio session (category "ambient" when it
+  // is the only one producing sound), it is suspended / interrupted on lock,
+  // and it is not needed to unlock a top-level <audio> element.
+  if (nativeAudioAllowed(window.location.search)) {
+    closeWebAudio();
+    return;
+  }
   try {
     const Ctor = window.AudioContext || window.webkitAudioContext;
     if (!Ctor) return;
@@ -205,6 +216,21 @@ function resumeWebAudio() {
   } catch {
     /* Web Audio is optional; the widget is the source. */
   }
+}
+
+function closeWebAudio() {
+  if (!gestureCtx) return;
+  try {
+    void gestureCtx.close();
+  } catch {
+    /* ignore */
+  }
+  gestureCtx = null;
+}
+
+/** Debug: the gesture AudioContext's state ("none" when never created). */
+export function gestureAudioContextState(): string {
+  return gestureCtx ? gestureCtx.state : "none";
 }
 
 /** Mark a user gesture. Never plays by itself. */
@@ -240,6 +266,10 @@ export function getLiveIframe() {
 
 export function getLiveWidget() {
   return live;
+}
+
+export function waveformUrlFor(soundId: string | null | undefined) {
+  return soundId ? (waveformUrls.get(soundId) ?? null) : null;
 }
 
 export function getLiveSoundId() {
@@ -328,6 +358,9 @@ function readPlaylist() {
     widget.getSounds((sounds) => {
       if (widget !== live || !Array.isArray(sounds)) return;
       playlist = sounds.map((s) => (s?.id === undefined ? "" : String(s.id)));
+      for (const s of sounds) {
+        if (s?.id !== undefined && typeof s.waveform_url === "string") waveformUrls.set(String(s.id), s.waveform_url);
+      }
       refreshCompleteness();
       if (!soundsComplete && now() - playlistStartedAt > PLAYLIST_WAIT_MS) soundsComplete = true;
       if (soundsComplete) stopPlaylistPoll();
