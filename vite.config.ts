@@ -11,6 +11,7 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
+import { blobHostFromToken, SAME_ORIGIN_STREAM_PREFIX } from "./src/lib/stream-proxy.ts";
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
@@ -145,7 +146,16 @@ function authPopupPlugin(): Plugin {
 // `0.0.0.0:8080` is the live-preview contract — don't change host/port.
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
+// Same-origin streams: /media/streams/* → the private Blob store's streams/
+// prefix as a Vercel CDN rewrite (Nitro `proxy` route rule; signed query and
+// Range pass through, no Function in the byte path). Only the store host is
+// derived from the token; nothing secret is embedded.
+const streamProxyHost = blobHostFromToken(process.env.BLOB_READ_WRITE_TOKEN);
+
 export default defineConfig(({ command, isPreview }) => ({
+  define: {
+    __STREAM_PROXY_HOST__: JSON.stringify(command === "build" && process.env.VERCEL ? (streamProxyHost ?? "") : ""),
+  },
   server: {
     host: "0.0.0.0",
     port: 8080,
@@ -175,6 +185,16 @@ export default defineConfig(({ command, isPreview }) => ({
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
+            ...(streamProxyHost
+              ? {
+                  routeRules: {
+                    [`${SAME_ORIGIN_STREAM_PREFIX}**`]: {
+                      proxy: `https://${streamProxyHost}/streams/**`,
+                      headers: { "x-robots-tag": "noindex" },
+                    },
+                  },
+                }
+              : {}),
           }),
         ]
       : []),

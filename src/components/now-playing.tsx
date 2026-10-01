@@ -1,17 +1,29 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { Pause, Play, SkipForward, Dices } from "lucide-react";
 import { HeartButton, ShareButton } from "@/components/track-actions";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
-import { PLAY_PENDING_COPY, playControlAria, playControlFace, playControlShowsPause } from "@/lib/playback";
-import { FEATURED_ID, embedSrc, getMeaning, getTrack } from "@/lib/rooms";
+import {
+  PLAY_PENDING_COPY,
+  playControlAria,
+  playControlFace,
+  playControlShowsPause,
+  pickTapTarget,
+  soundcloudPlaylistSrc,
+  tapOverlayPlacement,
+  tapTargetNudge,
+  type TapTargetCandidate,
+} from "@/lib/playback";
+import { TRACKS, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
 import { usePlayer } from "@/lib/player-store";
 import {
   bindLiveWidget,
   getLiveWidget,
+  getPlaybackSurface,
   loadSoundCloudApi,
   noteUserGesture,
+  setCatalogSoundIds,
   setLiveIframe,
   setLiveWidget,
   subscribePlayback,
@@ -19,12 +31,117 @@ import {
 import { hydrateWaveform } from "@/lib/waveform";
 import { cn } from "@/lib/utils";
 
+/**
+ * While a start is refused ("Tap to play"), lift the widget iframe over the
+ * visible Tap to play / Retry control, clipped to SoundCloud's own play
+ * button and invisible. The user's tap then lands inside the SoundCloud
+ * frame, which is the only tap strict autoplay (Chrome's user-gesture
+ * policy, Android) accepts for a cross-origin player; the widget is already
+ * cued on the right tablet. Mouse users get the control under the pointer.
+ */
+function useTapOverlay(
+  active: boolean,
+  iframeRef: RefObject<HTMLIFrameElement | null>,
+) {
+  // Layout effect: the overlay is placed in the same commit that shows the
+  // Tap to play face, before the browser paints it.
+  useLayoutEffect(() => {
+    const iframe = iframeRef.current;
+    if (!active || !iframe) return;
+    const root = document.documentElement;
+    let hovered: "wheel" | "dock" | null = null;
+    let frame = 0;
+    let nudged = false;
+
+    const place = () => {
+      frame = 0;
+      const els = document.querySelectorAll<HTMLElement>("[data-sc-tap-target]");
+      const candidates: TapTargetCandidate[] = [];
+      els.forEach((el) => {
+        const kind = el.dataset.scTapTarget === "wheel" ? "wheel" : "dock";
+        const r = el.getBoundingClientRect();
+        candidates.push({ kind, rect: { left: r.left, top: r.top, width: r.width, height: r.height } });
+      });
+      const dock = document.querySelector<HTMLElement>("[data-player-current]");
+      const dockTop = dock?.getBoundingClientRect().top ?? window.innerHeight;
+      const wheel = candidates.find((c) => c.kind === "wheel");
+      if (wheel && !nudged) {
+        // Once per refusal: if the wheel's Tap to play landed just behind the
+        // dock (phones, long meanings), bring it clear so it can be covered.
+        nudged = true;
+        const delta = tapTargetNudge(wheel.rect, { height: window.innerHeight, dockTop });
+        if (delta !== 0) {
+          window.scrollBy({ top: delta, behavior: "instant" as ScrollBehavior });
+          place();
+          return;
+        }
+      }
+      const target = pickTapTarget(
+        candidates,
+        { width: window.innerWidth, height: window.innerHeight, dockTop },
+        hovered,
+      );
+      if (!target) {
+        iframe.removeAttribute("data-sc-tap-overlay");
+        delete root.dataset.scTapReady;
+        return;
+      }
+      const spot = tapOverlayPlacement(target.rect);
+      iframe.setAttribute("data-sc-tap-overlay", target.kind);
+      iframe.style.left = `${spot.left}px`;
+      iframe.style.top = `${spot.top}px`;
+      iframe.style.clipPath = spot.clipPath;
+      // The wheel's Tap to play face stays hidden (styles.css) until the
+      // overlay really sits on it, so a tap can't beat the overlay.
+      root.dataset.scTapReady = target.kind;
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(place);
+    };
+    const onMove = (e: PointerEvent) => {
+      // Mouse only. On touch, pointerover fires on touchstart; moving the
+      // iframe then made WebKit drop the tap's click entirely.
+      if (e.pointerType !== "mouse") return;
+      const hit = (e.target as Element | null)?.closest?.("[data-sc-tap-target]") as HTMLElement | null;
+      const next = hit ? (hit.dataset.scTapTarget === "wheel" ? "wheel" : "dock") : hovered;
+      if (next !== hovered) {
+        hovered = next;
+        // Synchronously, so the press that follows this move hits the frame.
+        place();
+      }
+    };
+
+    place();
+    const poll = window.setInterval(schedule, 250);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    document.addEventListener("pointermove", onMove, { capture: true, passive: true });
+    document.addEventListener("pointerover", onMove, { capture: true, passive: true });
+    return () => {
+      window.clearInterval(poll);
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      document.removeEventListener("pointermove", onMove, { capture: true });
+      document.removeEventListener("pointerover", onMove, { capture: true });
+      iframe.removeAttribute("data-sc-tap-overlay");
+      delete root.dataset.scTapReady;
+      iframe.style.left = "";
+      iframe.style.top = "";
+      iframe.style.clipPath = "";
+    };
+  }, [active, iframeRef]);
+}
+
 export function NowPlaying() {
   const entered = usePlayer((s) => s.entered);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
   const playError = usePlayer((s) => s.playError);
   const playPending = usePlayer((s) => s.playPending);
+  const backend = usePlayer((s) => s.backend);
+  const scNeeded = usePlayer((s) => s.scNeeded);
+  const initEngine = usePlayer((s) => s.initEngine);
   const elapsed = usePlayer((s) => s.elapsed);
   const duration = usePlayer((s) => s.duration);
   const toggle = usePlayer((s) => s.toggle);
@@ -35,47 +152,63 @@ export function NowPlaying() {
   const setTiming = usePlayer((s) => s.setTiming);
   const hydrateHearts = useHearts((s) => s.hydrate);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const initialSrc = useRef(embedSrc(getTrack(FEATURED_ID)?.soundId ?? "", false));
+  // One widget for the page life: the whole profile as a playlist. Never
+  // rewritten per tablet (a reloaded iframe has no gesture, so iOS refused it).
+  const initialSrc = useRef(soundcloudPlaylistSrc());
   const current = getTrack(currentId);
   const ratio = duration > 0 ? Math.min(1, elapsed / duration) : 0;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
+  // The iframe overlay is only for a refused SoundCloud start. A refused
+  // native start is retried by a plain tap on our own button.
+  useTapOverlay(Boolean(playError) && entered && backend === "sc", iframeRef);
+
+  useEffect(() => {
+    document.documentElement.dataset.playerBackend = backend;
+  }, [backend]);
 
   useEffect(() => {
     hydrateHearts();
   }, [hydrateHearts]);
 
+  useEffect(() => {
+    initEngine();
+  }, [initEngine]);
+
   useLayoutEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
     setLiveIframe(iframe);
+    setCatalogSoundIds(TRACKS.map((track) => track.soundId));
     let cancelled = false;
+    let readyCheck = 0;
 
-    const attach = () => {
-      void loadSoundCloudApi()
-        .then((SC) => {
-          if (cancelled || !iframeRef.current) return;
-          const widget = SC.Widget(iframeRef.current);
-          bindLiveWidget(
-            widget,
-            SC.Widget.Events,
-            getTrack(usePlayer.getState().currentId)?.soundId ?? null,
-          );
-          hydrateWaveform(widget);
-        })
-        .catch(() => {
-          /* iframe src fallback still starts playback without the API */
-        });
-    };
+    // api.js is loaded async from <head> so it is listening before the
+    // player posts READY. This iframe is never reloaded per tablet any more,
+    // so if READY was still missed, reload the idle widget once.
+    void loadSoundCloudApi()
+      .then((SC) => {
+        const el = iframeRef.current;
+        if (cancelled || !el) return;
+        const widget = SC.Widget(el);
+        bindLiveWidget(widget, SC.Widget.Events);
+        hydrateWaveform(widget);
+        readyCheck = window.setTimeout(() => {
+          if (!cancelled && !getPlaybackSurface().widgetReady) {
+            el.setAttribute("src", initialSrc.current);
+          }
+        }, 8000);
+      })
+      .catch(() => {
+        /* no SoundCloud API: a play shows "Tap to play" after the timeout */
+      });
 
-    attach();
-    iframe.addEventListener("load", attach);
     const off = subscribePlayback((notice) => {
       if (notice.type === "play" || notice.type === "ready") {
         const widget = getLiveWidget();
         if (widget) hydrateWaveform(widget);
       }
-      if (notice.type === "progress") {
+      if (notice.type === "progress" && usePlayer.getState().backend === "sc") {
         const pos =
           ((notice.raw as { currentPosition?: number } | undefined)?.currentPosition ?? 0) /
           1000;
@@ -90,15 +223,16 @@ export function NowPlaying() {
 
     return () => {
       cancelled = true;
+      window.clearTimeout(readyCheck);
       off();
-      iframe.removeEventListener("load", attach);
       setLiveWidget(null, null);
       setLiveIframe(null);
     };
-  }, [setTiming]);
+  }, [setTiming, scNeeded]);
 
   useEffect(() => {
-    if (!playing) return;
+    // The native player reports its own timing (native-audio.ts progress).
+    if (!playing || backend !== "sc") return;
     const id = window.setInterval(() => {
       const widget = getLiveWidget();
       if (!widget) return;
@@ -113,7 +247,7 @@ export function NowPlaying() {
       }
     }, 800);
     return () => window.clearInterval(id);
-  }, [playing, setTiming]);
+  }, [playing, backend, setTiming]);
 
   if (!current) return null;
 
@@ -127,21 +261,35 @@ export function NowPlaying() {
   }
 
   function onPlayToggle() {
-    noteUserGesture();
+    // Widget command first, in the click's own turn; bookkeeping after.
     if (playError) retryPlay();
     else toggle();
+    noteUserGesture();
   }
 
   return (
     <>
-    <iframe
-      ref={iframeRef}
-      title="SoundCloud"
-      src={initialSrc.current}
-      allow="autoplay; encrypted-media"
-      className="pointer-events-none fixed right-0 bottom-0 z-30 size-5 opacity-100"
-      loading="eager"
-    />
+    {/*
+      The SoundCloud widget draws its waveform on a canvas sized from the
+      iframe's layout box. At 20×20 that canvas is 0 wide and the widget's own
+      draw() throws "createPattern … width or height of 0" (~10× per load),
+      which we cannot catch across origins. So the iframe gets the widget's
+      natural 320×166 layout, and clip-path paints only the same 20×20
+      bottom-right corner as before. The visible footprint (kept on screen at
+      full opacity for iOS Safari autoplay) and z-order behind the dock are
+      unchanged.
+    */}
+    {scNeeded ? (
+      <iframe
+        ref={iframeRef}
+        title="SoundCloud"
+        src={initialSrc.current}
+        allow="autoplay; encrypted-media"
+        className="sc-host-frame pointer-events-none fixed right-0 bottom-0 z-30 opacity-100"
+        loading="eager"
+        data-sc-host=""
+      />
+    ) : null}
     <div
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
@@ -152,6 +300,7 @@ export function NowPlaying() {
       data-player-pending={playPending ? "true" : "false"}
       data-player-blocked={playError ? "true" : "false"}
       data-player-face={face}
+      data-player-backend={backend}
     >
       <button
         type="button"
@@ -218,6 +367,7 @@ export function NowPlaying() {
           onClick={onPlayToggle}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center bg-accent text-bg transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96]"
           aria-label={playControlAria(face)}
+          data-sc-tap-target={playError && backend === "sc" ? "dock" : undefined}
         >
           {showPause ? (
             <Pause className="size-4" fill="currentColor" />
@@ -228,7 +378,7 @@ export function NowPlaying() {
         <button
           type="button"
           onPointerDown={noteUserGesture}
-          onClick={playNext}
+          onClick={() => playNext()}
           className="flex size-11 shrink-0 touch-manipulation items-center justify-center text-muted transition-colors duration-150 hover:text-fg"
           aria-label="Next tablet"
         >

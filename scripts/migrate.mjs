@@ -42,7 +42,12 @@ async function main() {
     return;
   }
 
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+  // Same as src/lib/pg-url.ts: spell out verify-full (today's behaviour) to
+  // silence pg-connection-string's sslmode deprecation warning.
+  const connectionString = /[?&]uselibpqcompat=/i.test(databaseUrl)
+    ? databaseUrl
+    : databaseUrl.replace(/([?&]sslmode=)(prefer|require|verify-ca)(?=&|#|$)/i, "$1verify-full");
+  const pool = new pg.Pool({ connectionString, max: 1 });
   const client = await pool.connect();
   try {
     await client.query(

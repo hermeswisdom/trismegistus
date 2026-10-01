@@ -3,10 +3,19 @@ import assert from "node:assert/strict";
 import {
   applyPlayback,
   bindLiveWidget,
+  getAttemptPhase,
   getPlaybackSurface,
+  isAudioUnlocked,
+  isPriming,
   noteUserGesture,
+  PRIME_MAX_SILENT_MS,
+  primeForLaterPlay,
+  quietForSpin,
   resetPlaybackForTests,
+  setCatalogSoundIds,
   setLiveIframe,
+  setPlaylistForTests,
+  setPrimeSupportForTests,
   subscribePlayback,
   type SCWidget,
 } from "./sc-widget.ts";
@@ -17,13 +26,13 @@ const Events = {
   PAUSE: "pause",
   FINISH: "finish",
   PLAY_PROGRESS: "playProgress",
+  ERROR: "error",
 };
 
-function fakeWidget() {
+function fakeWidget(cued = "900") {
   const listeners = new Map<string, (...args: unknown[]) => void>();
-  const plays: string[] = [];
-  const loads: { url: string; auto?: boolean }[] = [];
-  const widget: SCWidget & { fire: (ev: string) => void } = {
+  const calls: string[] = [];
+  const widget: SCWidget & { fire: (ev: string, raw?: unknown) => void } = {
     bind(event, listener) {
       listeners.set(event, listener);
     },
@@ -31,14 +40,24 @@ function fakeWidget() {
       listeners.delete(event);
     },
     play() {
-      plays.push("play");
+      calls.push("play");
     },
-    pause() {},
+    pause() {
+      calls.push("pause");
+    },
     toggle() {},
     load(url, options) {
-      loads.push({ url, auto: options?.auto_play });
+      calls.push(`load:${url}:${options?.auto_play}`);
     },
-    seekTo() {},
+    skip(index) {
+      calls.push(`skip:${index}`);
+    },
+    getSounds(cb) {
+      cb([]);
+    },
+    seekTo(ms) {
+      calls.push(`seek:${ms}`);
+    },
     getPosition(cb) {
       cb(0);
     },
@@ -46,136 +65,411 @@ function fakeWidget() {
       cb(0);
     },
     getVolume(cb) {
-      cb(0);
+      cb(100);
     },
-    setVolume() {},
+    setVolume(v) {
+      calls.push(`vol:${v}`);
+    },
     getCurrentSound(cb) {
-      cb(null);
+      cb({ id: Number(cued) });
     },
-    fire(ev) {
-      listeners.get(ev)?.();
-    },
-  };
-  return { widget, plays, loads };
-}
-
-function fakeIframe(src = "") {
-  const el = {
-    src,
-    getAttribute(name: string) {
-      return name === "src" ? el.src : null;
-    },
-    setAttribute(name: string, value: string) {
-      if (name === "src") el.src = value;
+    fire(ev, raw) {
+      listeners.get(ev)?.(raw);
     },
   };
-  return el as unknown as HTMLIFrameElement;
+  return { widget, calls };
 }
 
+const PLAYLIST = ["900", "555", "777"];
 const cmd = {
   intent: "play" as const,
   soundId: "555",
   permalink: "https://soundcloud.com/esoteric_vibrations/tablet",
 };
 
-describe("sc-widget playback client", () => {
+function readyWidget(cued = "900") {
+  const fake = fakeWidget(cued);
+  bindLiveWidget(fake.widget, Events);
+  fake.widget.fire("ready");
+  setPlaylistForTests(PLAYLIST, true);
+  fake.calls.length = 0;
+  return fake;
+}
+
+function collect() {
+  const types: string[] = [];
+  subscribePlayback((notice) => types.push(notice.type));
+  return types;
+}
+
+describe("sc-widget: one widget, one tap", () => {
   beforeEach(() => {
     resetPlaybackForTests();
+    setPrimeSupportForTests(true);
   });
 
   it("does not play on noteUserGesture", () => {
-    const { widget, plays } = fakeWidget();
-    bindLiveWidget(widget, Events, "555");
-    widget.fire("ready");
+    const { calls } = readyWidget();
     noteUserGesture();
-    assert.equal(plays.length, 0);
-    assert.equal(getPlaybackSurface().unlocked, true);
+    assert.deepEqual(calls, []);
   });
 
-  it("calls widget.play in the same turn when ready", () => {
-    const { widget, plays } = fakeWidget();
-    bindLiveWidget(widget, Events, "555");
-    widget.fire("ready");
-    applyPlayback(cmd);
-    assert.deepEqual(plays, ["play"]);
+  it("learns the cued sound from the widget, not the caller", () => {
+    readyWidget("777");
+    assert.equal(getPlaybackSurface().liveSoundId, "777");
   });
 
-  it("rewrites iframe src when the widget is not ready", () => {
-    const iframe = fakeIframe("https://w.soundcloud.com/player/?auto_play=false");
+  it("skips + plays a different tablet synchronously, with no iframe rewrite", () => {
+    const iframe = { src: "https://w.soundcloud.com/player/?url=users" } as HTMLIFrameElement;
     setLiveIframe(iframe);
+    const { calls } = readyWidget();
     applyPlayback(cmd);
-    assert.match(iframe.src, /auto_play=true/);
-    assert.match(iframe.src, /555/);
+    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
+    assert.equal(iframe.src, "https://w.soundcloud.com/player/?url=users");
+    assert.equal(calls.some((c) => c.startsWith("load")), false);
   });
 
-  it("loads a different permalink once the widget is ready", () => {
-    const { widget, loads } = fakeWidget();
-    bindLiveWidget(widget, Events, "111");
-    widget.fire("ready");
+  it("retry on the cued tablet is a plain play() in the same turn", () => {
+    const { calls } = readyWidget("555");
     applyPlayback(cmd);
-    assert.equal(loads.length, 1);
-    assert.equal(loads[0]?.url, cmd.permalink);
-    assert.equal(loads[0]?.auto, true);
+    assert.deepEqual(calls, ["vol:100", "play"]);
   });
 
-  it("keeps a pending sound id when the widget rebinds", () => {
-    const { widget } = fakeWidget();
+  it("stays pending on PLAY and confirms on the first progress > 0", () => {
+    const { widget } = readyWidget();
+    const types = collect();
     applyPlayback(cmd);
-    bindLiveWidget(widget, Events, "featured-old");
-    assert.equal(getPlaybackSurface().liveSoundId, "555");
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    assert.deepEqual(types, ["pending"]);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 0 });
+    assert.deepEqual(types, ["pending"]);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 150 });
+    assert.deepEqual(types.slice(0, 2), ["pending", "play"]);
+    assert.equal(getAttemptPhase(), "playing");
+    assert.equal(isAudioUnlocked(), true);
   });
 
-  it("ignores a widget pause while a play is still pending", () => {
-    const types: string[] = [];
-    const off = subscribePlayback((notice) => types.push(notice.type));
-    const { widget } = fakeWidget();
-    bindLiveWidget(widget, Events, "555");
-    widget.fire("ready");
+  it("a refused start (PAUSE at 0, no PLAY behind it) becomes blocked", async () => {
+    const { widget } = readyWidget();
+    const types = collect();
     applyPlayback(cmd);
-    widget.fire("pause");
-    off();
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    widget.fire("pause", { soundId: 555, currentPosition: 0 });
     assert.equal(types.includes("pause"), false);
-    assert.equal(types.includes("pending"), true);
+    await new Promise((resolve) => setTimeout(resolve, 750));
+    assert.equal(types.includes("blocked"), true);
+    assert.equal(getAttemptPhase(), "blocked");
+    resetPlaybackForTests();
   });
 
-  it("ignores a pause that follows PLAY before the tablet has been asked to rest", () => {
-    const types: string[] = [];
-    const off = subscribePlayback((notice) => types.push(notice.type));
-    const { widget } = fakeWidget();
-    bindLiveWidget(widget, Events, "555");
-    widget.fire("ready");
+  it("does not report the old tablet's pause while switching", () => {
+    const { widget } = readyWidget("900");
+    const types = collect();
+    applyPlayback({ ...cmd, soundId: "900" });
+    widget.fire("playProgress", { soundId: 900, currentPosition: 300 });
     applyPlayback(cmd);
-    widget.fire("play");
-    widget.fire("pause");
-    off();
-    assert.equal(types.includes("play"), true);
+    widget.fire("pause", { soundId: 900, currentPosition: 6100 });
     assert.equal(types.includes("pause"), false);
-    assert.equal(getPlaybackSurface().heardPlay, true);
+    resetPlaybackForTests();
   });
 
-  it("plays a ready widget without rewriting the iframe", () => {
-    const iframe = fakeIframe("https://w.soundcloud.com/player/?url=https%3A%2F%2Fapi.soundcloud.com%2Ftracks%2F555");
-    setLiveIframe(iframe);
-    const { widget, plays } = fakeWidget();
-    bindLiveWidget(widget, Events, "555");
-    widget.fire("ready");
-    const srcBefore = iframe.src;
-    applyPlayback(cmd);
-    assert.equal(iframe.src, srcBefore);
-    assert.deepEqual(plays, ["play"]);
-  });
-
-  it("treats a widget ERROR during play as a blocked tablet", () => {
-    const types: string[] = [];
-    const off = subscribePlayback((notice) => types.push(notice.type));
-    const { widget } = fakeWidget();
-    const events = { ...Events, ERROR: "error" };
-    bindLiveWidget(widget, events, "555");
-    widget.fire("ready");
+  it("treats a widget ERROR during a pending play as blocked", () => {
+    const { widget } = readyWidget();
+    const types = collect();
     applyPlayback(cmd);
     widget.fire("error");
-    off();
     assert.equal(types.includes("blocked"), true);
-    assert.equal(getPlaybackSurface().heardPlay, false);
+  });
+
+  it("queues a play while the playlist loads, primes in the tap, then skips when it arrives", () => {
+    const fake = fakeWidget("900");
+    bindLiveWidget(fake.widget, Events);
+    fake.widget.fire("ready");
+    setCatalogSoundIds(["900", "555", "777"]);
+    setPlaylistForTests(["900"], false);
+    fake.calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(fake.calls, ["vol:0", "play"]);
+    assert.equal(isPriming(), true);
+    setPlaylistForTests(PLAYLIST);
+    // The prime may still be sounding (at 0) on the old sound: no volume yet.
+    assert.deepEqual(fake.calls.slice(2), ["skip:1", "play"]);
+    assert.equal(isPriming(), false);
+    fake.widget.fire("playProgress", { soundId: 900, currentPosition: 3000 });
+    assert.equal(fake.calls.includes("vol:100"), false);
+    fake.widget.fire("playProgress", { soundId: 555, currentPosition: 40 });
+    assert.deepEqual(fake.calls.slice(4), ["vol:100"]);
+    resetPlaybackForTests();
+  });
+
+  it("queues until READY and then plays", () => {
+    const fake = fakeWidget("555");
+    bindLiveWidget(fake.widget, Events);
+    applyPlayback(cmd);
+    assert.deepEqual(fake.calls, []);
+    fake.widget.fire("ready");
+    assert.deepEqual(fake.calls, ["vol:100", "play"]);
+  });
+
+  it("primes the wheel winner silently and hands over to the landing without a pause", () => {
+    const { widget, calls } = readyWidget();
+    const types = collect();
+    assert.equal(primeForLaterPlay("777"), true);
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play"]);
+    widget.fire("play", { soundId: 777, currentPosition: 0 });
+    widget.fire("playProgress", { soundId: 777, currentPosition: 120 });
+    // Not paused: a pause() while SoundCloud is still fetching aborts its
+    // segment fetch and its widget throws an uncaught AbortError. The prime
+    // keeps running at volume 0 (no seek, no volume restore either).
+    assert.deepEqual(calls.slice(3), []);
+    assert.equal(isPriming(), true);
+    assert.deepEqual(types, []);
+    assert.equal(isAudioUnlocked(), true);
+    assert.ok(PRIME_MAX_SILENT_MS >= 8000);
+    // Landing: same sound; restart from 0, and only then volume back up.
+    calls.length = 0;
+    applyPlayback({ ...cmd, soundId: "777" });
+    assert.deepEqual(calls, ["seek:0", "vol:100", "play"]);
+    assert.equal(isPriming(), false);
+    // Once unlocked, priming is a no-op.
+    assert.equal(primeForLaterPlay("555"), false);
+  });
+
+  it("landing during a prime restores volume and restarts from zero", () => {
+    const { calls } = readyWidget();
+    primeForLaterPlay("777");
+    calls.length = 0;
+    applyPlayback({ ...cmd, soundId: "777" });
+    assert.deepEqual(calls, ["seek:0", "vol:100", "play"]);
+    resetPlaybackForTests();
+  });
+
+  it("the prime timeout also only pauses, leaving volume at 0", async () => {
+    const { calls } = readyWidget();
+    primeForLaterPlay("777");
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    assert.equal(isPriming(), false);
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play", "pause"]);
+    assert.equal(calls.includes("vol:100"), false);
+    assert.equal(calls.some((c) => c.startsWith("seek")), false);
+    resetPlaybackForTests();
+  });
+
+  it("a different tablet after a prime restores volume only once the new sound flows", () => {
+    const { widget, calls } = readyWidget();
+    primeForLaterPlay("777");
+    widget.fire("playProgress", { soundId: 777, currentPosition: 90 });
+    calls.length = 0;
+    applyPlayback(cmd);
+    // The silently running prime keeps sounding for a few ms after skip().
+    assert.deepEqual(calls, ["skip:1", "play"]);
+    widget.fire("playProgress", { soundId: 777, currentPosition: 3400 });
+    assert.deepEqual(calls, ["skip:1", "play"]);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 30 });
+    assert.deepEqual(calls, ["skip:1", "play", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("a refused start after a prime still restores volume (for the Tap to play tap)", () => {
+    const { widget, calls } = readyWidget();
+    primeForLaterPlay("777");
+    calls.length = 0;
+    applyPlayback(cmd);
+    widget.fire("error");
+    assert.equal(getAttemptPhase(), "blocked");
+    assert.deepEqual(calls, ["skip:1", "play", "vol:100"]);
+  });
+
+  it("skips the silent prime where media volume is ignored (iOS)", () => {
+    setPrimeSupportForTests(false);
+    const { calls } = readyWidget();
+    assert.equal(primeForLaterPlay("777"), false);
+    assert.equal(isPriming(), false);
+    assert.deepEqual(calls, []);
+    // The real play still goes out inside the tap.
+    applyPlayback({ ...cmd, soundId: "777" });
+    assert.deepEqual(calls, ["skip:2", "vol:100", "play"]);
+  });
+
+  it("does not prime a queued play on iOS either", () => {
+    setPrimeSupportForTests(false);
+    const fake = fakeWidget("900");
+    bindLiveWidget(fake.widget, Events);
+    fake.widget.fire("ready");
+    setCatalogSoundIds(["900", "555", "777"]);
+    setPlaylistForTests(["900"], false);
+    fake.calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(fake.calls, []);
+    setPlaylistForTests(PLAYLIST);
+    assert.deepEqual(fake.calls, ["skip:1", "vol:100", "play"]);
+    resetPlaybackForTests();
+  });
+
+  it("a tap on SoundCloud's own button while blocked moves a wrong cue to the target", () => {
+    const { widget, calls } = readyWidget("900");
+    applyPlayback(cmd);
+    widget.fire("error");
+    assert.equal(getAttemptPhase(), "blocked");
+    calls.length = 0;
+    widget.fire("play", { soundId: 900, currentPosition: 0 });
+    assert.deepEqual(calls, ["vol:0", "skip:1", "play"]);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 200 });
+    assert.deepEqual(calls, ["vol:0", "skip:1", "play", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("a tap on SoundCloud's own button on the cued target confirms play", () => {
+    const { widget, calls } = readyWidget("555");
+    const types = collect();
+    applyPlayback(cmd);
+    widget.fire("error");
+    calls.length = 0;
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    widget.fire("playProgress", { soundId: 555, currentPosition: 150 });
+    assert.deepEqual(calls, []);
+    assert.ok(types.includes("play"));
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("after a refused prime, later starts go straight to Tap to play without a doomed play()", async () => {
+    const { widget, calls } = readyWidget("900");
+    const types = collect();
+    primeForLaterPlay("777");
+    widget.fire("play", { soundId: 777, currentPosition: 0 });
+    widget.fire("pause", { soundId: 777, currentPosition: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    assert.equal(isPriming(), false);
+    // Already paused by the browser: no extra pause() either.
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play"]);
+    calls.length = 0;
+    applyPlayback(cmd); // landing on 555, cued is 777
+    // No play(): only cue the target and bring volume back for the overlay tap.
+    assert.deepEqual(calls, ["skip:1", "vol:100"]);
+    assert.equal(getAttemptPhase(), "blocked");
+    assert.equal(types.at(-1), "blocked");
+    // The skip's own refused start is ignored while blocked.
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    widget.fire("pause", { soundId: 555, currentPosition: 0 });
+    assert.equal(getAttemptPhase(), "blocked");
+    // The overlay tap inside SoundCloud plays the cued target.
+    widget.fire("play", { soundId: 555, currentPosition: 0 });
+    widget.fire("playProgress", { soundId: 555, currentPosition: 60 });
+    assert.deepEqual(calls, ["skip:1", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+    // Unlocked now: the next start is sent normally.
+    calls.length = 0;
+    applyPlayback({ ...cmd, soundId: "900" });
+    assert.deepEqual(calls, ["skip:0", "vol:100", "play"]);
+    resetPlaybackForTests();
+  });
+
+  it("a refused prime on the target just restores volume for the overlay tap", async () => {
+    const { widget, calls } = readyWidget("900");
+    primeForLaterPlay("555");
+    widget.fire("pause", { soundId: 555, currentPosition: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["vol:100"]);
+    assert.equal(getAttemptPhase(), "blocked");
+    resetPlaybackForTests();
+  });
+
+  it("a slow prime (still loading, no pause) is not treated as refused", async () => {
+    const { widget, calls } = readyWidget("900");
+    primeForLaterPlay("777");
+    widget.fire("play", { soundId: 777, currentPosition: 0 });
+    await new Promise((resolve) => setTimeout(resolve, 3100));
+    calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
+    assert.equal(getAttemptPhase(), "pending");
+    resetPlaybackForTests();
+  });
+
+  it("a spin while playing hushes instead of pausing, and the landing skips over it", () => {
+    const { widget, calls } = readyWidget("555");
+    const types = collect();
+    applyPlayback(cmd);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 900 });
+    assert.equal(getAttemptPhase(), "playing");
+    calls.length = 0;
+    assert.equal(quietForSpin(), true);
+    assert.deepEqual(calls, ["vol:0"]);
+    assert.equal(getAttemptPhase(), "idle");
+    // Old tablet keeps running silently; its events change nothing.
+    widget.fire("playProgress", { soundId: 555, currentPosition: 2000 });
+    widget.fire("pause", { soundId: 555, currentPosition: 2100 });
+    assert.equal(types.includes("pause"), false);
+    // Landing on 777: skip, play; volume only once 777 flows.
+    applyPlayback({ ...cmd, soundId: "777" });
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play"]);
+    widget.fire("playProgress", { soundId: 777, currentPosition: 40 });
+    assert.deepEqual(calls, ["vol:0", "skip:2", "play", "vol:100"]);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("replaying the hushed tablet resumes it (no seek) at full volume", () => {
+    const { widget, calls } = readyWidget("555");
+    applyPlayback(cmd);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 900 });
+    quietForSpin();
+    calls.length = 0;
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["vol:100", "play"]);
+  });
+
+  it("does not hush where volume is ignored (iOS pauses instead)", () => {
+    setPrimeSupportForTests(false);
+    const { widget } = readyWidget("555");
+    applyPlayback(cmd);
+    widget.fire("playProgress", { soundId: 555, currentPosition: 900 });
+    assert.equal(quietForSpin(), false);
+    assert.equal(getAttemptPhase(), "playing");
+  });
+
+  it("does not hush when nothing is sounding", () => {
+    readyWidget("555");
+    assert.equal(quietForSpin(), false);
+  });
+
+  it("pause stops the attempt and pauses the widget", () => {
+    const { calls } = readyWidget();
+    applyPlayback(cmd);
+    calls.length = 0;
+    applyPlayback({ ...cmd, intent: "pause" });
+    assert.deepEqual(calls, ["pause"]);
+    assert.equal(getAttemptPhase(), "idle");
+  });
+
+  it("falls back to a single-track load only when the sound is not in the playlist", () => {
+    const { calls } = readyWidget();
+    applyPlayback({ ...cmd, soundId: "404" });
+    assert.deepEqual(calls, [`load:${cmd.permalink}:true`]);
+    resetPlaybackForTests();
+  });
+});
+
+describe("player-store: retry sends before any state update", () => {
+  it("retryPlay and play call startTrack (native play() / widget postMessage) before set()", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const src = await readFile(new URL("./player-store.ts", import.meta.url), "utf8");
+    const body = (name: string) => {
+      const start = src.indexOf(`  ${name}: (`);
+      const end = src.indexOf("\n  },", start);
+      return src.slice(start, end);
+    };
+    for (const name of ["retryPlay", "play"]) {
+      const b = body(name);
+      assert.ok(b.includes("startTrack("), name);
+      assert.ok(b.indexOf("set(") > 0, name);
+      assert.ok(b.indexOf("startTrack(") < b.indexOf("set("), `${name}: startTrack before set`);
+      assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(b.slice(0, b.indexOf("startTrack("))), false);
+    }
+    // startTrack itself starts synchronously on both backends.
+    const st = src.slice(src.indexOf("function startTrack("), src.indexOf("\n}\n", src.indexOf("function startTrack(")));
+    assert.ok(st.includes("nativePlay(track)") && st.includes("applyPlayback("));
+    assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(st), false);
   });
 });

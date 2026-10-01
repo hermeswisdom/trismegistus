@@ -67,7 +67,7 @@ export function hydrateWaveform(widget: SCWidget) {
         hydrated.add(id);
         void loadWaveform(id, sound.waveform_url);
       } catch {
-        /* SoundCloud's canvas createPattern can throw while the widget draws. */
+        /* malformed sound payload from the widget API */
       }
     });
   } catch {

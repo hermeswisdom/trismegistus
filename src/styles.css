@@ -379,6 +379,38 @@
   }
 }
 
+/* Hidden SoundCloud host iframe (see now-playing.tsx): a real layout size so
+   the widget's waveform canvas is never 0×0, painted as a 20×20 corner only. */
+.sc-host-frame {
+  width: 320px;
+  height: 166px;
+  clip-path: inset(calc(100% - 20px) 0 0 calc(100% - 20px));
+}
+
+/* Live visitor badge: neon dot breathes like a broadcast light. */
+.visitor-dot {
+  box-shadow: 0 0 8px rgb(214 226 74 / 85%);
+  animation: visitor-dot-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes visitor-dot-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgb(214 226 74 / 85%);
+  }
+  50% {
+    opacity: 0.45;
+    box-shadow: 0 0 2px rgb(214 226 74 / 40%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .visitor-dot {
+    animation: none;
+  }
+}
+
 @media (max-width: 860px) {
   .atman-core {
     font-size: clamp(2.1rem, min(11svh, 11vh), 4.4rem);
@@ -430,4 +462,23 @@
   .mark-pulse-in {
     animation: none;
   }
+}
+
+/* "Tap to play": the widget sits over the refused control, clipped to
+   SoundCloud's own play button (position + clip set inline). Invisible,
+   but it takes the tap, so strict autoplay sees a tap inside the player. */
+.sc-host-frame[data-sc-tap-overlay] {
+  right: auto;
+  bottom: auto;
+  z-index: 60;
+  opacity: 0.01;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* The wheel's "Tap to play" shows only once the overlay covers it (the
+   hook sets html[data-sc-tap-ready]); until then it keeps its layout box.
+   The native player needs no overlay: a tap on the button itself plays. */
+html:not([data-sc-tap-ready="wheel"]):not([data-player-backend="native"]) [data-sc-tap-target="wheel"] {
+  visibility: hidden;
 }

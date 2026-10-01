@@ -5,6 +5,7 @@ import { AtmanWord } from "@/components/atman-word";
 import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
 import { MarksPulse } from "@/components/marks-pulse";
+import { BuyMasterButton } from "@/components/buy-master";
 import { HeartButton, ShareButton, ShareDayButton } from "@/components/track-actions";
 import { FavoritesShelf } from "@/components/favorites-shelf";
 import { MarkButton } from "@/components/mark-button";
@@ -118,6 +119,7 @@ export function TrackWall() {
                 <ShareButton track={current} className="bg-elevated" />
               )}
               <MarkButton trackId={current.id} className="bg-elevated" labeled />
+              <BuyMasterButton track={current} />
             </div>
           ) : null}
         </div>
@@ -218,11 +220,6 @@ function TabletTile({
         {active ? (
           <span className="absolute inset-0 ring-2 ring-accent ring-inset" />
         ) : null}
-        {isDaily ? (
-          <span className="absolute top-2 left-2 z-10 bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
-            Today
-          </span>
-        ) : null}
         <span className="absolute inset-x-0 bottom-0 z-[6] p-2.5 sm:p-4">
           <span className="block truncate font-display text-base leading-tight text-fg sm:text-xl">
             {track.title}
@@ -239,17 +236,51 @@ function TabletTile({
           </span>
         </span>
       </button>
-      <div className="absolute top-1.5 right-1.5 z-10 flex sm:top-2 sm:right-2">
-        <ReadButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
-        <HeartButton id={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
-        <ShareButton
-          track={track}
+      {/*
+        Outside the tile <button> (Buy is itself a <button> — nesting caused
+        React #418). Row 1: Today | icon strip. Row 2: Buy full width under the
+        strip so it is never covered. Daily tiles pack four icons 2×2 on mobile.
+        pointer-events-none on the shell lets taps on Today fall through to play.
+      */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-1 gap-y-1.5 p-1.5 sm:p-2">
+        <div className="min-w-0">
+          {isDaily ? (
+            <span className="inline-block bg-accent px-2 py-1 text-[0.6rem] font-medium tracking-[0.16em] text-bg uppercase">
+              Today
+            </span>
+          ) : null}
+        </div>
+        <div
           className={cn(
-            "size-10 bg-bg/55 text-fg sm:flex sm:size-11",
-            isDaily ? "flex" : "hidden",
+            "pointer-events-auto shrink-0 -mt-0.5 -mr-0.5 sm:mt-0 sm:mr-0",
+            // Four icons on a phone tile need a 2×2 pack; from sm a row fits.
+            isDaily ? "grid grid-cols-2 sm:flex" : "flex",
           )}
-        />
-        <MarkButton trackId={track.id} className="size-10 bg-bg/55 text-fg sm:size-11" />
+        >
+          <ReadButton
+            trackId={track.id}
+            className="size-8 bg-bg/55 text-fg sm:size-10"
+          />
+          <HeartButton
+            id={track.id}
+            className="size-8 bg-bg/55 text-fg sm:size-10"
+          />
+          <ShareButton
+            track={track}
+            className={cn(
+              "size-8 bg-bg/55 text-fg sm:size-10",
+              isDaily ? "flex" : "hidden",
+            )}
+          />
+          <MarkButton
+            trackId={track.id}
+            className="size-8 bg-bg/55 text-fg sm:size-10"
+          />
+        </div>
+        {/* Full-width under the icon row so the price is never clipped by the strip. */}
+        <div className="col-span-2 min-w-0 [&_button]:pointer-events-auto">
+          <BuyMasterButton track={track} variant="card" />
+        </div>
       </div>
     </li>
   );
