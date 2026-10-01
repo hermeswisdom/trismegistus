@@ -1,3 +1,4 @@
+import { nativeAudioAllowed } from "./streams.ts";
 import {
   IDLE_ATTEMPT,
   PLAY_BLOCKED_COPY,
@@ -199,6 +200,14 @@ function later(fn: () => void, ms: number) {
 
 function resumeWebAudio() {
   if (typeof window === "undefined") return;
+  // Native <audio> player in use: no AudioContext at all. On iOS a page
+  // AudioContext is a separate Web Audio session (category "ambient" when it
+  // is the only one producing sound), it is suspended / interrupted on lock,
+  // and it is not needed to unlock a top-level <audio> element.
+  if (nativeAudioAllowed(window.location.search)) {
+    closeWebAudio();
+    return;
+  }
   try {
     const Ctor = window.AudioContext || window.webkitAudioContext;
     if (!Ctor) return;
@@ -207,6 +216,21 @@ function resumeWebAudio() {
   } catch {
     /* Web Audio is optional; the widget is the source. */
   }
+}
+
+function closeWebAudio() {
+  if (!gestureCtx) return;
+  try {
+    void gestureCtx.close();
+  } catch {
+    /* ignore */
+  }
+  gestureCtx = null;
+}
+
+/** Debug: the gesture AudioContext's state ("none" when never created). */
+export function gestureAudioContextState(): string {
+  return gestureCtx ? gestureCtx.state : "none";
 }
 
 /** Mark a user gesture. Never plays by itself. */

@@ -11,6 +11,13 @@
  * locked). A stream that cannot load falls back to SoundCloud ("fallback").
  */
 import { classifyPlayRejection, streamUrl, type NativePhase } from "./streams.ts";
+import {
+  classifyPause,
+  debugEvent,
+  recordPause,
+  stackSnippet,
+  type PauseCall,
+} from "./audio-debug.ts";
 
 export type NativeNotice =
   | { type: "pending"; id: string }
@@ -42,6 +49,36 @@ let primeTimer: ReturnType<typeof setTimeout> | null = null;
 /** One silent reload per tablet when its signed URL lapses / the network drops. */
 let reloadedFor: string | null = null;
 const failed = new Set<string>();
+/** Last time our code paused the element or swapped its src, and why. */
+let pauseCall: PauseCall | null = null;
+
+function notePauseCall(reason: string) {
+  pauseCall = { at: Date.now(), reason, stack: stackSnippet(3) };
+}
+
+function visibility() {
+  return typeof document === "undefined" ? "unknown" : document.visibilityState;
+}
+
+/**
+ * Declare this page's audio as media playback (Safari 16.4+ Audio Session
+ * API). The page's category is then MediaPlayback for its whole life, so it
+ * keeps playing when the phone locks, between tracks (ended -> next src) and
+ * with the ringer switch on silent, instead of WebKit's automatic choice,
+ * which drops to "ambient" (silenced on lock) or "none" whenever no element
+ * is audibly playing for a moment.
+ */
+export function claimPlaybackAudioSession() {
+  try {
+    const s = (navigator as Navigator & { audioSession?: { type: string } }).audioSession;
+    if (s && s.type !== "playback") {
+      s.type = "playback";
+      debugEvent("audioSession", `type=${s.type}`);
+    }
+  } catch {
+    /* unsupported */
+  }
+}
 const listeners = new Set<(n: NativeNotice) => void>();
 
 export function subscribeNative(fn: (n: NativeNotice) => void) {
@@ -104,6 +141,21 @@ function ensureEl(): HTMLAudioElement | null {
   a.style.display = "none";
   document.body.appendChild(a);
 
+  // Any pause() on this element, from anywhere, leaves a reason + call site
+  // (shown by ?debug=audio). Our own calls set a specific reason first.
+  const elementPause = a.pause;
+  a.pause = function pauseTraced(this: HTMLAudioElement) {
+    if (!pauseCall || Date.now() - pauseCall.at > 50) notePauseCall("unlabelled pause() call");
+    return elementPause.call(this);
+  };
+  for (const type of ["loadstart", "play", "playing", "waiting", "stalled", "ended", "error", "emptied", "abort"]) {
+    a.addEventListener(type, () => {
+      const slug = activeSlug ?? "-";
+      const err = type === "error" && a.error ? ` code=${a.error.code}` : "";
+      debugEvent(`audio:${type}`, `${slug} t=${(a.currentTime || 0).toFixed(1)}${priming ? " (muted prime)" : ""}${err} [${visibility()}]`);
+    });
+  }
+
   a.addEventListener("playing", () => {
     unlocked = true;
     if (priming || !activeId) return;
@@ -125,6 +177,15 @@ function ensureEl(): HTMLAudioElement | null {
     }
   });
   a.addEventListener("pause", () => {
+    const why = classifyPause({ now: Date.now(), call: pauseCall, visibility: visibility(), ended: a.ended });
+    recordPause({
+      at: Date.now(),
+      reason: priming ? `${why.reason} (muted prime)` : why.reason,
+      ours: why.ours,
+      visibility: visibility(),
+      time: a.currentTime || 0,
+      stack: why.stack,
+    });
     // Only a pause of real playback (lock screen, headphones out, another
     // app taking audio). Our own pause() already set idle; a src change
     // during a pending start must not cancel it.
@@ -157,6 +218,7 @@ function ensureEl(): HTMLAudioElement | null {
       reloadedFor = slug;
       const url = streamUrl(slug);
       if (url) {
+        notePauseCall(`stream reload after load error (${slug})`);
         a.src = `${url}?r=${Date.now()}`;
         try {
           if (at > 0) a.currentTime = at;
@@ -177,6 +239,7 @@ function cue(a: HTMLAudioElement, track: NativeTrack): boolean {
   if (activeId === track.id && a.getAttribute("src")) return false;
   const url = streamUrl(track.slug);
   if (!url) return false;
+  notePauseCall(`src change to ${track.slug}`);
   a.src = url;
   activeId = track.id;
   activeSlug = track.slug;
@@ -203,6 +266,7 @@ export function nativePlay(track: NativeTrack): boolean {
     }
   }
   a.muted = false;
+  claimPlaybackAudioSession();
   const mine = ++seq;
   const id = track.id;
   const slug = track.slug;
@@ -237,12 +301,13 @@ export function nativePlay(track: NativeTrack): boolean {
   return true;
 }
 
-export function nativePause() {
+export function nativePause(reason = "app pause()") {
   seq += 1;
   stopPrime();
   clearConfirm();
   phase = "idle";
   try {
+    if (el && !el.paused) notePauseCall(reason);
     el?.pause();
   } catch {
     /* ignore */
@@ -272,6 +337,7 @@ export function nativePrime(track: NativeTrack): boolean {
   phase = "idle";
   cue(a, track);
   a.muted = true;
+  claimPlaybackAudioSession();
   priming = true;
   primedFor = track.id;
   try {
@@ -290,6 +356,7 @@ export function nativePrime(track: NativeTrack): boolean {
     if (!priming) return;
     stopPrime();
     try {
+      notePauseCall("muted prime 12s safety stop (wheel never landed)");
       a.pause();
     } catch {
       /* ignore */
@@ -313,6 +380,7 @@ export function resetNativeForTests() {
   seq = 0;
   clearConfirm();
   reloadedFor = null;
+  pauseCall = null;
   failed.clear();
   listeners.clear();
 }

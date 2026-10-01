@@ -40,6 +40,7 @@ import {
   resolvePrevious,
   type PlayerBackend,
 } from "@/lib/streams";
+import { debugEvent } from "@/lib/audio-debug";
 import { wheelPlayOn } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
 
@@ -125,10 +126,18 @@ function startTrack(nextId: string): PlayerBackend | null {
     hushWidget(track);
     if (nativePlay(track)) return "native";
   } else {
-    nativePause();
+    nativePause(`switched to SoundCloud for ${track.slug} (no stream)`);
   }
   applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
   return "sc";
+}
+
+/** Why the next store pause() happens (debug trace); default is a pause tap. */
+let pauseReason: string | null = null;
+
+function pauseWith(reason: string) {
+  pauseReason = reason;
+  usePlayer.getState().pause();
 }
 
 const countedAt = new Map<string, number>();
@@ -154,6 +163,7 @@ function ensurePlaybackBridge() {
   if (bridged) return;
   bridged = true;
   subscribePlayback((notice) => {
+    if (notice.type !== "progress") debugEvent(`sc:${notice.type}`, usePlayer.getState().backend === "sc" ? undefined : "(ignored: native engine)");
     // The widget can report on a sound we already moved off to the native player.
     if (usePlayer.getState().backend !== "sc") return;
     if (notice.type === "pending") {
@@ -216,6 +226,7 @@ function ensurePlaybackBridge() {
         const id = notice.id;
         const track = getTrack(id);
         if (!track) return;
+        debugEvent("engine", `fallback to SoundCloud: ${track.slug}`);
         usePlayer.setState({ backend: "sc" });
         applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
         usePlayer.setState(afterStart("sc"));
@@ -228,7 +239,7 @@ function ensurePlaybackBridge() {
       const s = usePlayer.getState();
       if (!s.playing) s.play();
     },
-    pause: () => usePlayer.getState().pause(),
+    pause: () => pauseWith("Media Session pause/stop (lock screen, headphones, car)"),
     next: () => usePlayer.getState().playNext(),
     previous: () => usePlayer.getState().playPrevious(),
     seekTo: (seconds) => {
@@ -299,7 +310,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       // an early pause() makes SoundCloud throw an AbortError. iOS still
       // pauses. The native element just pauses.
       if (get().backend === "sc" && quietForSpin()) set({ playing: false, playPending: false });
-      else get().pause();
+      else pauseWith("wheel spin (pause until it lands)");
     }
     // The winner sounds on landing, ~4s after this tap and outside it. Start
     // it silently now (inside the tap) so iOS allows that later play.
@@ -329,6 +340,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     // leaves first, before any state update or re-render, so it rides the
     // tap's user activation.
     const backend = startTrack(nextId) ?? get().backend;
+    debugEvent("engine", `${backend} ${track.slug}`);
     // Honest UI: pending until audio really flows (see reduceAttempt and
     // native-audio.ts). `playing` flips on the first real progress.
     set({
@@ -351,8 +363,10 @@ export const usePlayer = create<PlayerState>((set, get) => ({
 
   pause: () => {
     const track = getTrack(get().currentId);
+    const reason = pauseReason ?? "pause tap (dock / wheel / tracklist)";
+    pauseReason = null;
     if (get().backend === "native") {
-      nativePause();
+      nativePause(reason);
       set({ playing: false, playPending: false });
       setMediaSessionPlaying(false);
       return;

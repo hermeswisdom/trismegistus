@@ -12,6 +12,8 @@ import {
   type NativeNotice,
 } from "./native-audio.ts";
 import { STREAM_SLUGS } from "./stream-manifest.ts";
+import { getLastPause, resetAudioDebugForTests } from "./audio-debug.ts";
+import { readFileSync } from "node:fs";
 
 const A = { id: STREAM_SLUGS[0], slug: STREAM_SLUGS[0] };
 const B = { id: STREAM_SLUGS[1], slug: STREAM_SLUGS[1] };
@@ -58,14 +60,19 @@ class FakeAudio extends EventTarget {
 
 let audio: FakeAudio;
 let notices: NativeNotice[];
+let docListeners: string[];
 
 beforeEach(() => {
   resetNativeForTests();
   audio = new FakeAudio();
+  docListeners = [];
   (globalThis as unknown as { document: unknown }).document = {
     createElement: () => audio,
     body: { appendChild: () => undefined },
+    visibilityState: "visible",
+    addEventListener: (type: string) => docListeners.push(type),
   };
+  resetAudioDebugForTests(false);
   notices = [];
   subscribeNative((n) => notices.push(n));
 });
@@ -185,5 +192,58 @@ describe("native player", () => {
     audio.fire("error");
     await tick();
     assert.equal(types().at(-1), "fallback");
+  });
+
+  it("claims the playback audio session (iOS) before play()", () => {
+    const session = { type: "auto" };
+    Object.defineProperty(globalThis.navigator, "audioSession", { value: session, configurable: true });
+    let typeAtPlay = "";
+    audio.nextPlay = () => {
+      typeAtPlay = session.type;
+      audio.paused = false;
+      return Promise.resolve();
+    };
+    try {
+      nativePlay(A);
+      assert.equal(typeAtPlay, "playback");
+    } finally {
+      delete (globalThis.navigator as unknown as { audioSession?: unknown }).audioSession;
+    }
+  });
+
+  it("never hooks page visibility / pagehide / freeze", () => {
+    nativePlay(A);
+    audio.fire("playing");
+    assert.deepEqual(docListeners, []);
+    for (const file of ["native-audio.ts", "player-store.ts", "media-session.ts", "sc-widget.ts"]) {
+      const src = readFileSync(new URL(`./${file}`, import.meta.url), "utf8");
+      assert.doesNotMatch(src, /visibilitychange|pagehide|"freeze"|document\.hidden/, file);
+    }
+  });
+
+  it("labels each pause: our pause() with its reason, an unasked pause as the system's", () => {
+    nativePlay(A);
+    audio.paused = false;
+    audio.fire("playing");
+    nativePause("pause tap (test)");
+    audio.fire("pause");
+    assert.equal(getLastPause()?.ours, true);
+    assert.equal(getLastPause()?.reason, "pause tap (test)");
+
+    nativePlay(A);
+    audio.paused = false;
+    audio.fire("playing");
+    const realNow = Date.now;
+    Date.now = () => realNow() + 5000;
+    try {
+      (globalThis as unknown as { document: { visibilityState: string } }).document.visibilityState = "hidden";
+      audio.paused = true;
+      audio.fire("pause");
+    } finally {
+      Date.now = realNow;
+    }
+    assert.equal(getLastPause()?.ours, false);
+    assert.match(getLastPause()?.reason ?? "", /browser\/OS paused it while the page was hidden/);
+    assert.equal(getLastPause()?.visibility, "hidden");
   });
 });

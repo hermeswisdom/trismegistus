@@ -4,6 +4,7 @@
  * handlers exist, so only play, pause, previoustrack, nexttrack and seekto
  * are registered, and they are (re)registered once audio is playing.
  */
+import { debugEvent } from "@/lib/audio-debug";
 import { mediaArtwork } from "@/lib/streams";
 
 export type MediaSessionHandlers = {
@@ -38,12 +39,29 @@ export function registerMediaSessionActions() {
       /* action not supported here */
     }
   };
-  set("play", () => h.play());
-  set("pause", () => h.pause());
-  set("stop", () => h.pause());
-  set("nexttrack", () => h.next());
-  set("previoustrack", () => h.previous());
+  const log = (action: string) => debugEvent("media-session", action);
+  set("play", () => {
+    log("play");
+    h.play();
+  });
+  set("pause", () => {
+    log("pause");
+    h.pause();
+  });
+  set("stop", () => {
+    log("stop");
+    h.pause();
+  });
+  set("nexttrack", () => {
+    log("nexttrack");
+    h.next();
+  });
+  set("previoustrack", () => {
+    log("previoustrack");
+    h.previous();
+  });
   set("seekto", (details) => {
+    log(`seekto ${details.seekTime}`);
     if (typeof details.seekTime === "number" && Number.isFinite(details.seekTime)) h.seekTo(details.seekTime);
   });
   set("seekbackward", null);
