@@ -46,12 +46,28 @@
   for (const t of ["loadstart", "play", "playing", "pause", "waiting", "stalled", "ended", "error", "emptied", "abort"]) {
     a.addEventListener(t, () => log(`audio:${t} t=${a.currentTime.toFixed(1)} rs=${a.readyState} ns=${a.networkState}${t === "error" && a.error ? " code=" + a.error.code : ""} [${document.visibilityState}]`));
   }
-  let hiddenAt = null, tAtHide = 0;
+  // Verdict: any pause while hidden (or in the lock's blur, just before
+  // hidden) means it STOPPED, even if iOS resumed it later or currentTime moved.
+  let hiddenAt = null, tAtHide = 0, lastPauseAt = 0, lastPlayingAt = 0, pausesWhileHidden = 0, resumesWhileHidden = 0;
+  a.addEventListener("pause", () => { if (a.ended) return; lastPauseAt = Date.now(); if (hiddenAt !== null) pausesWhileHidden += 1; });
+  a.addEventListener("playing", () => { lastPlayingAt = Date.now(); if (hiddenAt !== null) resumesWhileHidden += 1; });
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { hiddenAt = Date.now(); tAtHide = a.currentTime; log(`page hidden (t=${tAtHide.toFixed(1)}, ${a.paused ? "paused" : "playing"})`); return; }
+    if (document.hidden) {
+      hiddenAt = Date.now();
+      tAtHide = a.currentTime;
+      // A pause in the last 3 s before hidden (lock = blur, pause, then hidden) counts as at lock.
+      pausesWhileHidden = lastPauseAt && hiddenAt - lastPauseAt < 3000 && lastPauseAt > lastPlayingAt ? 1 : 0;
+      resumesWhileHidden = 0;
+      log(`page hidden (t=${tAtHide.toFixed(1)}, ${a.paused ? "paused" : "playing"}${pausesWhileHidden ? ", paused just before" : ""})`);
+      return;
+    }
     if (hiddenAt === null) { log("page visible"); return; }
     const wall = (Date.now() - hiddenAt) / 1000, played = a.currentTime - tAtHide;
-    const verdict = played >= wall - 3 ? "KEPT PLAYING while locked" : played > 0.5 ? `STOPPED after ~${played.toFixed(0)}s of ${wall.toFixed(0)}s locked` : `STOPPED at lock (${wall.toFixed(0)}s locked)`;
+    let verdict;
+    if (pausesWhileHidden > 0) verdict = `STOPPED: ${pausesWhileHidden} pause(s) while locked${resumesWhileHidden ? `, ${resumesWhileHidden} resume(s)` : ""}`;
+    else if (a.paused && !a.ended) verdict = "STOPPED: paused on return";
+    else if (played < wall - 3) verdict = played > 0.5 ? `STOPPED after ~${played.toFixed(0)}s of ${wall.toFixed(0)}s locked` : `STOPPED at lock (${wall.toFixed(0)}s locked)`;
+    else verdict = "KEPT PLAYING while locked";
     log(`page visible · locked ${wall.toFixed(0)}s · audio advanced ${played.toFixed(1)}s → ${verdict}`);
     hiddenAt = null;
   });
