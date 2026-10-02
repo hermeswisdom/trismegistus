@@ -36,6 +36,7 @@ import {
   nativeAudioAllowed,
   nextPlayable,
   pickBackend,
+  pickRandomPlayable,
   popHistoryTo,
   pushHistory,
   resolvePrevious,
@@ -162,6 +163,8 @@ function countPlay(id: string) {
   // Automated QC (?qc=1, headless / emulated test browsers) never counts.
   if (isQcBrowser()) return;
   countedAt.set(id, now);
+  // Allowed while hidden (visible-gate.ts): a tablet that starts on a locked
+  // phone (auto-advance, lock-screen next) is a real listen and counts.
   void recordPlay({ data: id })
     .then((board) => {
       if (board) usePlayBoard.getState().setBoard(board.rows, board.recent);
@@ -318,7 +321,13 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     ensurePlaybackBridge();
     noteUserGesture();
     if (opts?.markEntered) set({ entered: true, playError: null });
-    const winner = randomTrack(get().currentId);
+    // Native in use: only tablets with a stream can win (no SoundCloud
+    // fallback, so no iframe overlay, on the first visit's landing).
+    const winner =
+      pickRandomPlayable(TRACKS, {
+        except: get().currentId,
+        playable: nativeAllowed() ? (t) => backendFor(t) === "native" : undefined,
+      }) ?? randomTrack(get().currentId);
     if (!useWheelSpin.getState().begin(winner.id, { force: opts?.force ?? true })) {
       return;
     }

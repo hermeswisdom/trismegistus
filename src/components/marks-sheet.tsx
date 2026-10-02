@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { X } from "lucide-react";
 import { addTrackMark, listTrackMarks, type TrackMark } from "@/lib/marks";
 import { useMarksFeed } from "@/lib/marks-feed";
+import { whenVisible } from "@/lib/visible-gate";
 import { useMarkSheet } from "@/lib/mark-sheet";
 import { markAuthorFromSession } from "@/lib/mark-name";
 import { leftMarkCopy, markNameHint } from "@/lib/mark-copy";
@@ -71,13 +72,24 @@ export function MarksSheet() {
     }
     setLeft(false);
     setError(false);
-    void listTrackMarks({ data: trackId })
-      .then((rows) => {
-        const next = rows ?? [];
-        setMarks(next);
-        setTrack(trackId, next);
-      })
-      .catch(() => setMarks([]));
+    let cancelled = false;
+    // listTrackMarks is a POST: never from a hidden tab (visible-gate.ts).
+    whenVisible("marks-sheet", () => {
+      if (cancelled) return;
+      void listTrackMarks({ data: trackId })
+        .then((rows) => {
+          if (cancelled) return;
+          const next = rows ?? [];
+          setMarks(next);
+          setTrack(trackId, next);
+        })
+        .catch(() => {
+          if (!cancelled) setMarks([]);
+        });
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [trackId, setTrack]);
 
   useEffect(() => {

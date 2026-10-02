@@ -401,3 +401,12 @@ export function tapTargetNudge(
   if (bottom > viewport.dockTop) return Math.ceil(bottom - (viewport.dockTop - margin));
   return Math.floor(rect.top - margin);
 }
+
+/**
+ * The wheel's "Tap to play" is an iframe-overlay target only on the
+ * SoundCloud fallback. On the native player the button plays by itself, so it
+ * carries no overlay marker (and styles.css never hides it waiting for one).
+ */
+export function wheelTapTarget(backend: "native" | "sc"): "wheel" | undefined {
+  return backend === "sc" ? "wheel" : undefined;
+}

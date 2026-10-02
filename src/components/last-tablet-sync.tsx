@@ -7,6 +7,7 @@ import { readLastTablet, writeLastTablet } from "@/lib/last-tablet";
 import { loadMyLastTablet, saveMyLastTablet } from "@/lib/prefs";
 import { usePlayer } from "@/lib/player-store";
 import { getTrack } from "@/lib/rooms";
+import { whenVisible } from "@/lib/visible-gate";
 
 type HomeSearch = { daily?: 1; tablet?: string };
 
@@ -57,8 +58,12 @@ export function LastTabletSync({ search }: { search: HomeSearch }) {
     if (!entered) return;
     writeLastTablet(currentId);
     if (!signedIn) return;
-    void saveMyLastTablet({ data: currentId }).catch(() => {
-      /* local last tablet still holds */
+    // Auto-advance on a locked phone changes the tablet while hidden: save
+    // the latest one once the tab is visible again (visible-gate.ts).
+    whenVisible("last-tablet", () => {
+      void saveMyLastTablet({ data: currentId }).catch(() => {
+        /* local last tablet still holds */
+      });
     });
   }, [currentId, entered, signedIn]);
 
