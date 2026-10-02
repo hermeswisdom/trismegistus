@@ -190,10 +190,13 @@ export function InstallAppButton({
   className,
   onPrompt,
   testId,
+  compactBelowXl = false,
 }: {
   className?: string;
   onPrompt?: () => void;
   testId?: string;
+  /** Desktop nav: "Install" / "Installed" from lg to xl, so the row never wraps at 1024px. */
+  compactBelowXl?: boolean;
 }) {
   const { isStandalone, requestInstall } = useInstallApp();
   const hydrated = useHydrated();
@@ -209,7 +212,14 @@ export function InstallAppButton({
       }}
       className={className}
     >
-      {installMenuLabel(standalone)}
+      {compactBelowXl ? (
+        <>
+          <span className="xl:hidden">{standalone ? "Installed" : "Install"}</span>
+          <span className="hidden xl:inline">{installMenuLabel(standalone)}</span>
+        </>
+      ) : (
+        installMenuLabel(standalone)
+      )}
     </button>
   );
 }

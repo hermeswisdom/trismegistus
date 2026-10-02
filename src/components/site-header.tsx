@@ -64,7 +64,8 @@ export function SiteHeader() {
           ))}
           <InstallAppButton
             testId="nav"
-            className="text-xs font-medium tracking-[0.22em] text-muted uppercase transition-colors duration-150 hover:text-accent"
+            compactBelowXl
+            className="text-xs font-medium tracking-[0.22em] whitespace-nowrap text-muted uppercase transition-colors duration-150 hover:text-accent"
           />
           <AccountLink />
         </nav>
