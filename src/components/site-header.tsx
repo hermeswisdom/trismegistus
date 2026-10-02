@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { AccountLink } from "@/components/account-menu";
 import { HermesNote } from "@/components/hermes-note";
+import { InstallAppButton } from "@/components/install-app";
 import { VisitorBadge } from "@/components/visitor-badge";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/lib/player-store";
@@ -61,6 +62,11 @@ export function SiteHeader() {
               {link.label}
             </a>
           ))}
+          <InstallAppButton
+            testId="nav"
+            compactBelowXl
+            className="text-xs font-medium tracking-[0.22em] whitespace-nowrap text-muted uppercase transition-colors duration-150 hover:text-accent"
+          />
           <AccountLink />
         </nav>
         <button
@@ -106,6 +112,14 @@ export function SiteHeader() {
               {link.label}
             </a>
           ))}
+          <div className="mt-8">
+            <p className="text-xs tracking-[0.28em] text-subtle uppercase">The app</p>
+            <InstallAppButton
+              testId="menu"
+              onPrompt={() => setOpen(false)}
+              className="mt-4 inline-flex min-h-11 items-center font-display text-3xl text-fg"
+            />
+          </div>
           <div className="mt-8">
             <p className="text-xs tracking-[0.28em] text-subtle uppercase">The name</p>
             <div className="mt-4">

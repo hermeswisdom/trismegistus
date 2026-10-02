@@ -515,6 +515,17 @@ export function normalizeHeadContext(ctx = {}) {
   };
 }
 
+/** True when the document already has a `<link rel="…">` of this type. */
+export function hasLinkRel(html, rel) {
+  const want = String(rel).toLowerCase();
+  for (const match of String(html).matchAll(/<link\b[^>]*>/gi)) {
+    const attr = match[0].match(/\brel\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+    const value = (attr?.[1] ?? attr?.[2] ?? attr?.[3] ?? "").toLowerCase();
+    if (value.split(/\s+/).includes(want)) return true;
+  }
+  return false;
+}
+
 export function injectGrokPwaHead(html, ctx = {}) {
   if (typeof html !== "string") return html;
   const { site, projectId, creator, creatorId, host, cwd } = normalizeHeadContext(ctx);
@@ -554,8 +565,11 @@ export function injectGrokPwaHead(html, ctx = {}) {
 
   const missing = grokPwaHeadTags(appName)
     .filter(([key]) => {
-      if (key === "manifest") return !next.includes('href="/__grok/manifest.webmanifest"');
-      if (key === "apple-touch-icon") return !next.includes('href="/__grok/icon-180.png"');
+      // An app that ships its own manifest / home-screen icon (e.g. Atman
+      // Music's public/manifest.webmanifest) keeps it: a second, generic
+      // "Grok App" manifest or icon link would compete with it.
+      if (key === "manifest") return !hasLinkRel(next, "manifest");
+      if (key === "apple-touch-icon") return !hasLinkRel(next, "apple-touch-icon");
       return !next.includes(`name="${key}"`);
     })
     .map(([, tag]) => tag);
