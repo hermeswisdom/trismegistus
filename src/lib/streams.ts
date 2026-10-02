@@ -132,10 +132,9 @@ export function nextPlayable(
 }
 
 /**
- * Random tablet for the wheel. While the native player is in use, only
- * tablets with a stream can win, so the first visit (Enter → wheel) never
- * lands on the SoundCloud fallback, where a refused start needs the iframe
- * "Tap to play" overlay. Falls back to the whole pool when nothing else fits.
+ * Random tablet for the wheel, optionally limited to `playable` ones (see
+ * `wheelWinnerFilter`). Never the current tablet when there is another;
+ * falls back to the whole pool when nothing else fits.
  */
 export function pickRandomPlayable<T extends { id: string }>(
   pool: readonly T[],
@@ -147,4 +146,24 @@ export function pickRandomPlayable<T extends { id: string }>(
   const from = playable.length > 0 ? playable : others;
   if (from.length === 0) return undefined;
   return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}
+
+/**
+ * Which tablets may win a wheel spin.
+ *
+ * Only the automatic first-visit landing (Enter → wheel, `spinTablet({
+ * markEntered })`, or the wheel's own mount-time auto spin) is limited to
+ * tablets with a native stream while the native player is in use: there the
+ * start can be refused by autoplay rules, and a SoundCloud-fallback winner
+ * would then need the iframe "Tap to play" overlay (the WebKit first-tap race,
+ * #34). Every other spin is a tap on the wheel or dice, so any tablet can win,
+ * including the ones without a stream (lift-me-up, remember-who-you-are-mp3-1),
+ * which play through SoundCloud inside that tap.
+ */
+export function wheelWinnerFilter<T>(opts: {
+  landing: boolean;
+  nativeInUse: boolean;
+  isNative: (item: T) => boolean;
+}): ((item: T) => boolean) | undefined {
+  return opts.landing && opts.nativeInUse ? opts.isNative : undefined;
 }

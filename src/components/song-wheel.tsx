@@ -85,7 +85,8 @@ export function SongWheel() {
       if (focused) setLanded(focused);
       return;
     }
-    if (action === "spin") spinTablet({ force: true });
+    // Automatic first spin after entering: a landing, like Enter's own spin.
+    if (action === "spin") spinTablet({ force: true, landing: true });
   }, [entered, nonce, busy, currentId, resumedOnEnter, search.daily, search.tablet, spinTablet]);
 
   useLayoutEffect(() => {
