@@ -79,6 +79,7 @@ export declare function normalizeHeadContext(ctx?: GrokHeadContext): {
   site: OgSite;
 };
 export declare function injectGrokPwaHead(html: string, ctx?: GrokHeadContext): string;
+export declare function hasLinkRel(html: string, rel: string): boolean;
 export declare function createHeadInjector(ctx?: GrokHeadContext): {
   push(chunk: Uint8Array | string): Uint8Array[];
   flush(): Uint8Array[];
