@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, EllipsisVertical, Share, X } from "lucide-react";
+import { Check, Copy, Share, X } from "lucide-react";
 import {
   APP_NAME,
   clearStashedInstallPrompt,
@@ -222,27 +222,26 @@ export function InstallPrompt({ className }: { className?: string }) {
     <aside
       data-install-prompt=""
       aria-label={`Install ${APP_NAME}`}
-      className={cn(
-        "flex items-center gap-3 border border-border bg-surface/70 py-2.5 pr-1.5 pl-3",
-        className,
-      )}
+      className={cn("flex items-start gap-3 border border-border bg-surface/70 py-3 pr-1 pl-3", className)}
     >
-      <img src="/icons/icon-192.png" alt="" width={36} height={36} className="size-9 shrink-0" />
-      <p className="min-w-0 flex-1 text-xs leading-relaxed text-muted">{installPromptBody({ ios, canPrompt })}</p>
-      <button
-        type="button"
-        data-install-trigger="prompt"
-        aria-haspopup="dialog"
-        onClick={(event) => requestInstall(event.currentTarget)}
-        className="inline-flex min-h-11 shrink-0 items-center px-3 text-xs font-medium tracking-[0.18em] text-accent uppercase transition-opacity duration-150 hover:opacity-80"
-      >
-        {canPrompt ? "Install" : "Show me how"}
-      </button>
+      <img src="/icons/icon-192.png" alt="" width={40} height={40} className="mt-0.5 size-10 shrink-0" />
+      <div className="min-w-0 flex-1">
+        <p className="text-xs leading-relaxed text-muted">{installPromptBody({ ios, canPrompt })}</p>
+        <button
+          type="button"
+          data-install-trigger="prompt"
+          aria-haspopup={canPrompt ? undefined : "dialog"}
+          onClick={(event) => requestInstall(event.currentTarget)}
+          className="-ml-0.5 inline-flex min-h-11 items-center gap-2 text-xs font-medium tracking-[0.2em] text-accent uppercase transition-opacity duration-150 hover:opacity-80"
+        >
+          {canPrompt ? "Install" : "Show me how"}
+        </button>
+      </div>
       <button
         type="button"
         onClick={dismissPrompt}
         aria-label="Not now: hide the install reminder"
-        className="flex size-11 shrink-0 items-center justify-center text-subtle transition-colors duration-150 hover:text-fg"
+        className="-mt-1 flex size-11 shrink-0 items-center justify-center text-subtle transition-colors duration-150 hover:text-fg"
       >
         <X className="size-4" />
       </button>
@@ -405,15 +404,21 @@ function InstallSheet({
 }
 
 function StepText({ step }: { step: InstallStep }) {
+  const parts = step.text.split("{share}");
   return (
     <span className="min-w-0 pt-0.5 text-muted">
-      {step.text}
-      {step.shareIcon ? (
-        <Share aria-label="Share icon" className="ml-1.5 inline-block size-[1.1em] -translate-y-px align-middle text-accent" />
-      ) : null}
-      {step.menuIcon ? (
-        <EllipsisVertical aria-label="Menu icon" className="ml-1 inline-block size-[1.1em] -translate-y-px align-middle text-accent" />
-      ) : null}
+      {parts.map((part, i) => (
+        <span key={i}>
+          {part}
+          {i < parts.length - 1 ? (
+            <Share
+              role="img"
+              aria-label="(the Share icon)"
+              className="mx-0.5 inline-block size-[1.1em] -translate-y-px align-middle text-accent"
+            />
+          ) : null}
+        </span>
+      ))}
     </span>
   );
 }

@@ -78,8 +78,7 @@ describe("installGuideFor: one set of steps per platform", () => {
   it("iPhone Safari gets Share → Add to Home Screen", () => {
     assert.deepEqual(guide(IPHONE_SAFARI), { kind: "ios-safari", app: null });
     const copy = installSheetCopy(guide(IPHONE_SAFARI));
-    assert.match(copy.steps[0].text, /Share/);
-    assert.equal(copy.steps[0].shareIcon, true);
+    assert.match(copy.steps[0].text, /Share button \{share\}/);
     assert.match(copy.steps[1].text, /Add to Home Screen/);
   });
 
@@ -166,7 +165,10 @@ describe("installGuideFor: one set of steps per platform", () => {
     for (const kind of kinds) {
       const copy = installSheetCopy({ kind, app: null });
       assert.ok(copy.title.length > 0 && copy.lead.length > 0, kind);
-      for (const step of copy.steps) assert.doesNotMatch(step.text, /[{}]|undefined|null/, kind);
+      for (const step of copy.steps) {
+        assert.doesNotMatch(step.text.replaceAll("{share}", ""), /[{}]|undefined|null/, kind);
+        assert.ok(step.text.split("{share}").length <= 2, `${kind}: at most one Share icon per step`);
+      }
     }
   });
 });

@@ -324,7 +324,8 @@ export function readInstallGuide(standalone: boolean): InstallGuide {
 // Sheet copy (English only, like the rest of the site)
 // ---------------------------------------------------------------------------
 
-export type InstallStep = { text: string; shareIcon?: boolean; menuIcon?: boolean };
+/** One instruction. `{share}` in the text marks where the Share icon is drawn. */
+export type InstallStep = { text: string };
 
 export type InstallSheetCopy = {
   title: string;
@@ -348,7 +349,7 @@ export function installSheetCopy(guide: InstallGuide): InstallSheetCopy {
         title: `Add ${APP_NAME} to your Home Screen`,
         lead: "Three taps in Safari:",
         steps: [
-          { text: "Tap the Share button in Safari's toolbar. If you only see •••, tap that first.", shareIcon: true },
+          { text: "Tap the Share button {share} in Safari's toolbar. If you only see •••, tap that first." },
           { text: "Scroll down and choose 'Add to Home Screen'." },
           { text: "Tap 'Add'." },
         ],
@@ -362,7 +363,7 @@ export function installSheetCopy(guide: InstallGuide): InstallSheetCopy {
         steps: [
           { text: "Copy the link below." },
           { text: "Open Safari and paste it into the address bar." },
-          { text: "In Safari, tap Share, then 'Add to Home Screen', then 'Add'.", shareIcon: true },
+          { text: "In Safari, tap Share {share}, then 'Add to Home Screen', then 'Add'." },
         ],
         foot: `Some newer versions of ${browser} also show 'Add to Home Screen' in their own Share menu.`,
         copyLink: true,
@@ -380,8 +381,8 @@ export function installSheetCopy(guide: InstallGuide): InstallSheetCopy {
           { text: `Tap the ••• or Share menu in ${app} and choose 'Open in ${browser}' (it may say 'Open in browser').` },
           { text: `No such option? Copy the link below and paste it into ${browser}.` },
           ios
-            ? { text: "In Safari, tap Share, then 'Add to Home Screen', then 'Add'.", shareIcon: true }
-            : { text: "In Chrome, open the ⋮ menu and choose 'Install app' or 'Add to Home screen'.", menuIcon: true },
+            ? { text: "In Safari, tap Share {share}, then 'Add to Home Screen', then 'Add'." }
+            : { text: "In Chrome, open the ⋮ menu and choose 'Install app' or 'Add to Home screen'." },
         ],
         copyLink: true,
       };
@@ -391,7 +392,7 @@ export function installSheetCopy(guide: InstallGuide): InstallSheetCopy {
         title: `Install ${APP_NAME}`,
         lead: "Install from your browser's menu:",
         steps: [
-          { text: "Tap the ⋮ menu (top right in Chrome).", menuIcon: true },
+          { text: "Tap the ⋮ menu (top right in Chrome)." },
           { text: "Choose 'Install app' or 'Add to Home screen', then confirm." },
         ],
         foot: "Samsung Internet: menu ≡, then 'Add page to', then 'Home screen'. Firefox: menu ⋮, then 'Install'.",
@@ -402,7 +403,7 @@ export function installSheetCopy(guide: InstallGuide): InstallSheetCopy {
         lead: "In Chrome:",
         steps: [
           { text: "Click the install icon at the right end of the address bar." },
-          { text: "Or open the ⋮ menu, then 'Cast, save, and share', then 'Install Atman Music…' (older Chrome: 'Install page as app…').", menuIcon: true },
+          { text: "Or open the ⋮ menu, then 'Cast, save, and share', then 'Install Atman Music…' (older Chrome: 'Install page as app…')." },
           { text: "Click 'Install'. It opens in its own window and from your Dock, taskbar or Start menu." },
         ],
       };
@@ -421,7 +422,7 @@ export function installSheetCopy(guide: InstallGuide): InstallSheetCopy {
         title: `Add ${APP_NAME} to your Dock`,
         lead: "In Safari on a Mac (macOS Sonoma or later):",
         steps: [
-          { text: "Click File in the menu bar, then 'Add to Dock…'. Or click Share in the toolbar, then 'Add to Dock'.", shareIcon: true },
+          { text: "Click File in the menu bar, then 'Add to Dock…'. Or click Share {share} in the toolbar, then 'Add to Dock'." },
           { text: "Click 'Add'. It opens in its own window from the Dock." },
         ],
       };
