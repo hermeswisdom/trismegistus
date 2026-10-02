@@ -16,6 +16,7 @@ describe("public/sitemap.xml", () => {
     const xml = read("public/sitemap.xml");
     assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/<\/loc>/);
     assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/download<\/loc>/);
+    assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/ebook<\/loc>/);
     assert.match(xml, new RegExp(`/\\?tablet=${SOUNDCLOUD_TRACKS[0].id}<`));
   });
 });

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const SITE_ORIGIN = "https://atmanmusic.app";
-export const STATIC_ROUTES = ["/", "/download"];
+export const STATIC_ROUTES = ["/", "/ebook", "/download"];
 
 /** @param {string} source @returns {string[]} */
 export function trackIds(source) {

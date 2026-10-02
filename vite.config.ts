@@ -12,6 +12,7 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
 import { blobHostFromToken, SAME_ORIGIN_STREAM_PREFIX } from "./src/lib/stream-proxy.ts";
+import { ebookHeaders } from "./src/lib/ebook.ts";
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
 function hasGlobbedMigrations(root: string): boolean {
@@ -185,16 +186,21 @@ export default defineConfig(({ command, isPreview }) => ({
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
-            ...(streamProxyHost
-              ? {
-                  routeRules: {
+            routeRules: {
+              // Free ebook static files: long cache, exact content types and
+              // clean file names (src/lib/ebook.ts).
+              ...Object.fromEntries(
+                Object.entries(ebookHeaders()).map(([path, headers]) => [path, { headers }]),
+              ),
+              ...(streamProxyHost
+                ? {
                     [`${SAME_ORIGIN_STREAM_PREFIX}**`]: {
                       proxy: `https://${streamProxyHost}/streams/**`,
                       headers: { "x-robots-tag": "noindex" },
                     },
-                  },
-                }
-              : {}),
+                  }
+                : {}),
+            },
           }),
         ]
       : []),

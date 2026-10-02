@@ -30,6 +30,12 @@ export function SiteFooter() {
             X · Hermes10wisdom
           </a>
           <a
+            href="/ebook"
+            className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
+          >
+            Free ebook
+          </a>
+          <a
             href="/download"
             className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
           >

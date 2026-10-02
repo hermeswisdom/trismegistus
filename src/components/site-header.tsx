@@ -11,6 +11,7 @@ const LINKS = [
   { href: "#saved", label: "Saved" },
   { href: "#wheel", label: "Wheel" },
   { href: "#board", label: "Board" },
+  { href: "#ebook", label: "Ebook" },
   { href: "#office", label: "Office" },
   { href: "#signal", label: "Signal" },
 ];
@@ -90,7 +91,7 @@ export function SiteHeader() {
       </div>
       <div
         className={cn(
-          "fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 bg-bg lg:hidden transition-[opacity,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          "fixed inset-0 top-[calc(3.5rem+env(safe-area-inset-top))] z-20 overflow-y-auto overscroll-contain bg-bg lg:hidden transition-[opacity,visibility] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
           open ? "visible opacity-100" : "invisible pointer-events-none opacity-0",
         )}
       >
