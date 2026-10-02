@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DownloadRouteImport } from './routes/download'
+import { Route as EbookRouteImport } from './routes/ebook'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as ApiEbookHitRouteImport } from './routes/api/ebook/hit'
 import { Route as ApiMastersDownloadRouteImport } from './routes/api/masters/download'
 import { Route as ApiStreamSlugRouteImport } from './routes/api/stream/$slug'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
@@ -27,6 +29,11 @@ const DownloadRoute = DownloadRouteImport.update({
   path: '/download',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EbookRoute = EbookRouteImport.update({
+  id: '/ebook',
+  path: '/ebook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -35,6 +42,11 @@ const LoginRoute = LoginRouteImport.update({
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEbookHitRoute = ApiEbookHitRouteImport.update({
+  id: '/api/ebook/hit',
+  path: '/api/ebook/hit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiMastersDownloadRoute = ApiMastersDownloadRouteImport.update({
@@ -56,8 +68,10 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/download': typeof DownloadRoute
+  '/ebook': typeof EbookRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -65,8 +79,10 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/download': typeof DownloadRoute
+  '/ebook': typeof EbookRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -75,8 +91,10 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/download': typeof DownloadRoute
+  '/ebook': typeof EbookRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
@@ -86,8 +104,10 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/download'
+    | '/ebook'
     | '/login'
     | '/api/auth/$'
+    | '/api/ebook/hit'
     | '/api/masters/download'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
@@ -95,8 +115,10 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/download'
+    | '/ebook'
     | '/login'
     | '/api/auth/$'
+    | '/api/ebook/hit'
     | '/api/masters/download'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
@@ -104,8 +126,10 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/download'
+    | '/ebook'
     | '/login'
     | '/api/auth/$'
+    | '/api/ebook/hit'
     | '/api/masters/download'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
@@ -114,8 +138,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DownloadRoute: typeof DownloadRoute
+  EbookRoute: typeof EbookRoute
   LoginRoute: typeof LoginRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  ApiEbookHitRoute: typeof ApiEbookHitRoute
   ApiMastersDownloadRoute: typeof ApiMastersDownloadRoute
   ApiStreamSlugRoute: typeof ApiStreamSlugRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
@@ -137,6 +163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ebook': {
+      id: '/ebook'
+      path: '/ebook'
+      fullPath: '/ebook'
+      preLoaderRoute: typeof EbookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -149,6 +182,13 @@ declare module '@tanstack/react-router' {
       path: '/api/auth/$'
       fullPath: '/api/auth/$'
       preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/ebook/hit': {
+      id: '/api/ebook/hit'
+      path: '/api/ebook/hit'
+      fullPath: '/api/ebook/hit'
+      preLoaderRoute: typeof ApiEbookHitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/masters/download': {
@@ -178,8 +218,10 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DownloadRoute: DownloadRoute,
+  EbookRoute: EbookRoute,
   LoginRoute: LoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  ApiEbookHitRoute: ApiEbookHitRoute,
   ApiMastersDownloadRoute: ApiMastersDownloadRoute,
   ApiStreamSlugRoute: ApiStreamSlugRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,

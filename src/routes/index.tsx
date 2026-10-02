@@ -3,6 +3,7 @@ import { About } from "@/components/about";
 import { AudioDebugPanel } from "@/components/audio-debug-panel";
 import { EnterGate } from "@/components/enter-gate";
 import { FavoritesSync } from "@/components/favorites-sync";
+import { FreeEbook } from "@/components/free-ebook";
 import { LastTabletSync } from "@/components/last-tablet-sync";
 import { Leaderboard } from "@/components/leaderboard";
 import { MarksBoardSync } from "@/components/marks-board-sync";
@@ -67,6 +68,7 @@ function Home() {
         <TrackWall />
         <SongWheel />
         <Leaderboard />
+        <FreeEbook />
         <About />
         <Signal />
       </main>
