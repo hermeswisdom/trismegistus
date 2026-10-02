@@ -108,3 +108,37 @@ describe("nextPlayable", () => {
     assert.equal(nextPlayable([], "a", () => true), undefined);
   });
 });
+
+describe("pickRandomPlayable (wheel winner)", () => {
+  const pool = [
+    { id: "a", slug: "a" },
+    { id: "b", slug: "b" },
+    { id: "c", slug: "c" },
+  ];
+  it("only picks playable tablets, never the current one", async () => {
+    const { pickRandomPlayable } = await import("./streams.ts");
+    for (const r of [0, 0.3, 0.6, 0.99]) {
+      const t = pickRandomPlayable(pool, { except: "a", playable: (x) => x.id !== "b", random: () => r });
+      assert.equal(t?.id, "c");
+    }
+  });
+  it("falls back to any other tablet when none is playable", async () => {
+    const { pickRandomPlayable } = await import("./streams.ts");
+    assert.equal(pickRandomPlayable(pool, { except: "a", playable: () => false, random: () => 0 })?.id, "b");
+    assert.equal(pickRandomPlayable([], {}), undefined);
+  });
+  it("no current-track exclusion when the pool has one tablet", async () => {
+    const { pickRandomPlayable } = await import("./streams.ts");
+    assert.equal(pickRandomPlayable([pool[0]], { except: "a" })?.id, "a");
+  });
+  it("on the real catalogue, the wheel never lands on a no-stream tablet", async () => {
+    const { pickRandomPlayable, hasStream } = await import("./streams.ts");
+    const { SOUNDCLOUD_TRACKS } = await import("./soundcloud-tracks.ts");
+    const noStream = SOUNDCLOUD_TRACKS.filter((t) => !hasStream(t.slug)).map((t) => t.id);
+    assert.ok(noStream.length > 0);
+    for (let i = 0; i < SOUNDCLOUD_TRACKS.length; i++) {
+      const t = pickRandomPlayable(SOUNDCLOUD_TRACKS, { playable: (x) => hasStream(x.slug), random: () => i / SOUNDCLOUD_TRACKS.length });
+      assert.ok(t && !noStream.includes(t.id), t?.id);
+    }
+  });
+});

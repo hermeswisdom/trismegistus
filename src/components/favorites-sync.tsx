@@ -4,6 +4,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { listMyFavorites, syncMyFavorites } from "@/lib/favorites";
 import { idsFromHeartMap, isSignedInForSaves, mergeFavoriteIds } from "@/lib/favorites-sync";
 import { useHearts } from "@/lib/hearts";
+import { whenVisible } from "@/lib/visible-gate";
 
 /** Hydrate local hearts, then merge Neon favorites once a real session is on. */
 export function FavoritesSync() {
@@ -28,21 +29,25 @@ export function FavoritesSync() {
     if (isPending || !user) return;
     if (mergedFor.current === user.id) return;
     mergedFor.current = user.id;
-    const local = idsFromHeartMap(useHearts.getState().ids);
-    void (async () => {
-      try {
-        const remote = await listMyFavorites();
-        if (!remote?.signedIn) return;
-        const merged = mergeFavoriteIds(local, remote.ids);
-        replace(merged);
-        if (local.length > 0) {
-          const saved = await syncMyFavorites({ data: local });
-          if (saved?.ids) replace(saved.ids);
+    // A tab opened in the background merges once it is first shown. Signed
+    // out meanwhile: listMyFavorites says so and nothing is written.
+    whenVisible("favorites-merge", () => {
+      const local = idsFromHeartMap(useHearts.getState().ids);
+      void (async () => {
+        try {
+          const remote = await listMyFavorites();
+          if (!remote?.signedIn) return;
+          const merged = mergeFavoriteIds(local, remote.ids);
+          replace(merged);
+          if (local.length > 0) {
+            const saved = await syncMyFavorites({ data: local });
+            if (saved?.ids) replace(saved.ids);
+          }
+        } catch {
+          /* local hearts still hold */
         }
-      } catch {
-        /* local hearts still hold */
-      }
-    })();
+      })();
+    });
   }, [user, isPending, replace]);
 
   return null;

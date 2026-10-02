@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { TRACKS, getMeaning, getTrack, type Track } from "@/lib/rooms";
 import { autoFirstSpin } from "@/lib/first-spin";
-import { PLAY_BLOCKED_COPY } from "@/lib/playback";
+import { PLAY_BLOCKED_COPY, tapTargetNudge, wheelTapTarget } from "@/lib/playback";
 import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
 import {
@@ -50,6 +50,7 @@ export function SongWheel() {
   const resumedOnEnter = usePlayer((s) => s.resumedOnEnter);
   const playError = usePlayer((s) => s.playError);
   const retryPlay = usePlayer((s) => s.retryPlay);
+  const backend = usePlayer((s) => s.backend);
   const nonce = useWheelSpin((s) => s.nonce);
   const winnerId = useWheelSpin((s) => s.winnerId);
   const busy = useWheelSpin((s) => s.busy);
@@ -61,6 +62,7 @@ export function SongWheel() {
   const [spinning, setSpinning] = useState(false);
   const [landed, setLanded] = useState<Track | null>(null);
   const discRef = useRef<HTMLDivElement>(null);
+  const tapRef = useRef<HTMLButtonElement>(null);
   const angleRef = useRef(0);
   const firstSpinRef = useRef(false);
 
@@ -149,6 +151,27 @@ export function SongWheel() {
   const sealedLanded = landed ?? (landedId ? getTrack(landedId) : null);
   // Browser refused the landing play (no gesture yet): ask for one tap.
   const landedBlocked = Boolean(playError && sealedLanded && sealedLanded.id === currentId);
+  // Native: this button itself starts the <audio> inside the tap, so it never
+  // waits for (or is hidden behind) the SoundCloud iframe overlay. Only the
+  // SoundCloud fallback marks it as an overlay target.
+  const tapTarget = wheelTapTarget(backend);
+
+  // Native has no overlay hook to bring the button clear of the dock (long
+  // meanings push it down on phones), so do it here, before the first paint.
+  useLayoutEffect(() => {
+    if (!landedBlocked || tapTarget) return;
+    const el = tapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const dockTop =
+      document.querySelector<HTMLElement>("[data-player-current]")?.getBoundingClientRect().top ??
+      window.innerHeight;
+    const delta = tapTargetNudge(
+      { left: r.left, top: r.top, width: r.width, height: r.height },
+      { height: window.innerHeight, dockTop },
+    );
+    if (delta !== 0) window.scrollBy({ top: delta, behavior: "instant" as ScrollBehavior });
+  }, [landedBlocked, tapTarget]);
   const rite = wheelRiteCopy({
     entered,
     landedId: sealedLanded?.id ?? null,
@@ -187,8 +210,9 @@ export function SongWheel() {
                     noteUserGesture();
                   }}
                   className="mt-4 inline-flex h-11 items-center bg-accent px-6 font-sans text-xs font-medium tracking-[0.2em] text-bg not-italic uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"
+                  ref={tapRef}
                   data-wheel-tap-to-play=""
-                  data-sc-tap-target="wheel"
+                  data-sc-tap-target={tapTarget}
                 >
                   {PLAY_BLOCKED_COPY}
                 </button>

@@ -476,9 +476,10 @@
   cursor: pointer;
 }
 
-/* The wheel's "Tap to play" shows only once the overlay covers it (the
-   hook sets html[data-sc-tap-ready]); until then it keeps its layout box.
-   The native player needs no overlay: a tap on the button itself plays. */
-html:not([data-sc-tap-ready="wheel"]):not([data-player-backend="native"]) [data-sc-tap-target="wheel"] {
+/* SoundCloud fallback only: the wheel's "Tap to play" shows once the overlay
+   covers it (the hook sets html[data-sc-tap-ready]); until then it keeps its
+   layout box. The native button has no data-sc-tap-target (song-wheel.tsx):
+   a tap on it plays by itself, so it is never hidden waiting for an overlay. */
+html:not([data-sc-tap-ready="wheel"]) [data-sc-tap-target="wheel"] {
   visibility: hidden;
 }

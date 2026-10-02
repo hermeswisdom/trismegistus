@@ -130,3 +130,21 @@ export function nextPlayable(
   }
   return order[(i + 1 + order.length) % order.length]?.id;
 }
+
+/**
+ * Random tablet for the wheel. While the native player is in use, only
+ * tablets with a stream can win, so the first visit (Enter → wheel) never
+ * lands on the SoundCloud fallback, where a refused start needs the iframe
+ * "Tap to play" overlay. Falls back to the whole pool when nothing else fits.
+ */
+export function pickRandomPlayable<T extends { id: string }>(
+  pool: readonly T[],
+  opts: { except?: string; playable?: (item: T) => boolean; random?: () => number } = {},
+): T | undefined {
+  const random = opts.random ?? Math.random;
+  const others = opts.except && pool.length > 1 ? pool.filter((t) => t.id !== opts.except) : [...pool];
+  const playable = opts.playable ? others.filter(opts.playable) : others;
+  const from = playable.length > 0 ? playable : others;
+  if (from.length === 0) return undefined;
+  return from[Math.min(from.length - 1, Math.floor(random() * from.length))];
+}

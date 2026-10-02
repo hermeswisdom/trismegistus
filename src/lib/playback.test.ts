@@ -365,3 +365,16 @@ describe("tapTargetNudge", () => {
     assert.equal(tapTargetNudge({ left: 20, top: -2000, width: 146, height: 44 }, vp), 0);
   });
 });
+
+describe("wheelTapTarget", () => {
+  it("marks the wheel's Tap to play as an overlay target only on SoundCloud", async () => {
+    const { wheelTapTarget } = await import("./playback.ts");
+    assert.equal(wheelTapTarget("sc"), "wheel");
+    assert.equal(wheelTapTarget("native"), undefined);
+  });
+  it("styles.css hides only the overlay-marked button (never the native one)", async () => {
+    const fs = await import("node:fs");
+    const css = fs.readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+    assert.match(css, /html:not\(\[data-sc-tap-ready="wheel"\]\) \[data-sc-tap-target="wheel"\] \{\s*visibility: hidden;/);
+  });
+});

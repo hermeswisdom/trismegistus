@@ -1,9 +1,5 @@
 import { create } from "zustand";
-import {
-  listAllTrackMarks,
-  listTrackMarks,
-  type TrackMark,
-} from "@/lib/marks";
+import { listAllTrackMarks, type TrackMark } from "@/lib/marks";
 
 export const EMPTY_MARKS: TrackMark[] = [];
 
@@ -11,7 +7,6 @@ type MarksFeedState = {
   byTrack: Record<string, TrackMark[]>;
   loaded: boolean;
   hydrate: () => Promise<void>;
-  hydrateTrack: (trackId: string) => Promise<void>;
   setTrack: (trackId: string, marks: TrackMark[]) => void;
 };
 
@@ -33,16 +28,6 @@ export const useMarksFeed = create<MarksFeedState>((set, get) => ({
       set({ byTrack: group(rows ?? []), loaded: true });
     } catch {
       set({ loaded: true });
-    }
-  },
-  hydrateTrack: async (trackId) => {
-    try {
-      const rows = await listTrackMarks({ data: trackId });
-      set((state) => ({
-        byTrack: { ...state.byTrack, [trackId]: rows ?? EMPTY_MARKS },
-      }));
-    } catch {
-      /* keep what we have */
     }
   },
   setTrack: (trackId, marks) =>
