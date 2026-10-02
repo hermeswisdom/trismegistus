@@ -142,3 +142,83 @@ describe("pickRandomPlayable (wheel winner)", () => {
     }
   });
 });
+
+describe("wheelWinnerFilter: every tablet can win a normal spin", () => {
+  const NO_STREAM = ["lift-me-up", "remember-who-you-are-mp3-1"];
+
+  /** Every winner pickRandomPlayable can return for this filter, sweeping the random draw. */
+  async function reachableWinners(opts: { current: string; landing: boolean; nativeInUse: boolean }) {
+    const { pickRandomPlayable, hasStream, wheelWinnerFilter } = await import("./streams.ts");
+    const { SOUNDCLOUD_TRACKS } = await import("./soundcloud-tracks.ts");
+    const playable = wheelWinnerFilter<(typeof SOUNDCLOUD_TRACKS)[number]>({
+      landing: opts.landing,
+      nativeInUse: opts.nativeInUse,
+      isNative: (t) => hasStream(t.slug),
+    });
+    const won = new Set<string>();
+    const n = SOUNDCLOUD_TRACKS.length;
+    for (let k = 0; k < n; k++) {
+      const t = pickRandomPlayable(SOUNDCLOUD_TRACKS, { except: opts.current, playable, random: () => (k + 0.5) / n });
+      if (t) won.add(t.id);
+    }
+    return { won, all: SOUNDCLOUD_TRACKS.map((t) => t.id) };
+  }
+
+  it("the two tablets without a stream are still the only ones (else the filter is moot)", async () => {
+    const { hasStream } = await import("./streams.ts");
+    const { SOUNDCLOUD_TRACKS } = await import("./soundcloud-tracks.ts");
+    assert.deepEqual(SOUNDCLOUD_TRACKS.filter((t) => !hasStream(t.slug)).map((t) => t.id).sort(), NO_STREAM);
+  });
+
+  it("only the automatic landing with native in use is filtered", async () => {
+    const { wheelWinnerFilter } = await import("./streams.ts");
+    const isNative = (x: string) => x !== "sc-only";
+    assert.equal(wheelWinnerFilter({ landing: false, nativeInUse: true, isNative }), undefined);
+    assert.equal(wheelWinnerFilter({ landing: false, nativeInUse: false, isNative }), undefined);
+    assert.equal(wheelWinnerFilter({ landing: true, nativeInUse: false, isNative }), undefined);
+    assert.equal(wheelWinnerFilter({ landing: true, nativeInUse: true, isNative }), isNative);
+  });
+
+  it("a normal spin with native in use can land on every tablet, including lift-me-up and remember-who-you-are-mp3-1", async () => {
+    const { won, all } = await reachableWinners({ current: "the-sleepers-waking", landing: false, nativeInUse: true });
+    assert.deepEqual([...won].sort(), all.filter((id) => id !== "the-sleepers-waking").sort());
+    for (const id of NO_STREAM) assert.ok(won.has(id), id);
+  });
+
+  it("every tablet can win from any current tablet (only the current one is skipped)", async () => {
+    const { SOUNDCLOUD_TRACKS } = await import("./soundcloud-tracks.ts");
+    for (const current of [...NO_STREAM, SOUNDCLOUD_TRACKS[0].id, SOUNDCLOUD_TRACKS.at(-1)!.id]) {
+      const { won, all } = await reachableWinners({ current, landing: false, nativeInUse: true });
+      assert.equal(won.size, all.length - 1, current);
+      assert.equal(won.has(current), false, current);
+    }
+  });
+
+  it("the first-visit landing still never picks a SoundCloud-only tablet", async () => {
+    const { won } = await reachableWinners({ current: "the-sleepers-waking", landing: true, nativeInUse: true });
+    for (const id of NO_STREAM) assert.equal(won.has(id), false, id);
+    assert.equal(won.size, 104 - 1 - NO_STREAM.length);
+  });
+
+  it("wiring: spinTablet filters only for markEntered / landing; only the automatic spins pass them", async () => {
+    const fs = await import("node:fs");
+    const read = (p: string) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
+    const store = read("./player-store.ts");
+    const spin = store.slice(store.indexOf("  spinTablet: (opts) => {"), store.indexOf("useWheelSpin.getState().begin(winner.id"));
+    assert.match(spin, /playable: wheelWinnerFilter<Track>\(\{\s*landing: Boolean\(opts\?\.markEntered \|\| opts\?\.landing\),\s*nativeInUse: nativeAllowed\(\),/);
+    assert.doesNotMatch(spin, /playable: nativeAllowed\(\) \?/, "no unconditional native-only filter");
+    // Enter's first-visit spin and the wheel's auto spin are the landings ...
+    assert.match(store, /get\(\)\.spinTablet\(\{ force: true, markEntered: true \}\)/);
+    const wheel = read("../components/song-wheel.tsx");
+    assert.match(wheel, /if \(action === "spin"\) spinTablet\(\{ force: true, landing: true \}\)/);
+    // ... every tap-driven spin is a normal one.
+    const tapSpins = [
+      ...wheel.matchAll(/spinTablet\(([^)]*)\)/g),
+      ...read("../components/track-wall.tsx").matchAll(/spinTablet\(([^)]*)\)/g),
+      ...read("../components/now-playing.tsx").matchAll(/spinTablet\(([^)]*)\)/g),
+    ].map((m) => m[1]);
+    const landings = tapSpins.filter((a) => /markEntered|landing/.test(a));
+    assert.deepEqual(landings, ["{ force: true, landing: true }"]);
+    assert.ok(tapSpins.filter((a) => a === "").length >= 3, "the wheel, wall dice and dock random spins pass no landing flag");
+  });
+});

@@ -37,6 +37,7 @@ import {
   nextPlayable,
   pickBackend,
   pickRandomPlayable,
+  wheelWinnerFilter,
   popHistoryTo,
   pushHistory,
   resolvePrevious,
@@ -83,7 +84,12 @@ type PlayerState = {
   playNext: () => void;
   playPrevious: () => void;
   retryPlay: () => void;
-  spinTablet: (opts?: { force?: boolean; markEntered?: boolean }) => void;
+  /**
+   * `markEntered`: the first-visit landing from Enter. `landing`: the wheel's
+   * automatic first spin. Either one limits the winner to tablets with a
+   * native stream (see `wheelWinnerFilter`); normal spins can land anywhere.
+   */
+  spinTablet: (opts?: { force?: boolean; markEntered?: boolean; landing?: boolean }) => void;
   landSpin: (id: string) => void;
   seek: (ratio: number) => void;
   setPlaying: (value: boolean) => void;
@@ -321,12 +327,17 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     ensurePlaybackBridge();
     noteUserGesture();
     if (opts?.markEntered) set({ entered: true, playError: null });
-    // Native in use: only tablets with a stream can win (no SoundCloud
-    // fallback, so no iframe overlay, on the first visit's landing).
+    // Only the automatic first-visit landing is limited to tablets with a
+    // stream (no SoundCloud fallback, so no iframe overlay, when autoplay
+    // refuses the start). A normal spin can land on every tablet.
     const winner =
       pickRandomPlayable(TRACKS, {
         except: get().currentId,
-        playable: nativeAllowed() ? (t) => backendFor(t) === "native" : undefined,
+        playable: wheelWinnerFilter<Track>({
+          landing: Boolean(opts?.markEntered || opts?.landing),
+          nativeInUse: nativeAllowed(),
+          isNative: (t) => backendFor(t) === "native",
+        }),
       }) ?? randomTrack(get().currentId);
     if (!useWheelSpin.getState().begin(winner.id, { force: opts?.force ?? true })) {
       return;
