@@ -11,6 +11,7 @@ const LINKS = [
   { href: "#work", label: "Wall" },
   { href: "#saved", label: "Saved" },
   { href: "#wheel", label: "Wheel" },
+  { href: "#bowls", label: "Bowls" },
   { href: "#board", label: "Board" },
   { href: "#ebook", label: "Ebook" },
   { href: "#office", label: "Office" },
@@ -52,7 +53,7 @@ export function SiteHeader() {
           <HermesNote size="mark" />
           Atman Music
         </a>
-        <nav className="hidden items-center gap-8 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-5 lg:flex xl:gap-8" aria-label="Primary">
           {LINKS.map((link) => (
             <a
               key={link.href}
