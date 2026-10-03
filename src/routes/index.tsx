@@ -4,6 +4,7 @@ import { AudioDebugPanel } from "@/components/audio-debug-panel";
 import { EnterGate } from "@/components/enter-gate";
 import { FavoritesSync } from "@/components/favorites-sync";
 import { FreeEbook } from "@/components/free-ebook";
+import { HealingSounds } from "@/components/healing-sounds";
 import { LastTabletSync } from "@/components/last-tablet-sync";
 import { Leaderboard } from "@/components/leaderboard";
 import { MarksBoardSync } from "@/components/marks-board-sync";
@@ -67,6 +68,7 @@ function Home() {
       <main id="wall-main" tabIndex={-1} className="outline-none">
         <TrackWall />
         <SongWheel />
+        <HealingSounds />
         <Leaderboard />
         <FreeEbook />
         <About />

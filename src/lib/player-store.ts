@@ -46,6 +46,7 @@ import {
 import { debugEvent } from "@/lib/audio-debug";
 import { wheelPlayOn } from "@/lib/wheel-rite";
 import { useWheelSpin } from "@/lib/wheel-spin";
+import { hushBowlGraph } from "@/lib/bowl-synth";
 
 function pageHasDeepLink() {
   if (typeof window === "undefined") return false;
@@ -376,6 +377,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const nextId = id ?? get().currentId;
     const track = getTrack(nextId);
     if (!track) return;
+    hushBowlGraph();
     const prevId = get().currentId;
     const wasPlaying = get().playing;
     const reset = nextId !== prevId;
