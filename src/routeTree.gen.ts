@@ -10,9 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BowlsRouteImport } from './routes/bowls'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as EbookRouteImport } from './routes/ebook'
-import { Route as BowlsRouteImport } from './routes/bowls'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiEbookHitRouteImport } from './routes/api/ebook/hit'
@@ -25,6 +25,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BowlsRoute = BowlsRouteImport.update({
+  id: '/bowls',
+  path: '/bowls',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DownloadRoute = DownloadRouteImport.update({
   id: '/download',
   path: '/download',
@@ -33,11 +38,6 @@ const DownloadRoute = DownloadRouteImport.update({
 const EbookRoute = EbookRouteImport.update({
   id: '/ebook',
   path: '/ebook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BowlsRoute = BowlsRouteImport.update({
-  id: '/bowls',
-  path: '/bowls',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -73,9 +73,9 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
-  '/bowls': typeof BowlsRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
@@ -85,9 +85,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
-  '/bowls': typeof BowlsRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
@@ -98,9 +98,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
-  '/bowls': typeof BowlsRoute
   '/login': typeof LoginRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
@@ -112,9 +112,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bowls'
     | '/download'
     | '/ebook'
-    | '/bowls'
     | '/login'
     | '/api/auth/$'
     | '/api/ebook/hit'
@@ -124,9 +124,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bowls'
     | '/download'
     | '/ebook'
-    | '/bowls'
     | '/login'
     | '/api/auth/$'
     | '/api/ebook/hit'
@@ -136,9 +136,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/bowls'
     | '/download'
     | '/ebook'
-    | '/bowls'
     | '/login'
     | '/api/auth/$'
     | '/api/ebook/hit'
@@ -149,9 +149,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BowlsRoute: typeof BowlsRoute
   DownloadRoute: typeof DownloadRoute
   EbookRoute: typeof EbookRoute
-  BowlsRoute: typeof BowlsRoute
   LoginRoute: typeof LoginRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiEbookHitRoute: typeof ApiEbookHitRoute
@@ -169,6 +169,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bowls': {
+      id: '/bowls'
+      path: '/bowls'
+      fullPath: '/bowls'
+      preLoaderRoute: typeof BowlsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/download': {
       id: '/download'
       path: '/download'
@@ -181,13 +188,6 @@ declare module '@tanstack/react-router' {
       path: '/ebook'
       fullPath: '/ebook'
       preLoaderRoute: typeof EbookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bowls': {
-      id: '/bowls'
-      path: '/bowls'
-      fullPath: '/bowls'
-      preLoaderRoute: typeof BowlsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -237,9 +237,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BowlsRoute: BowlsRoute,
   DownloadRoute: DownloadRoute,
   EbookRoute: EbookRoute,
-  BowlsRoute: BowlsRoute,
   LoginRoute: LoginRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiEbookHitRoute: ApiEbookHitRoute,
