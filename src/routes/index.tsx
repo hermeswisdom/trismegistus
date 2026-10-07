@@ -58,6 +58,7 @@ export const Route = createFileRoute("/")({
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:title", content: card.title },
         { name: "twitter:description", content: description },
+        { name: "twitter:url", content: card.url },
         { name: "twitter:image", content: card.image },
         jsonLdMeta(
           focus.source === "none"

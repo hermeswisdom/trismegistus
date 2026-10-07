@@ -125,7 +125,8 @@ describe("homeOgCard", () => {
     const card = homeOgCard({ source: "daily", ...track });
     assert.equal(card.title, "Today's tablet — Fragile God — Atman Music");
     assert.equal(card.siteName, "Atman Music");
-    assert.equal(card.url, "https://atmanmusic.app/?daily=1");
+    // og:url is the canonical (today's tablet), not the rotating /?daily=1.
+    assert.equal(card.url, "https://atmanmusic.app/?tablet=fragile-god");
     assert.equal(
       card.image,
       "https://atmanmusic.app/images/tracks/fragile-god.jpg",

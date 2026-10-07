@@ -7,6 +7,7 @@ import { MEANINGS } from "./meanings.ts";
 import { DEFAULT_MASTER_PRICE_PENCE, trackIsForSale } from "./masters.ts";
 import { londonDateKey, pickDailyTablet, resolveFocusedTablet } from "./daily-tablet.ts";
 import { parseHomeSearch } from "./tablet-link.ts";
+import { homeOgCard, homeOgUrl } from "./share.ts";
 import {
   ARTIST_ID,
   ARTIST_SAME_AS,
@@ -144,6 +145,54 @@ describe("canonicals", () => {
       assert.match(src, /NOINDEX_META/, route);
       assert.doesNotMatch(src, /rel: "canonical"/, route);
     }
+  });
+});
+
+describe("og:url and twitter:url match the canonical", () => {
+  it("tablet, daily and bare home: homeOgUrl() === homeCanonical()", () => {
+    for (const source of ["tablet", "daily", "none"] as const) {
+      for (const track of SOUNDCLOUD_TRACKS) {
+        assert.equal(
+          homeOgUrl({ source, slug: track.slug }),
+          homeCanonical({ source, slug: track.slug }),
+          `${source} ${track.slug}`,
+        );
+      }
+    }
+  });
+
+  it("daily keeps the Today's tablet card text with the canonical URL", () => {
+    const track = SOUNDCLOUD_TRACKS[0]!;
+    const card = homeOgCard({ source: "daily", ...track, meaning: MEANINGS[track.id] ?? "" });
+    assert.equal(card.title, `Today's tablet — ${track.title} — Atman Music`);
+    assert.equal(card.url, `https://atmanmusic.app/?tablet=${track.slug}`);
+  });
+
+  it("the home route emits twitter:url from the same card url", () => {
+    assert.match(read("src/routes/index.tsx"), /\{ name: "twitter:url", content: card\.url \}/);
+    assert.match(read("src/routes/index.tsx"), /\{ property: "og:url", content: card\.url \}/);
+  });
+});
+
+describe("catalogue titles", () => {
+  it("are unique, so names, breadcrumbs and h2s tell tracks apart", () => {
+    const seen = new Map<string, string>();
+    for (const t of SOUNDCLOUD_TRACKS) {
+      const key = t.title.trim().toLowerCase();
+      assert.equal(seen.get(key), undefined, `${t.id} repeats the title of ${seen.get(key)}`);
+      seen.set(key, t.id);
+    }
+    assert.equal(SOUNDCLOUD_TRACKS.find((t) => t.id === "infinite-spark-of-atoms-1")?.title, "Infinite Spark of Atoms (II)");
+  });
+});
+
+describe("hero fits short phones", () => {
+  it("defines phone-short and tightens the hero heading, meaning and CTA row with it", () => {
+    assert.match(read("src/styles.css"), /@custom-variant phone-short \(@media \(max-width: 639\.98px\) and \(max-height: 740px\)\);/);
+    const wall = read("src/components/track-wall.tsx");
+    assert.match(wall, /<h2 className="[^"]*phone-short:truncate[^"]*">\s*\{current\.title\}/);
+    assert.match(wall, /line-clamp-4[^"]*phone-short:line-clamp-2/);
+    assert.match(wall, /sm:mt-10 phone-short:mt-4/);
   });
 });
 

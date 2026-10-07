@@ -75,7 +75,7 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
             Atman Music · {TRACKS.length} tablets
             {isDaily ? " · Today's tablet" : ""}
           </p>
-          <h1 className="mt-4">
+          <h1 className="mt-4 phone-short:mt-2">
             {entered ? (
               <HermesNote playing={playing} align="start" />
             ) : (
@@ -83,17 +83,20 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
             )}
           </h1>
           {current ? (
-            <h2 className="mt-5 font-display text-2xl leading-tight text-fg sm:text-3xl">
+            // Server-rendered track name (SEO). On short phones it stays one
+            // line (full text still in the HTML) and the meaning clamps to two
+            // lines, so Play / Download MP3 clear the bottom player bar.
+            <h2 className="mt-4 font-display text-xl leading-tight text-fg sm:mt-5 sm:text-3xl phone-short:mt-2 phone-short:truncate">
               {current.title}
             </h2>
           ) : null}
           {current ? (
-            <p className="mt-3 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85">
+            <p className="mt-3 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85 phone-short:mt-2 phone-short:line-clamp-2">
               {getMeaning(current.id)}
             </p>
           ) : null}
           {current ? (
-            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10">
+            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10 phone-short:mt-4">
               <button
                 type="button"
                 onPointerDown={noteUserGesture}
