@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "mines-just-on-a-folding-chair",
+    title: "Mine's Just on a Folding Chair",
+    soundId: "2414943480",
+    slug: "mines-just-on-a-folding-chair",
+    image: "/images/tracks/mines-just-on-a-folding-chair.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/mines-just-on-a-folding-chair",
+    recorded: "October 2026",
+    downloadKey: "masters/mines-just-on-a-folding-chair.mp3",
+  },
+  {
     id: "dont-fear",
     title: "Don't Fear",
     soundId: "2414925384",

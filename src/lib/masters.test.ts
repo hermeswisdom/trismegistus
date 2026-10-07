@@ -31,10 +31,10 @@ describe("catalog master mapping", () => {
     }
   });
 
-  it("enables Buy on the 104 Blob-backed slugs and leaves two without masters", () => {
+  it("enables Buy on the 105 Blob-backed slugs and leaves two without masters", () => {
     const forSale = (SOUNDCLOUD_TRACKS as Track[]).filter(trackIsForSale);
-    assert.equal(SOUNDCLOUD_TRACKS.length, 106);
-    assert.equal(forSale.length, 104);
+    assert.equal(SOUNDCLOUD_TRACKS.length, 107);
+    assert.equal(forSale.length, 105);
     assert.equal(
       saleDownloadKey(forSale.find((row) => row.id === "the-sleepers-waking")!),
       "masters/the-sleepers-waking.mp3",
@@ -96,6 +96,18 @@ describe("download naming", () => {
       "The Sleepers Waking — Atman Music.mp3",
     );
     assert.match(contentDisposition("The Sleepers Waking — Atman Music.mp3"), /attachment/);
+  });
+
+  it("escapes apostrophes in the download filename (RFC 5987 filename*)", () => {
+    const name = masterFilename({ title: "Mine's Just on a Folding Chair", slug: "mines-just-on-a-folding-chair" });
+    assert.equal(name, "Mine's Just on a Folding Chair — Atman Music.mp3");
+    const header = contentDisposition(name);
+    const star = header.split("filename*=UTF-8''")[1];
+    assert.equal(star, "Mine%27s%20Just%20on%20a%20Folding%20Chair%20%E2%80%94%20Atman%20Music.mp3");
+    assert.equal(/['()*\s"]/.test(star), false);
+    assert.equal(decodeURIComponent(star), name);
+    assert.match(header, /^attachment; filename="Mine's Just on a Folding Chair _ Atman Music\.mp3"; /);
+    assert.equal(contentDisposition("Don't (Live)*.mp3").split("''")[1], "Don%27t%20%28Live%29%2A.mp3");
   });
 
   it("builds dry-run session ids that round-trip the track id", () => {

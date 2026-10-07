@@ -50,6 +50,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "me-and-eric",
   "michael-my-lil-legend",
   "miles-of-lies",
+  "mines-just-on-a-folding-chair",
   "mirror-mirror-left-wing",
   "mo-bius-bowl-mp3",
   "moon-circles-1",
