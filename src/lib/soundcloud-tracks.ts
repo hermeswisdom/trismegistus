@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "dont-fear",
+    title: "Don't Fear",
+    soundId: "",
+    slug: "dont-fear",
+    image: "/images/tracks/dont-fear.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/dont-fear",
+    recorded: "October 2026",
+    downloadKey: "masters/dont-fear.mp3",
+  },
+  {
     id: "i-am-here",
     title: "I Am Here",
     soundId: "2414888580",
