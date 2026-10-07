@@ -4,6 +4,7 @@
  * native player is in use and the SoundCloud iframe is not loaded.
  */
 export const WAVEFORM_URLS: Readonly<Record<string, string>> = {
+  "2414925384": "https://wave.sndcdn.com/aLMZlsMR5O3z_m.json",
   "2408498463": "https://wave.sndcdn.com/nJfPs5uEOx1M_m.json",
   "2408498421": "https://wave.sndcdn.com/kCeXZhkvpyuF_m.json",
   "2408498328": "https://wave.sndcdn.com/noRQNjiRr1Qt_m.json",
