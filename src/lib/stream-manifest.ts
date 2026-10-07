@@ -22,6 +22,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "critical-mass-in-warrington",
   "djinn",
   "dodgy-sir-keir-scandal-after",
+  "dont-fear",
   "dont-look-up",
   "dusty-shoe-bass",
   "ego-overload-mp3",

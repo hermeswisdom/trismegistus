@@ -5,7 +5,7 @@ import { FEATURED_ID, TRACKS, getTrack, nextTrack, randomTrack, type Track } fro
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
 import { isQcBrowser } from "@/lib/qc-client";
-import { PLAY_BLOCKED_COPY, resolvePlayTap } from "@/lib/playback";
+import { PLAY_BLOCKED_COPY, PLAY_FAILED_COPY, resolvePlayTap } from "@/lib/playback";
 import {
   applyPlayback,
   getAttemptPhase,
@@ -33,6 +33,7 @@ import {
   setMediaSessionTrack,
 } from "@/lib/media-session";
 import {
+  canUseSoundCloud,
   nativeAudioAllowed,
   nextPlayable,
   pickBackend,
@@ -41,6 +42,7 @@ import {
   popHistoryTo,
   pushHistory,
   resolvePrevious,
+  streamFailureAction,
   type PlayerBackend,
 } from "@/lib/streams";
 import { debugEvent } from "@/lib/audio-debug";
@@ -107,8 +109,16 @@ function nativeAllowed() {
 }
 
 function backendFor(track: Track): PlayerBackend {
-  return pickBackend({ slug: track.slug, allowNative: nativeAllowed(), failed: failedStreams() });
+  return pickBackend({
+    slug: track.slug,
+    allowNative: nativeAllowed(),
+    failed: failedStreams(),
+    soundCloud: canUseSoundCloud(track),
+  });
 }
+
+/** Neither engine can play the tablet right now: the Try again face. */
+const PLAY_FAILED_STATE = { playing: false, playPending: false, playError: PLAY_FAILED_COPY } as const;
 
 /**
  * UI state right after a start: normally pending, but a start the widget
@@ -136,14 +146,21 @@ function hushWidget(track: Track | undefined) {
  * the native `ended` event) that reaches here synchronously keeps its user
  * gesture / media session. Returns the backend used.
  */
-function startTrack(nextId: string): PlayerBackend | null {
+function startTrack(nextId: string): PlayerBackend | "failed" | null {
   const track = getTrack(nextId);
   if (!track) return null;
   const backend = backendFor(track);
   if (backend === "native") {
     hushWidget(track);
     if (nativePlay(track)) return "native";
-  } else {
+  }
+  if (!canUseSoundCloud(track)) {
+    // No stream to start and no SoundCloud sound: never hand the widget an
+    // empty id (its permalink load 404s and drops the profile playlist).
+    nativePause(`${track.slug}: no stream and no SoundCloud sound`);
+    return "failed";
+  }
+  if (backend !== "native") {
     nativePause(`switched to SoundCloud for ${track.slug} (no stream)`);
     if (!usePlayer.getState().scNeeded) {
       debugEvent("engine", "mounting the SoundCloud iframe");
@@ -250,6 +267,13 @@ function ensurePlaybackBridge() {
         const id = notice.id;
         const track = getTrack(id);
         if (!track) return;
+        if (streamFailureAction(track) === "error") {
+          // SoundCloud has no sound for it yet: stay native, show Try again.
+          debugEvent("engine", `stream failed, no SoundCloud sound for ${track.slug}`);
+          usePlayer.setState(PLAY_FAILED_STATE);
+          setMediaSessionPlaying(false);
+          return;
+        }
         debugEvent("engine", `fallback to SoundCloud: ${track.slug}`);
         usePlayer.setState({ backend: "sc", scNeeded: true });
         applyPlayback({ intent: "play", soundId: track.soundId, permalink: track.permalink });
@@ -386,15 +410,16 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     // The start (native play() or the widget's skip + play postMessage)
     // leaves first, before any state update or re-render, so it rides the
     // tap's user activation.
-    const backend = startTrack(nextId) ?? get().backend;
-    debugEvent("engine", `${backend} ${track.slug}`);
+    const started = startTrack(nextId);
+    const backend = started === "failed" ? "native" : (started ?? get().backend);
+    debugEvent("engine", `${started ?? backend} ${track.slug}`);
     // Honest UI: pending until audio really flows (see reduceAttempt and
     // native-audio.ts). `playing` flips on the first real progress.
     set({
       ...(opts?.markEntered || get().entered ? { entered: true } : {}),
       currentId: nextId,
       backend,
-      ...afterStart(backend),
+      ...(started === "failed" ? PLAY_FAILED_STATE : afterStart(backend)),
       elapsed: reset ? 0 : get().elapsed,
       duration: reset ? 0 : get().duration,
       ...(reset && get().entered && !opts?.fromHistory
@@ -476,10 +501,11 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     // Same turn as the tap, and before anything else: native play(), or for
     // the widget a plain play() / skip + play. No await, no state update and
     // no iframe rewrite ahead of it.
-    const backend = startTrack(id) ?? get().backend;
+    const started = startTrack(id);
+    const backend = started === "failed" ? "native" : (started ?? get().backend);
     ensurePlaybackBridge();
     noteUserGesture();
-    set({ backend, ...afterStart(backend) });
+    set({ backend, ...(started === "failed" ? PLAY_FAILED_STATE : afterStart(backend)) });
   },
 
   seek: (ratio) => {

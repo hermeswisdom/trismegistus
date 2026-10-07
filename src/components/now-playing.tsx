@@ -181,7 +181,8 @@ export function NowPlaying() {
     const iframe = iframeRef.current;
     if (!iframe) return;
     setLiveIframe(iframe);
-    setCatalogSoundIds(TRACKS.map((track) => track.soundId));
+    // A tablet SoundCloud has not published yet has no sound id; it plays natively.
+    setCatalogSoundIds(TRACKS.map((track) => track.soundId).filter(Boolean));
     let cancelled = false;
     let readyCheck = 0;
 

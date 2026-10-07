@@ -131,6 +131,18 @@ describe("native player", () => {
     assert.equal(failedStreams().has(A.slug), true);
   });
 
+  it("a retry after a failed stream re-cues the src instead of replaying the dead element", async () => {
+    audio.nextPlay = () => Promise.reject(Object.assign(new Error("x"), { name: "NotSupportedError" }));
+    nativePlay(A);
+    await tick();
+    assert.equal(failedStreams().has(A.slug), true);
+    audio.src = "";
+    audio.setAttribute("src", "about:blank#dead");
+    assert.equal(nativePlay(A), true);
+    assert.equal(audio.src, `/api/stream/${A.slug}`);
+    assert.equal(audio.plays.at(-1)?.src, `/api/stream/${A.slug}`);
+  });
+
   it("on ended, the next tablet's src + play() run inside the event (lock screen auto-advance)", () => {
     nativePlay(A);
     audio.fire("playing");

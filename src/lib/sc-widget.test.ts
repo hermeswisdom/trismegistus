@@ -443,6 +443,42 @@ describe("sc-widget: one widget, one tap", () => {
     assert.equal(getAttemptPhase(), "idle");
   });
 
+  it("does nothing for an empty sound id: no skip, no load, the playlist stays", () => {
+    const iframe = { src: "https://w.soundcloud.com/player/?url=users" } as HTMLIFrameElement;
+    setLiveIframe(iframe);
+    const { calls } = readyWidget();
+    const types = collect();
+    for (const soundId of ["", "   "]) {
+      assert.deepEqual(applyPlayback({ ...cmd, soundId, permalink: "https://soundcloud.com/esoteric_vibrations/dont-fear" }), { op: "none" });
+    }
+    assert.deepEqual(calls, []);
+    assert.deepEqual(types, []);
+    assert.equal(getAttemptPhase(), "idle");
+    assert.equal(iframe.src, "https://w.soundcloud.com/player/?url=users");
+    // The profile playlist is intact: the next real tablet still skips + plays.
+    applyPlayback(cmd);
+    assert.deepEqual(calls, ["skip:1", "vol:100", "play"]);
+    resetPlaybackForTests();
+  });
+
+  it("does nothing for an empty permalink, even for a sound outside the playlist", () => {
+    const { calls } = readyWidget();
+    assert.deepEqual(applyPlayback({ ...cmd, soundId: "404", permalink: "" }), { op: "none" });
+    assert.deepEqual(calls, []);
+    assert.equal(getAttemptPhase(), "idle");
+    resetPlaybackForTests();
+  });
+
+  it("never queues an empty sound id for when the widget becomes ready", () => {
+    const fake = fakeWidget();
+    bindLiveWidget(fake.widget, Events);
+    assert.deepEqual(applyPlayback({ ...cmd, soundId: "" }), { op: "none" });
+    fake.widget.fire("ready");
+    setPlaylistForTests(PLAYLIST, true);
+    assert.equal(fake.calls.some((c) => c.startsWith("load") || c === "play"), false);
+    resetPlaybackForTests();
+  });
+
   it("falls back to a single-track load only when the sound is not in the playlist", () => {
     const { calls } = readyWidget();
     applyPlayback({ ...cmd, soundId: "404" });
@@ -471,5 +507,21 @@ describe("player-store: retry sends before any state update", () => {
     const st = src.slice(src.indexOf("function startTrack("), src.indexOf("\n}\n", src.indexOf("function startTrack(")));
     assert.ok(st.includes("nativePlay(track)") && st.includes("applyPlayback("));
     assert.equal(/await|Promise|queueMicrotask|setTimeout/.test(st), false);
+  });
+});
+
+describe("player-store: a stream failure without a SoundCloud sound stays native", () => {
+  it("the fallback notice and startTrack check for a sound id before any applyPlayback", async () => {
+    const { readFile } = await import("node:fs/promises");
+    const src = await readFile(new URL("./player-store.ts", import.meta.url), "utf8");
+    const fb = src.slice(src.indexOf('case "fallback": {'), src.indexOf("\n      }\n", src.indexOf('case "fallback": {')));
+    assert.ok(fb.includes('streamFailureAction(track) === "error"'));
+    assert.ok(fb.indexOf("streamFailureAction(") < fb.indexOf("applyPlayback("), "error check before the widget");
+    assert.ok(fb.indexOf("PLAY_FAILED_STATE") < fb.indexOf("applyPlayback("));
+    assert.ok(fb.indexOf("return;") < fb.indexOf("applyPlayback("), "returns before the widget");
+    const st = src.slice(src.indexOf("function startTrack("), src.indexOf("\n}\n", src.indexOf("function startTrack(")));
+    assert.ok(st.indexOf("canUseSoundCloud(track)") > 0);
+    assert.ok(st.indexOf("canUseSoundCloud(track)") < st.indexOf("applyPlayback("), "sound id check before the widget");
+    assert.ok(src.includes("soundCloud: canUseSoundCloud(track)"), "backendFor keeps unpublished tablets native");
   });
 });
