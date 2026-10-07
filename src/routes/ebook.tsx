@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { EbookPageBody } from "@/components/free-ebook";
 import { HermesNote } from "@/components/hermes-note";
 import { EBOOK_COVER, EBOOK_DESCRIPTION, EBOOK_PAGE_PATH, EBOOK_TITLE } from "@/lib/ebook";
+import { ebookJsonLd, jsonLdMeta } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/tablet-link";
 
 const TITLE = `${EBOOK_TITLE} · free ebook · Atman Music`;
@@ -24,6 +25,7 @@ export const Route = createFileRoute("/ebook")({
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: EBOOK_DESCRIPTION },
       { name: "twitter:image", content: IMAGE },
+      jsonLdMeta(ebookJsonLd()),
     ],
     links: [{ rel: "canonical", href: PAGE_URL }],
   }),

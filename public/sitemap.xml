@@ -2,434 +2,537 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://atmanmusic.app/</loc>
+    <lastmod>2026-10-07</lastmod>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/ebook</loc>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://atmanmusic.app/download</loc>
+    <lastmod>2026-10-02</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/bowls</loc>
+    <lastmod>2026-10-03</lastmod>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=everything-else</loc>
+    <lastmod>2026-09-27</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=warehouse-filter</loc>
+    <lastmod>2026-09-27</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=warehouse-hypnosis</loc>
+    <lastmod>2026-09-27</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-shadow-learned-my-name</loc>
+    <lastmod>2026-09-26</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-sleepers-waking</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=fragile-god</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=wait-for-a-love-that-stays</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=now-i-see-you-blossom</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-endless-mirror</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=old-mens-game</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=me-and-eric</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=fake-love-shadows</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=bassline-serenade</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=dont-look-up</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=whats-in-it-for-me</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=nobody-can-stop-it</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=djinn</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=subterranean-pulse</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=neon-nostalgia</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=neon-pulse</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=shamanic-in-the-woods</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=shamanica</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=shamanic-me-up</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-worst-kind-of-heartache</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=i-tired</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=solitudes-silent-flame</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=hold-lightly</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=marble-heartbeats</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=7-signs-silent-danger</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=bones-keep-score</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=broken-brick-rebuild</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=half-way-heart-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=miles-of-lies</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=makers-make</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=that-sax-is-fine</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=two-blue-screens</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=throat-sing</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=piano-hands</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=bonefire-circle</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=quartz-pulse-ritual</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=saxatone</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=babushka-on-fire</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=dusty-shoe-bass</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=scratch-on-the-floor</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=let-that-fear-go</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-last-one</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=paper-crown</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=gold-curtains</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=spy-pigeons</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=bank-holiday-bloke</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=steel-peach-bloom</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=saxamoan</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=lift-me-up</loc>
+    <lastmod>2026-09-20</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=natures-plant</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=stone-chest</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=pocketful-umbrellas</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=dodgy-sir-keir-scandal-after</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=thats-life</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=moonlit-handpan-groove-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=broken-britain-debt-bomb</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=mo-bius-bowl-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=moon-circles-1</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=bamboo-kickback</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=nine-completes</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=shadows-of-the-cross</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=tracy-chapman-tape</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=welcome-home-neville</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=mirror-mirror-left-wing</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=ego-overload-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=quantum-stage</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=fiat-slaves-no-more</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=find-your-atman</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=baguio-the-wrong-dam-room-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-city-of-london</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=when-we-were-cool</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=awake</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-mushroom-alchemist</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=your-first-pill</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=mr-oil-up-aaron-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=cockny-in-his-polish-tracksuit</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=the-best-of-the-worst-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=famous-aint-fun-anymore</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=through-the-cracks</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=baguio-trip-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=remember-who-you-are-mp3-1</loc>
+    <lastmod>2026-09-20</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=hyperdimensional-dancefloor</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=remember-who-you-are-mp3</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=infinite-spark-of-atoms-1</loc>
+    <lastmod>2026-10-07</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=infinite-spark-of-atoms</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=puppets-on-a-string</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=warrington-boy-outside-the</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=hidden-circuits-of-the-one</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=michael-my-lil-legend</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=el-chapo-lev</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=cardboard-kingdom</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=amy-all-out-of-love</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=funk-in-the-forest</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=paper-tigers-in-red-ties</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=still-on-the-graft</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=trevor-the-beat-creator</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=beyond-the-body</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=critical-mass-in-warrington</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=still-not-retiring-in</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://atmanmusic.app/?tablet=i-never-left-you-i-left-the-i</loc>
+    <lastmod>2026-09-23</lastmod>
     <priority>0.8</priority>
   </url>
 </urlset>

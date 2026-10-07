@@ -1,4 +1,5 @@
 import { InstallAppButton, InstallPrompt } from "@/components/install-app";
+import { X_HANDLE, X_PROFILE } from "@/lib/artist";
 import { SOUNDCLOUD_PROFILE, TRACKS } from "@/lib/rooms";
 
 export function SiteFooter() {
@@ -24,12 +25,12 @@ export function SiteFooter() {
             SoundCloud
           </a>
           <a
-            href="https://x.com/Hermes10wisdom"
+            href={X_PROFILE}
             target="_blank"
             rel="noreferrer"
             className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
           >
-            X · Hermes10wisdom
+            X · {X_HANDLE}
           </a>
           <a
             href="/bowls"

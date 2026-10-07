@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Short phone viewports (iPhone with Safari toolbars ≈ 390×664, SE 375×667):
+   the wall hero tightens so its CTAs stay above the fixed player bar. */
+@custom-variant phone-short (@media (max-width: 639.98px) and (max-height: 740px));
+
 @property --atman-level {
   syntax: "<number>";
   inherits: true;

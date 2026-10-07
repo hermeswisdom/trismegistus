@@ -102,6 +102,11 @@ export function homeOgImage(input: {
   return absoluteAssetUrl(input.image, input.origin);
 }
 
+/**
+ * og:url = the page's canonical. A tablet link is its own /?tablet=<slug>;
+ * ?daily=1 is today's tablet's URL (the "Today's tablet" card text stays,
+ * and the shared link itself is still /?daily=1). Bare home: /.
+ */
 export function homeOgUrl(input: {
   source: "daily" | "tablet" | "none";
   slug: string;
@@ -109,12 +114,7 @@ export function homeOgUrl(input: {
 }): string {
   const origin = originFrom(input.origin);
   if (input.source === "none") return `${origin}/`;
-  const daily = input.source === "daily";
-  return tabletPageUrl({
-    daily,
-    tablet: daily ? undefined : input.slug,
-    origin,
-  });
+  return tabletPageUrl({ tablet: input.slug, origin });
 }
 
 export type HomeOgCard = {

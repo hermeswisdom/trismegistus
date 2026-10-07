@@ -21,7 +21,13 @@ import { noteUserGesture } from "@/lib/sc-widget";
 import { playControlFace, playControlShowsPause } from "@/lib/playback";
 import { cn } from "@/lib/utils";
 
-export function TrackWall() {
+/**
+ * `focusId`: the track a ?tablet= / ?daily=1 link resolved to on the server.
+ * The server render and the first client render use it, so the hero's track
+ * name and meaning are in the server HTML; after mount the player store
+ * (already set by LastTabletSync's layout effect) takes over.
+ */
+export function TrackWall({ focusId }: { focusId?: string } = {}) {
   const entered = usePlayer((s) => s.entered);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
@@ -35,8 +41,10 @@ export function TrackWall() {
   const recent = [...namedMarks, ...listenMarks].slice(0, 12);
   const hearts = useHearts((s) => s.ids);
   const [savedOnly, setSavedOnly] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dailyId = dailyTrackId();
-  const current = TRACKS.find((t) => t.id === currentId) ?? TRACKS[0];
+  const shownId = !mounted && focusId ? focusId : currentId;
+  const current = TRACKS.find((t) => t.id === shownId) ?? TRACKS[0];
   const isDaily = current?.id === dailyId;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
@@ -46,6 +54,10 @@ export function TrackWall() {
   useEffect(() => {
     void hydrateMarks();
   }, [hydrateMarks]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <section id="top" className="relative">
@@ -63,7 +75,7 @@ export function TrackWall() {
             Atman Music · {TRACKS.length} tablets
             {isDaily ? " · Today's tablet" : ""}
           </p>
-          <h1 className="mt-4">
+          <h1 className="mt-4 phone-short:mt-2">
             {entered ? (
               <HermesNote playing={playing} align="start" />
             ) : (
@@ -71,12 +83,20 @@ export function TrackWall() {
             )}
           </h1>
           {current ? (
-            <p className="mt-5 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85">
+            // Server-rendered track name (SEO). On short phones it stays one
+            // line (full text still in the HTML) and the meaning clamps to two
+            // lines, so Play / Download MP3 clear the bottom player bar.
+            <h2 className="mt-4 font-display text-xl leading-tight text-fg sm:mt-5 sm:text-3xl phone-short:mt-2 phone-short:truncate">
+              {current.title}
+            </h2>
+          ) : null}
+          {current ? (
+            <p className="mt-3 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85 phone-short:mt-2 phone-short:line-clamp-2">
               {getMeaning(current.id)}
             </p>
           ) : null}
           {current ? (
-            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10">
+            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10 phone-short:mt-4">
               <button
                 type="button"
                 onPointerDown={noteUserGesture}
@@ -114,7 +134,13 @@ export function TrackWall() {
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
               {isDaily ? (
-                <ShareDayButton track={current} className="h-12" />
+                <ShareDayButton
+                  track={current}
+                  // Short phones: icon-only like the plain Share button, so the
+                  // daily tablet keeps the same three CTA rows as any other.
+                  className="h-12 phone-short:size-11 phone-short:justify-center phone-short:px-0"
+                  labelClassName="phone-short:sr-only"
+                />
               ) : (
                 <ShareButton track={current} className="bg-elevated" />
               )}

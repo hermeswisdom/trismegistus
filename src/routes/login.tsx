@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { HermesNote } from "@/components/hermes-note";
 import { LoginForm } from "@/components/login-form";
 import { getAuthDoors } from "@/lib/auth/doors";
+import { NOINDEX_META } from "@/lib/seo";
 
 export const Route = createFileRoute("/login")({
   loader: async () => {
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/login")({
   },
   component: LoginPage,
   head: () => ({
-    meta: [{ title: "Keep a name — Atman Music" }],
+    meta: [{ title: "Keep a name — Atman Music" }, NOINDEX_META],
   }),
 });
 

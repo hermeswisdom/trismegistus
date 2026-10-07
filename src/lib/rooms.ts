@@ -58,7 +58,7 @@ export const JOURNAL = [
   },
 ];
 
-export const SOUNDCLOUD_PROFILE = "https://soundcloud.com/esoteric_vibrations";
+export { SOUNDCLOUD_PROFILE } from "./artist";
 
 export const FEATURED_ID = "the-sleepers-waking";
 
