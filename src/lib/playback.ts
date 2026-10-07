@@ -23,6 +23,8 @@ export const PLAYLIST_WAIT_MS = 15000;
 
 export const PLAY_BLOCKED_COPY = "Tap to play";
 export const PLAY_PENDING_COPY = "Sounding…";
+/** The stream failed and there is no SoundCloud sound to fall back to. */
+export const PLAY_FAILED_COPY = "Couldn’t play this one";
 
 export type PlayIntent = "play" | "pause";
 

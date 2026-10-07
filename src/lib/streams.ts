@@ -39,12 +39,35 @@ export function nativeAudioAllowed(search: string | null | undefined): boolean {
   }
 }
 
-/** Which backend plays this tablet. A stream that failed this page life falls back. */
+/**
+ * SoundCloud can play this tablet: it has a published sound id. A tablet
+ * SoundCloud is still processing has none yet, and loading its permalink in
+ * the widget 404s and drops the profile playlist.
+ */
+export function canUseSoundCloud(track: { soundId?: string | null }): boolean {
+  return Boolean(track.soundId?.trim());
+}
+
+/**
+ * The native stream failed: hand the tablet to SoundCloud, or, with no sound
+ * id, stay native and show the can't-play / Try again state.
+ */
+export function streamFailureAction(track: { soundId?: string | null }): "sc" | "error" {
+  return canUseSoundCloud(track) ? "sc" : "error";
+}
+
+/**
+ * Which backend plays this tablet. A stream that failed this page life falls
+ * back to SoundCloud, except for a tablet with no SoundCloud sound
+ * (`soundCloud: false`), which only the stream can play.
+ */
 export function pickBackend(opts: {
   slug: string;
   allowNative: boolean;
   failed?: ReadonlySet<string>;
+  soundCloud?: boolean;
 }): PlayerBackend {
+  if (opts.soundCloud === false && hasStream(opts.slug)) return "native";
   if (!opts.allowNative) return "sc";
   if (opts.failed?.has(opts.slug)) return "sc";
   return hasStream(opts.slug) ? "native" : "sc";

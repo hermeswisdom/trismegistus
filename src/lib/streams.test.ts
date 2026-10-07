@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  canUseSoundCloud,
   nextPlayable,
   classifyPlayRejection,
   hasStream,
@@ -11,6 +12,7 @@ import {
   pushHistory,
   resolvePrevious,
   streamBlobPath,
+  streamFailureAction,
   streamUrl,
 } from "./streams.ts";
 import { STREAM_SLUGS } from "./stream-manifest.ts";
@@ -221,5 +223,30 @@ describe("wheelWinnerFilter: every tablet can win a normal spin", () => {
     const landings = tapSpins.filter((a) => /markEntered|landing/.test(a));
     assert.deepEqual(landings, ["{ force: true, landing: true }"]);
     assert.ok(tapSpins.filter((a) => a === "").length >= 3, "the wheel, wall dice and dock random spins pass no landing flag");
+  });
+});
+
+describe("a tablet SoundCloud has not published yet (no sound id)", () => {
+  const slug = STREAM_SLUGS[0];
+  it("has no SoundCloud target, so a failed stream shows the error instead of falling back", () => {
+    for (const soundId of ["", "  ", undefined, null]) {
+      assert.equal(canUseSoundCloud({ soundId }), false, String(soundId));
+      assert.equal(streamFailureAction({ soundId }), "error", String(soundId));
+    }
+    assert.equal(canUseSoundCloud({ soundId: "2414888580" }), true);
+    assert.equal(streamFailureAction({ soundId: "2414888580" }), "sc");
+  });
+  it("stays native after its stream fails (Try again refetches), even with ?player=sc", () => {
+    const failed = new Set([slug]);
+    assert.equal(pickBackend({ slug, allowNative: true, failed, soundCloud: false }), "native");
+    assert.equal(pickBackend({ slug, allowNative: false, soundCloud: false }), "native");
+    // With a sound id a failed stream still falls back to SoundCloud.
+    assert.equal(pickBackend({ slug, allowNative: true, failed, soundCloud: true }), "sc");
+    assert.equal(pickBackend({ slug, allowNative: true, failed }), "sc");
+  });
+  it("every catalogue tablet without a sound id has a native stream", () => {
+    const unpublished = SOUNDCLOUD_TRACKS.filter((t) => !canUseSoundCloud(t));
+    assert.ok(unpublished.some((t) => t.id === "dont-fear"));
+    for (const t of unpublished) assert.equal(hasStream(t.slug), true, t.id);
   });
 });

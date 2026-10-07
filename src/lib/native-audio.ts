@@ -254,7 +254,8 @@ function ensureEl(): HTMLAudioElement | null {
 }
 
 function cue(a: HTMLAudioElement, track: NativeTrack): boolean {
-  if (activeId === track.id && a.getAttribute("src")) return false;
+  // A failed stream is re-cued on a retry, so Try again really refetches it.
+  if (activeId === track.id && a.getAttribute("src") && !failed.has(track.slug)) return false;
   const url = srcFor(track.slug);
   if (!url) return false;
   notePauseCall(`src change to ${track.slug}`);

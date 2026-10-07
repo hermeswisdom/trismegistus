@@ -559,6 +559,7 @@ function run(cmd: PlayCommand, op: PlaybackOp) {
       }
       widget.play();
     } else if (op.op === "load") {
+      if (!hasSoundCloudTarget(cmd)) return;
       // Not in the profile playlist (removed / private on SoundCloud).
       // This reloads the widget; it can need a second tap on iOS.
       singleMode = true;
@@ -588,6 +589,11 @@ function runQueued() {
   run(cmd, op);
 }
 
+/** A play command SoundCloud can act on: a sound id and a permalink. */
+function hasSoundCloudTarget(cmd: PlayCommand) {
+  return Boolean(cmd.soundId?.trim() && cmd.permalink?.trim());
+}
+
 /**
  * Start or stop a tablet. Call it synchronously from the tap handler: the
  * `skip` + `play` postMessage must leave in the same turn as the gesture.
@@ -600,6 +606,13 @@ export function applyPlayback(cmd: PlayCommand): PlaybackOp {
     const op = planPlayback(cmd, getPlaybackSurface());
     run(cmd, op);
     return op;
+  }
+
+  if (!hasSoundCloudTarget(cmd)) {
+    // An unpublished tablet (no sound id) or no permalink: nothing SoundCloud
+    // can play. No skip and no load, which would 404 and drop the playlist.
+    queued = null;
+    return { op: "none" };
   }
 
   const op = planPlayback(cmd, getPlaybackSurface(cmd.soundId));
