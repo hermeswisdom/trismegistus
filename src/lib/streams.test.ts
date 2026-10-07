@@ -197,7 +197,8 @@ describe("wheelWinnerFilter: every tablet can win a normal spin", () => {
   it("the first-visit landing still never picks a SoundCloud-only tablet", async () => {
     const { won } = await reachableWinners({ current: "the-sleepers-waking", landing: true, nativeInUse: true });
     for (const id of NO_STREAM) assert.equal(won.has(id), false, id);
-    assert.equal(won.size, 104 - 1 - NO_STREAM.length);
+    assert.equal(won.size, SOUNDCLOUD_TRACKS.length - 1 - NO_STREAM.length);
+    assert.equal(SOUNDCLOUD_TRACKS.length, 105);
   });
 
   it("wiring: spinTablet filters only for markEntered / landing; only the automatic spins pass them", async () => {

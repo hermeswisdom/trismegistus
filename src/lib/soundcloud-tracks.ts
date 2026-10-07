@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "i-am-here",
+    title: "I Am Here",
+    soundId: "2414888580",
+    slug: "i-am-here",
+    image: "/images/tracks/i-am-here.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/i-am-here",
+    recorded: "October 2026",
+    downloadKey: "masters/i-am-here.mp3",
+  },
+  {
     id: "everything-else",
     title: "Everything else",
     soundId: "2408498463",
