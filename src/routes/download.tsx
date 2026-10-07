@@ -5,6 +5,7 @@ import { parseDownloadSearch } from "@/lib/download-search";
 import { MASTER_LICENSE_LINE } from "@/lib/masters";
 import { redeemMasterPurchase } from "@/lib/master-checkout";
 import { getTrackBySlug } from "@/lib/rooms";
+import { NOINDEX_META } from "@/lib/seo";
 
 export const Route = createFileRoute("/download")({
   validateSearch: parseDownloadSearch,
@@ -28,7 +29,9 @@ export const Route = createFileRoute("/download")({
   },
   component: DownloadPage,
   head: () => ({
-    meta: [{ title: "Master MP3 — Atman Music" }],
+    // Receipt redemption (?session_id= / ?receipt=): a utility page, kept out
+    // of the index and the sitemap.
+    meta: [{ title: "Master MP3 — Atman Music" }, NOINDEX_META],
   }),
 });
 

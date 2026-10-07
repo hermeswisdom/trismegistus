@@ -21,7 +21,13 @@ import { noteUserGesture } from "@/lib/sc-widget";
 import { playControlFace, playControlShowsPause } from "@/lib/playback";
 import { cn } from "@/lib/utils";
 
-export function TrackWall() {
+/**
+ * `focusId`: the track a ?tablet= / ?daily=1 link resolved to on the server.
+ * The server render and the first client render use it, so the hero's track
+ * name and meaning are in the server HTML; after mount the player store
+ * (already set by LastTabletSync's layout effect) takes over.
+ */
+export function TrackWall({ focusId }: { focusId?: string } = {}) {
   const entered = usePlayer((s) => s.entered);
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
@@ -35,8 +41,10 @@ export function TrackWall() {
   const recent = [...namedMarks, ...listenMarks].slice(0, 12);
   const hearts = useHearts((s) => s.ids);
   const [savedOnly, setSavedOnly] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const dailyId = dailyTrackId();
-  const current = TRACKS.find((t) => t.id === currentId) ?? TRACKS[0];
+  const shownId = !mounted && focusId ? focusId : currentId;
+  const current = TRACKS.find((t) => t.id === shownId) ?? TRACKS[0];
   const isDaily = current?.id === dailyId;
   const face = playControlFace({ playing, playPending, playError });
   const showPause = playControlShowsPause(face);
@@ -46,6 +54,10 @@ export function TrackWall() {
   useEffect(() => {
     void hydrateMarks();
   }, [hydrateMarks]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
     <section id="top" className="relative">
@@ -71,7 +83,12 @@ export function TrackWall() {
             )}
           </h1>
           {current ? (
-            <p className="mt-5 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85">
+            <h2 className="mt-5 font-display text-2xl leading-tight text-fg sm:text-3xl">
+              {current.title}
+            </h2>
+          ) : null}
+          {current ? (
+            <p className="mt-3 max-w-lg line-clamp-4 whitespace-pre-line text-lead font-light text-fg/85">
               {getMeaning(current.id)}
             </p>
           ) : null}

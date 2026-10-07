@@ -5,9 +5,15 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { INSTALL_CAPTURE_SCRIPT } from "@/lib/install-app";
 import { ViewportLock } from "@/components/viewport-lock";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
+import { siteVerificationMeta } from "@/lib/seo";
 import appCss from "../styles.css?url";
 
 const APP_NAME = "Atman Music";
+
+/** GOOGLE_SITE_VERIFICATION, inlined at build (vite.config.ts). Empty: no tag. */
+declare const __GOOGLE_SITE_VERIFICATION__: string;
+const GOOGLE_SITE_VERIFICATION =
+  typeof __GOOGLE_SITE_VERIFICATION__ === "string" ? __GOOGLE_SITE_VERIFICATION__ : "";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -26,6 +32,7 @@ export const Route = createRootRoute({
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black" },
+      ...siteVerificationMeta(GOOGLE_SITE_VERIFICATION),
     ],
     links: [
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },

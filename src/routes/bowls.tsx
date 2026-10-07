@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { HealingSounds } from "@/components/healing-sounds";
 import { HermesNote } from "@/components/hermes-note";
 import { BOWLS, BOWLS_DISCLAIMER, BOWLS_PATH } from "@/lib/bowls";
+import { jsonLdMeta, pageBreadcrumbJsonLd } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/tablet-link";
 
 const TITLE = "Sound bowls · Healing sounds · Atman Music";
@@ -21,6 +22,7 @@ export const Route = createFileRoute("/bowls")({
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: TITLE },
       { name: "twitter:description", content: DESCRIPTION },
+      jsonLdMeta(pageBreadcrumbJsonLd("Sound bowls", BOWLS_PATH)),
     ],
     links: [{ rel: "canonical", href: PAGE_URL }],
   }),

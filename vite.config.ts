@@ -156,6 +156,9 @@ const streamProxyHost = blobHostFromToken(process.env.BLOB_READ_WRITE_TOKEN);
 export default defineConfig(({ command, isPreview }) => ({
   define: {
     __STREAM_PROXY_HOST__: JSON.stringify(command === "build" && process.env.VERCEL ? (streamProxyHost ?? "") : ""),
+    // Search Console meta-tag verification (src/routes/__root.tsx). Public by
+    // design; empty or unset renders no tag. Changing it needs a redeploy.
+    __GOOGLE_SITE_VERIFICATION__: JSON.stringify(String(process.env.GOOGLE_SITE_VERIFICATION ?? "").trim()),
   },
   server: {
     host: "0.0.0.0",
