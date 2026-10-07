@@ -38,6 +38,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "hidden-circuits-of-the-one",
   "hold-lightly",
   "hyperdimensional-dancefloor",
+  "i-am-here",
   "i-never-left-you-i-left-the-i",
   "i-tired",
   "infinite-spark-of-atoms",
