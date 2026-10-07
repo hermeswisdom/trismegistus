@@ -134,7 +134,13 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
               {isDaily ? (
-                <ShareDayButton track={current} className="h-12" />
+                <ShareDayButton
+                  track={current}
+                  // Short phones: icon-only like the plain Share button, so the
+                  // daily tablet keeps the same three CTA rows as any other.
+                  className="h-12 phone-short:size-11 phone-short:justify-center phone-short:px-0"
+                  labelClassName="phone-short:sr-only"
+                />
               ) : (
                 <ShareButton track={current} className="bg-elevated" />
               )}

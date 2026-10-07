@@ -130,9 +130,12 @@ export function ShareButton({
 export function ShareDayButton({
   track,
   className,
+  labelClassName,
 }: {
   track: Track;
   className?: string;
+  /** e.g. "phone-short:sr-only": icon-only where space is tight (name kept). */
+  labelClassName?: string;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -158,7 +161,7 @@ export function ShareDayButton({
       )}
     >
       {copied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
-      {copied ? "Copied" : "Share the day"}
+      <span className={labelClassName}>{copied ? "Copied" : "Share the day"}</span>
     </button>
   );
 }

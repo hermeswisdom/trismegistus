@@ -193,6 +193,9 @@ describe("hero fits short phones", () => {
     assert.match(wall, /<h2 className="[^"]*phone-short:truncate[^"]*">\s*\{current\.title\}/);
     assert.match(wall, /line-clamp-4[^"]*phone-short:line-clamp-2/);
     assert.match(wall, /sm:mt-10 phone-short:mt-4/);
+    // The daily tablet's Share the day goes icon-only there (name kept).
+    assert.match(wall, /labelClassName="phone-short:sr-only"/);
+    assert.match(read("src/components/track-actions.tsx"), /aria-label=\{copied \? "Link copied" : "Share the day"\}/);
   });
 });
 
