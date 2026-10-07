@@ -2,7 +2,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "dont-fear",
     title: "Don't Fear",
-    soundId: "",
+    soundId: "2414925384",
     slug: "dont-fear",
     image: "/images/tracks/dont-fear.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/dont-fear",
