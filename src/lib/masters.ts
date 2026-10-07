@@ -97,7 +97,12 @@ export function masterFilename(track: Pick<Track, "title" | "slug">): string {
 
 export function contentDisposition(filename: string): string {
   const fallback = filename.replace(/[^\x20-\x7E]+/g, "_").replace(/"/g, "");
-  const encoded = encodeURIComponent(filename);
+  // RFC 5987 attr-chars: encodeURIComponent leaves ' ( ) * as-is, and a bare
+  // apostrophe is the filename* delimiter ("Don't Fear"), so encode those too.
+  const encoded = encodeURIComponent(filename).replace(
+    /['()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
   return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }
 
