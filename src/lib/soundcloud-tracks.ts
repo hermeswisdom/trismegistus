@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "turn-the-page-anyway",
+    title: "Turn the Page Anyway",
+    soundId: "2416545993",
+    slug: "turn-the-page-anyway",
+    image: "/images/tracks/turn-the-page-anyway.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/turn-the-page-anyway",
+    recorded: "October 2026",
+    downloadKey: "masters/turn-the-page-anyway.mp3",
+  },
+  {
     id: "mines-just-on-a-folding-chair",
     title: "Mine's Just on a Folding Chair",
     soundId: "2414943480",
