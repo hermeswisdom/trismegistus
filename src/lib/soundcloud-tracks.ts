@@ -2,7 +2,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "same-old-score",
     title: "Same Old Score",
-    soundId: "",
+    soundId: "2417082012",
     slug: "same-old-score",
     image: "/images/tracks/same-old-score.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/same-old-score",
