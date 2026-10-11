@@ -62,6 +62,9 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
   return (
     <section id="top" className="relative">
       <div className="relative isolate min-h-dvh overflow-x-clip overflow-hidden">
+        {/* Desktop bottom padding (sm:pb-40) clears the player bar even when it
+            grows a "Tap to play" / "Sounding" line (~25px): pb-32 left only
+            16px under Download and 6px under Play at 1280×900. */}
         {current ? (
           <img
             src={current.image}
@@ -70,7 +73,7 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
           />
         ) : null}
         <div className="absolute inset-0 bg-linear-to-t from-bg via-bg/55 to-bg/30" />
-        <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-[calc(10.5rem+env(safe-area-inset-bottom))] pt-[calc(6.5rem+env(safe-area-inset-top))] sm:px-8 sm:pb-32">
+        <div className="relative mx-auto flex min-h-dvh max-w-6xl flex-col justify-end px-5 pb-[calc(10.5rem+env(safe-area-inset-bottom))] pt-[calc(6.5rem+env(safe-area-inset-top))] sm:px-8 sm:pb-40">
           <p className="text-xs font-medium tracking-[0.42em] text-accent uppercase">
             Atman Music · {TRACKS.length} tablets
             {isDaily ? " · Today's tablet" : ""}
