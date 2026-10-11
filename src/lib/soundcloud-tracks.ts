@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "picnic-in-the-park",
+    title: "Picnic in the Park",
+    soundId: "",
+    slug: "picnic-in-the-park",
+    image: "/images/tracks/picnic-in-the-park.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/picnic-in-the-park",
+    recorded: "October 2026",
+    downloadKey: "masters/picnic-in-the-park.mp3",
+  },
+  {
     id: "turn-the-page-anyway",
     title: "Turn the Page Anyway",
     soundId: "2416545993",
