@@ -72,6 +72,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "quantum-stage",
   "quartz-pulse-ritual",
   "remember-who-you-are-mp3",
+  "same-old-score",
   "saxamoan",
   "saxatone",
   "scratch-on-the-floor",

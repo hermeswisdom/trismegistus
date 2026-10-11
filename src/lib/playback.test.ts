@@ -378,3 +378,17 @@ describe("wheelTapTarget", () => {
     assert.match(css, /html:not\(\[data-sc-tap-ready="wheel"\]\) \[data-sc-tap-target="wheel"\] \{\s*visibility: hidden;/);
   });
 });
+
+describe("desktop hero spacing", () => {
+  it("leaves room for the player bar's Tap to play line under Play / Download", async () => {
+    const fs = await import("node:fs");
+    const src = fs.readFileSync(new URL("../components/track-wall.tsx", import.meta.url), "utf8");
+    const hero = /className="relative mx-auto flex min-h-dvh[^"]*"/.exec(src)?.[0] ?? "";
+    // Desktop bar: ~107px, plus ~25px when it shows a status line. pb-32
+    // (128px) left 16px under Download in that state; keep at least 160px.
+    const sm = Number(/\bsm:pb-(\d+)\b/.exec(hero)?.[1]);
+    assert.ok(sm * 4 >= 160, `desktop hero padding ${sm * 4}px`);
+    // Phones keep their own tuned padding.
+    assert.match(hero, /\bpb-\[calc\(10\.5rem\+env\(safe-area-inset-bottom\)\)\]/);
+  });
+});

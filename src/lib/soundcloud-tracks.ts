@@ -1,8 +1,18 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "same-old-score",
+    title: "Same Old Score",
+    soundId: "2417082012",
+    slug: "same-old-score",
+    image: "/images/tracks/same-old-score.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/same-old-score",
+    recorded: "October 2026",
+    downloadKey: "masters/same-old-score.mp3",
+  },
+  {
     id: "picnic-in-the-park",
     title: "Picnic in the Park",
-    soundId: "",
+    soundId: "2417080812",
     slug: "picnic-in-the-park",
     image: "/images/tracks/picnic-in-the-park.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/picnic-in-the-park",
