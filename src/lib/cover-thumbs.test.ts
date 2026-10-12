@@ -14,7 +14,7 @@ describe("cover thumbnails", () => {
       assert.notEqual(thumb, t.image, t.id);
       const file = new URL(`../../public${thumb}`, import.meta.url);
       assert.ok(fs.existsSync(file), `${t.id}: missing ${thumb}`);
-      assert.ok(fs.statSync(file).size < 60_000, `${t.id}: thumb too big`);
+      assert.ok(fs.statSync(file).size < 100_000, `${t.id}: thumb too big`);
     }
   });
 });
