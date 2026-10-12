@@ -1,4 +1,5 @@
 import { TRACKS } from "@/lib/rooms";
+import { coverThumb } from "@/lib/cover-thumb";
 import { cn } from "@/lib/utils";
 
 const MOSAIC = TRACKS.slice(0, 24);
@@ -12,7 +13,9 @@ export function CoverMosaic({ className }: { className?: string }) {
       {MOSAIC.map((track) => (
         <img
           key={track.id}
-          src={track.image}
+          // 480px thumbs: cells are ~160x300px (desktop) / ~98x111px (phones),
+          // and React preloads each eager <img> at high priority.
+          src={coverThumb(track.image)}
           alt=""
           className="size-full min-h-0 object-cover outline-none"
         />
