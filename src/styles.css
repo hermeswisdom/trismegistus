@@ -120,6 +120,20 @@
   }
 }
 
+/* Sprite icons (src/components/sprite-icon.tsx): lucide's stroke defaults.
+   In the components layer so utilities (size-*, fill-current) win. */
+@layer components {
+  .icon {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+}
+
 @layer utilities {
   .grain {
     pointer-events: none;

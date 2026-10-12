@@ -1,5 +1,5 @@
 import { useState, type MouseEvent } from "react";
-import { Download } from "lucide-react";
+import { SpriteIcon } from "@/components/sprite-icon";
 import { startMasterCheckout } from "@/lib/master-checkout";
 import {
   MASTER_LICENSE_LINE,
@@ -57,7 +57,7 @@ export function BuyMasterButton({
           disabled={busy}
           className="inline-flex h-7 w-full max-w-full items-center gap-1 bg-accent px-2 text-[0.58rem] font-medium tracking-[0.12em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96] disabled:opacity-60 sm:h-8 sm:w-auto sm:px-2.5 sm:text-[0.62rem]"
         >
-          <Download className="size-3 shrink-0" />
+          <SpriteIcon name="download" className="size-3 shrink-0" />
           <span className="truncate">{busy ? "Opening…" : label}</span>
         </button>
         {error ? (
@@ -78,7 +78,7 @@ export function BuyMasterButton({
         disabled={busy}
         className="inline-flex h-12 w-fit touch-manipulation items-center gap-2 bg-elevated px-5 text-xs font-medium tracking-[0.2em] text-fg uppercase transition-[transform,opacity] duration-150 ease-out hover:opacity-90 active:scale-[0.96] disabled:opacity-60"
       >
-        <Download className="size-3.5" />
+        <SpriteIcon name="download" className="size-3.5" />
         {busy ? "Opening checkout" : label}
       </button>
       <span className="text-[0.65rem] tracking-[0.16em] text-subtle uppercase">

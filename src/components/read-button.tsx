@@ -1,4 +1,4 @@
-import { BookOpen } from "lucide-react";
+import { SpriteIcon } from "@/components/sprite-icon";
 import { useMeaningSheet } from "@/lib/meaning-sheet";
 import { cn } from "@/lib/utils";
 
@@ -24,7 +24,7 @@ export function ReadButton({
         className,
       )}
     >
-      <BookOpen className="size-4" />
+      <SpriteIcon name="book" className="size-4" />
     </button>
   );
 }

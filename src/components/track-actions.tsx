@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Heart, Share2 } from "lucide-react";
+import { SpriteIcon } from "@/components/sprite-icon";
 import { setMyFavorite } from "@/lib/favorites";
 import { isSignedInForSaves } from "@/lib/favorites-sync";
 import { useHearts } from "@/lib/hearts";
@@ -51,7 +51,7 @@ export function HeartButton({
       )}
     >
       <span className="relative size-4">
-        <Heart
+        <SpriteIcon name="heart"
           className={cn(
             swap,
             liked
@@ -59,7 +59,7 @@ export function HeartButton({
               : "scale-[0.25] opacity-0 blur-[4px]",
           )}
         />
-        <Heart
+        <SpriteIcon name="heart"
           className={cn(
             "size-4 transition-[opacity,filter,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)]",
             liked
@@ -106,7 +106,7 @@ export function ShareButton({
       )}
     >
       <span className="relative size-4">
-        <Check
+        <SpriteIcon name="check"
           className={cn(
             swap,
             copied
@@ -114,7 +114,7 @@ export function ShareButton({
               : "scale-[0.25] opacity-0 blur-[4px]",
           )}
         />
-        <Share2
+        <SpriteIcon name="share"
           className={cn(
             "size-4 transition-[opacity,filter,scale] duration-300 ease-[cubic-bezier(0.2,0,0,1)]",
             copied
@@ -160,7 +160,7 @@ export function ShareDayButton({
         className,
       )}
     >
-      {copied ? <Check className="size-3.5" /> : <Share2 className="size-3.5" />}
+      {copied ? <SpriteIcon name="check" className="size-3.5" /> : <SpriteIcon name="share" className="size-3.5" />}
       <span className={labelClassName}>{copied ? "Copied" : "Share the day"}</span>
     </button>
   );

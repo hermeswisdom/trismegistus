@@ -20,6 +20,7 @@ import { usePlayer } from "@/lib/player-store";
 import { noteUserGesture } from "@/lib/sc-widget";
 import { playControlFace, playControlShowsPause } from "@/lib/playback";
 import { cn } from "@/lib/utils";
+import { meaningExcerpt } from "@/lib/meaning-excerpt";
 
 /**
  * `focusId`: the track a ?tablet= / ?daily=1 link resolved to on the server.
@@ -261,7 +262,7 @@ function TabletTile({
                 : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100",
             )}
           >
-            {getMeaning(track.id)}
+            {meaningExcerpt(getMeaning(track.id))}
           </span>
         </span>
       </button>

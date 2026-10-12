@@ -7,6 +7,7 @@ import { ViewportLock } from "@/components/viewport-lock";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
 import { siteVerificationMeta } from "@/lib/seo";
 import appCss from "../styles.css?url";
+import { IconSprite } from "@/components/sprite-icon";
 
 const APP_NAME = "Atman Music";
 
@@ -61,6 +62,7 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body className="bg-bg text-fg font-sans">
+        <IconSprite />
         <ViewportLock />
         <PreviewHostBridge />
         <AuthProvider>

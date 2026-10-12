@@ -1,4 +1,4 @@
-import { MessageSquare } from "lucide-react";
+import { SpriteIcon } from "@/components/sprite-icon";
 import { useMarkSheet } from "@/lib/mark-sheet";
 import { useMarksFeed } from "@/lib/marks-feed";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,7 @@ export function MarkButton({
         className,
       )}
     >
-      <MessageSquare className="size-4" />
+      <SpriteIcon name="mark" className="size-4" />
       {labeled ? <span>Leave a mark</span> : null}
       {count > 0 ? (
         <span
