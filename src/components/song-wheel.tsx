@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
 import { TRACKS, getMeaning, getTrack, type Track } from "@/lib/rooms";
+import { coverThumb } from "@/lib/cover-thumb";
 import { autoFirstSpin } from "@/lib/first-spin";
 import { PLAY_BLOCKED_COPY, tapTargetNudge, wheelTapTarget } from "@/lib/playback";
 import { usePlayer } from "@/lib/player-store";
@@ -65,6 +66,30 @@ export function SongWheel() {
   const tapRef = useRef<HTMLButtonElement>(null);
   const angleRef = useRef(0);
   const firstSpinRef = useRef(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  // Wheel art starts on the 480px thumbs (the newest covers, already loaded by
+  // the enter-gate mosaic) and switches to the full covers once the wheel is
+  // within a screen of view, so first load doesn't fetch 12 full covers for a
+  // section below the fold. The full art is in place before it is seen.
+  const [fullArt, setFullArt] = useState(false);
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setFullArt(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setFullArt(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "100% 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   useEffect(() => {
     angleRef.current = angle;
@@ -180,7 +205,7 @@ export function SongWheel() {
   });
 
   return (
-    <section id="wheel" className="border-t border-border">
+    <section ref={sectionRef} id="wheel" className="border-t border-border">
       <div className="mx-auto grid w-full max-w-6xl items-center gap-10 overflow-x-clip px-5 py-16 sm:gap-12 sm:px-8 sm:py-20 lg:grid-cols-[1fr_minmax(0,22rem)] lg:py-28">
         <div>
           <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">
@@ -261,7 +286,7 @@ export function SongWheel() {
                         height="200"
                       >
                         <image
-                          href={track.image}
+                          href={fullArt ? track.image : coverThumb(track.image)}
                           width="200"
                           height="200"
                           preserveAspectRatio="xMidYMid slice"
