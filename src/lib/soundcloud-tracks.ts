@@ -2,7 +2,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "calm-turns-steel",
     title: "Calm Turns Steel",
-    soundId: "",
+    soundId: "2419813842",
     slug: "calm-turns-steel",
     image: "/images/tracks/calm-turns-steel.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/calm-turns-steel",
