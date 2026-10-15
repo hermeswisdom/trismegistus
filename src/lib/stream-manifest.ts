@@ -17,6 +17,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "bones-keep-score",
   "broken-brick-rebuild",
   "broken-britain-debt-bomb",
+  "calm-turns-steel",
   "cardboard-kingdom",
   "cockny-in-his-polish-tracksuit",
   "critical-mass-in-warrington",

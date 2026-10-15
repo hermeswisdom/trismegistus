@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "calm-turns-steel",
+    title: "Calm Turns Steel",
+    soundId: "2419813842",
+    slug: "calm-turns-steel",
+    image: "/images/tracks/calm-turns-steel.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/calm-turns-steel",
+    recorded: "October 2026",
+    downloadKey: "masters/calm-turns-steel.mp3",
+  },
+  {
     id: "same-old-score",
     title: "Same Old Score",
     soundId: "2417082012",
