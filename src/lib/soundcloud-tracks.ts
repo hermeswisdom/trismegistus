@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "armour-of-god",
+    title: "Armour of God",
+    soundId: "",
+    slug: "armour-of-god",
+    image: "/images/tracks/armour-of-god.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/armour-of-god",
+    recorded: "October 2026",
+    downloadKey: "masters/armour-of-god.mp3",
+  },
+  {
     id: "calm-turns-steel",
     title: "Calm Turns Steel",
     soundId: "2419813842",
