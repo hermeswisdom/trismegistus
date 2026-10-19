@@ -248,6 +248,14 @@ describe("a tablet SoundCloud has not published yet (no sound id)", () => {
     const unpublished = SOUNDCLOUD_TRACKS.filter((t) => !canUseSoundCloud(t));
     for (const t of unpublished) assert.equal(hasStream(t.slug), true, t.id);
   });
+  it("Paper Script now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
+    const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "paper-script")!;
+    assert.equal(t.soundId, "2421782430");
+    assert.equal(t.permalink, "https://soundcloud.com/esoteric_vibrations/paper-script");
+    assert.equal(streamFailureAction(t), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, failed: new Set([t.slug]), soundCloud: canUseSoundCloud(t) }), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, soundCloud: canUseSoundCloud(t) }), "native");
+  });
   it("Armour of God x Lionheart now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
     const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "armour-of-god")!;
     assert.equal(t.title, "Armour of God x Lionheart");

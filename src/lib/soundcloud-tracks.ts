@@ -2,7 +2,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "paper-script",
     title: "Paper Script",
-    soundId: "",
+    soundId: "2421782430",
     slug: "paper-script",
     image: "/images/tracks/paper-script.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/paper-script",
