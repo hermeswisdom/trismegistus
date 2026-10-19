@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "as-above-so-below",
+    title: "As Above, So Below",
+    soundId: "2421845208",
+    slug: "as-above-so-below",
+    image: "/images/tracks/as-above-so-below.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/as-above-so-below",
+    recorded: "October 2026",
+    downloadKey: "masters/as-above-so-below.mp3",
+  },
+  {
     id: "paper-script",
     title: "Paper Script",
     soundId: "2421782430",

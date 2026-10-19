@@ -200,7 +200,7 @@ describe("wheelWinnerFilter: every tablet can win a normal spin", () => {
     const { won } = await reachableWinners({ current: "the-sleepers-waking", landing: true, nativeInUse: true });
     for (const id of NO_STREAM) assert.equal(won.has(id), false, id);
     assert.equal(won.size, SOUNDCLOUD_TRACKS.length - 1 - NO_STREAM.length);
-    assert.equal(SOUNDCLOUD_TRACKS.length, 113);
+    assert.equal(SOUNDCLOUD_TRACKS.length, 114);
   });
 
   it("wiring: spinTablet filters only for markEntered / landing; only the automatic spins pass them", async () => {
@@ -247,6 +247,14 @@ describe("a tablet SoundCloud has not published yet (no sound id)", () => {
   it("every catalogue tablet without a sound id has a native stream", () => {
     const unpublished = SOUNDCLOUD_TRACKS.filter((t) => !canUseSoundCloud(t));
     for (const t of unpublished) assert.equal(hasStream(t.slug), true, t.id);
+  });
+  it("As Above, So Below now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
+    const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "as-above-so-below")!;
+    assert.equal(t.soundId, "2421845208");
+    assert.equal(t.permalink, "https://soundcloud.com/esoteric_vibrations/as-above-so-below");
+    assert.equal(streamFailureAction(t), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, failed: new Set([t.slug]), soundCloud: canUseSoundCloud(t) }), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, soundCloud: canUseSoundCloud(t) }), "native");
   });
   it("Paper Script now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
     const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "paper-script")!;

@@ -31,10 +31,10 @@ describe("catalog master mapping", () => {
     }
   });
 
-  it("enables Buy on the 111 Blob-backed slugs and leaves two without masters", () => {
+  it("enables Buy on the 112 Blob-backed slugs and leaves two without masters", () => {
     const forSale = (SOUNDCLOUD_TRACKS as Track[]).filter(trackIsForSale);
-    assert.equal(SOUNDCLOUD_TRACKS.length, 113);
-    assert.equal(forSale.length, 111);
+    assert.equal(SOUNDCLOUD_TRACKS.length, 114);
+    assert.equal(forSale.length, 112);
     assert.equal(
       saleDownloadKey(forSale.find((row) => row.id === "the-sleepers-waking")!),
       "masters/the-sleepers-waking.mp3",

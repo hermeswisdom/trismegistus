@@ -6,6 +6,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "7-signs-silent-danger",
   "amy-all-out-of-love",
   "armour-of-god",
+  "as-above-so-below",
   "awake",
   "babushka-on-fire",
   "baguio-the-wrong-dam-room-mp3",
