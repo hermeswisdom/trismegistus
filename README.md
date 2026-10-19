@@ -153,3 +153,31 @@ Open a tablet with a Buy button → Checkout skips Stripe and `/download?session
 Without `MASTER_DRY_RUN` and without `STRIPE_SECRET_KEY`, the Buy button explains that Checkout is not configured.
 
 Do not put live Stripe keys in git.
+
+## Admin upload queue (Phase 1)
+
+`/admin` is a private upload queue, gated server-side: only a signed-in
+account whose email is on the `ADMIN_EMAILS` allowlist (comma/space
+separated; unset defaults to Atman's `smlc@me.com` — there is no role column
+on the Better Auth `user` table) can see it. Everyone else — signed out or a
+different account — gets a 404 from the loader, the Blob-token route
+(`/api/admin/blob-upload`) and the pickup API (`/api/admin/queue`).
+
+Uploads go browser → private Vercel Blob directly (no Function size limit)
+under unguessable `queue/<uuid>` pathnames — never `masters/` or `streams/` —
+with a row in `upload_queue` (`migrations/0011_upload_queue.sql`, applied by
+the normal build/PGLite pipeline like every other migration; do not run it by
+hand on production). Statuses: `waiting` → `in_progress` → `live` /
+`rejected`. Phase 1 UI only lists `waiting` items and can delete one (record
++ Blob files, waiting-only, enforced in SQL). Queue items never appear on
+the wall, homepage or any public API.
+
+Agent pickup (lists only, never publishes):
+
+```bash
+npm run queue:list                # waiting items; needs DATABASE_URL (Neon)
+npm run queue:list -- --dry-run   # no DB: prints what it would run
+npm run queue:list -- --status in_progress --json
+```
+
+Or, with an admin session cookie: `GET /api/admin/queue?status=waiting`.

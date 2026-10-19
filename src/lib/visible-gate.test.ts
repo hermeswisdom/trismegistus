@@ -100,6 +100,8 @@ const POLICY: Record<string, "play" | "heartbeat" | "deferred" | "tap" | "previe
   startMasterCheckout: "tap",
   redeemMasterPurchase: "tap", // /download loader after the Stripe redirect
   getConnectorReadiness: "preview", // Grok preview iframe only
+  createAdminQueueItem: "tap", // /admin Upload button (admin only)
+  deleteAdminQueueItem: "tap", // /admin Delete button (admin only)
 };
 
 const SRC = new URL("../", import.meta.url).pathname;

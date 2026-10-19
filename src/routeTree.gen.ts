@@ -10,10 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BowlsRouteImport } from './routes/bowls'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as EbookRouteImport } from './routes/ebook'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ApiAdminBlobUploadRouteImport } from './routes/api/admin/blob-upload'
+import { Route as ApiAdminQueueRouteImport } from './routes/api/admin/queue'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiEbookHitRouteImport } from './routes/api/ebook/hit'
 import { Route as ApiMastersDownloadRouteImport } from './routes/api/masters/download'
@@ -23,6 +26,11 @@ import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhoo
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BowlsRoute = BowlsRouteImport.update({
@@ -43,6 +51,16 @@ const EbookRoute = EbookRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminBlobUploadRoute = ApiAdminBlobUploadRouteImport.update({
+  id: '/api/admin/blob-upload',
+  path: '/api/admin/blob-upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminQueueRoute = ApiAdminQueueRouteImport.update({
+  id: '/api/admin/queue',
+  path: '/api/admin/queue',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -73,10 +91,13 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
   '/login': typeof LoginRoute
+  '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
+  '/api/admin/queue': typeof ApiAdminQueueRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
@@ -85,10 +106,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
   '/login': typeof LoginRoute
+  '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
+  '/api/admin/queue': typeof ApiAdminQueueRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
@@ -98,10 +122,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
   '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
   '/login': typeof LoginRoute
+  '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
+  '/api/admin/queue': typeof ApiAdminQueueRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
@@ -112,10 +139,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/bowls'
     | '/download'
     | '/ebook'
     | '/login'
+    | '/api/admin/blob-upload'
+    | '/api/admin/queue'
     | '/api/auth/$'
     | '/api/ebook/hit'
     | '/api/masters/download'
@@ -124,10 +154,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/bowls'
     | '/download'
     | '/ebook'
     | '/login'
+    | '/api/admin/blob-upload'
+    | '/api/admin/queue'
     | '/api/auth/$'
     | '/api/ebook/hit'
     | '/api/masters/download'
@@ -136,10 +169,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/bowls'
     | '/download'
     | '/ebook'
     | '/login'
+    | '/api/admin/blob-upload'
+    | '/api/admin/queue'
     | '/api/auth/$'
     | '/api/ebook/hit'
     | '/api/masters/download'
@@ -149,10 +185,13 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
   BowlsRoute: typeof BowlsRoute
   DownloadRoute: typeof DownloadRoute
   EbookRoute: typeof EbookRoute
   LoginRoute: typeof LoginRoute
+  ApiAdminBlobUploadRoute: typeof ApiAdminBlobUploadRoute
+  ApiAdminQueueRoute: typeof ApiAdminQueueRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiEbookHitRoute: typeof ApiEbookHitRoute
   ApiMastersDownloadRoute: typeof ApiMastersDownloadRoute
@@ -167,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bowls': {
@@ -195,6 +241,20 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/blob-upload': {
+      id: '/api/admin/blob-upload'
+      path: '/api/admin/blob-upload'
+      fullPath: '/api/admin/blob-upload'
+      preLoaderRoute: typeof ApiAdminBlobUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/queue': {
+      id: '/api/admin/queue'
+      path: '/api/admin/queue'
+      fullPath: '/api/admin/queue'
+      preLoaderRoute: typeof ApiAdminQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -237,10 +297,13 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
   BowlsRoute: BowlsRoute,
   DownloadRoute: DownloadRoute,
   EbookRoute: EbookRoute,
   LoginRoute: LoginRoute,
+  ApiAdminBlobUploadRoute: ApiAdminBlobUploadRoute,
+  ApiAdminQueueRoute: ApiAdminQueueRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiEbookHitRoute: ApiEbookHitRoute,
   ApiMastersDownloadRoute: ApiMastersDownloadRoute,
