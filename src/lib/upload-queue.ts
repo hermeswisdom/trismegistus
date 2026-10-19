@@ -48,6 +48,24 @@ export function isAdminEmail(
   return parseAdminEmails(rawAllowlist).includes(email.trim().toLowerCase());
 }
 
+export type AdminAccessKind = "admin" | "signed_out" | "not_admin";
+
+/**
+ * Classify a resolved session for the /admin gate. `hasSessionUser` is
+ * whether Better Auth returned a user at all; the email is that user's
+ * DB/session email (never a client-supplied value). Signed-out and
+ * signed-in-but-not-allowlisted must stay distinct: the former can be sent
+ * to sign in, the latter must keep the bare 404.
+ */
+export function adminAccessKind(
+  hasSessionUser: boolean,
+  email: string | null | undefined,
+  rawAllowlist?: string | null,
+): AdminAccessKind {
+  if (!hasSessionUser) return "signed_out";
+  return isAdminEmail(email, rawAllowlist) ? "admin" : "not_admin";
+}
+
 export function isQueueStatus(v: unknown): v is QueueStatus {
   return typeof v === "string" && (QUEUE_STATUSES as readonly string[]).includes(v);
 }

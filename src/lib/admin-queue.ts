@@ -13,6 +13,13 @@ async function adminDeps() {
   return import("@/lib/upload-queue.server");
 }
 
+/** Gate classification only (no data, no identity) for the /admin loader. */
+export const getAdminAccess = createServerFn({ method: "GET" }).handler(async () => {
+  const { resolveAdminAccess } = await adminDeps();
+  const access = await resolveAdminAccess();
+  return { kind: access.kind };
+});
+
 export const getAdminQueue = createServerFn({ method: "GET" }).handler(async () => {
   const { requireAdmin, listQueueItems } = await adminDeps();
   await requireAdmin();

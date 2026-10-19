@@ -2,9 +2,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { HermesNote } from "@/components/hermes-note";
 import { LoginForm } from "@/components/login-form";
 import { getAuthDoors } from "@/lib/auth/doors";
+import { parseLoginSearch } from "@/lib/auth/login-return";
 import { NOINDEX_META } from "@/lib/seo";
 
 export const Route = createFileRoute("/login")({
+  validateSearch: parseLoginSearch,
   loader: async () => {
     try {
       return await getAuthDoors();
@@ -20,6 +22,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { oauthEnabled } = Route.useLoaderData();
+  const { next } = Route.useSearch();
   return (
     <main className="min-h-dvh bg-bg px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8">
       <div className="mx-auto flex min-h-dvh max-w-6xl flex-col justify-center py-12">
@@ -41,7 +44,7 @@ function LoginPage() {
           the marks you leave and the days you return.
         </p>
         <div className="mt-10">
-          <LoginForm oauthEnabled={oauthEnabled} />
+          <LoginForm oauthEnabled={oauthEnabled} returnTo={next} />
         </div>
       </div>
     </main>

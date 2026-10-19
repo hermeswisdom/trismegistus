@@ -10,9 +10,10 @@
 import { auth } from "@/lib/auth/server";
 import { env } from "@/lib/env.server";
 import {
+  adminAccessKind,
   buildQueueRecord,
-  isAdminEmail,
   isQueueId,
+  type AdminAccessKind,
   type QueueItemInput,
   type QueueRecord,
 } from "@/lib/upload-queue";
@@ -25,21 +26,40 @@ import {
 
 export type AdminUser = { id: string; email: string };
 
-export async function getAdminUser(headers?: Headers): Promise<AdminUser | null> {
+export type AdminAccess =
+  | { kind: "admin"; user: AdminUser }
+  | { kind: Exclude<AdminAccessKind, "admin"> };
+
+/**
+ * Resolve the /admin gate without conflating its outcomes: no/invalid
+ * session is `signed_out` (the route may send that visitor to sign in),
+ * while a real session whose email is not allowlisted is `not_admin`
+ * (the route must keep the bare 404). Any resolution failure fails
+ * closed as `signed_out` — no admin data is ever returned on this path,
+ * and requireAdmin()/getAdminUser() below re-verify before any data.
+ */
+export async function resolveAdminAccess(headers?: Headers): Promise<AdminAccess> {
   try {
     let h = headers;
     if (!h) {
       const { getRequest } = await import("@tanstack/react-start/server");
       h = getRequest()?.headers;
     }
-    if (!h) return null;
+    if (!h) return { kind: "signed_out" };
     const session = await auth.api.getSession({ headers: h });
     const email = session?.user?.email ?? null;
-    if (!session?.user || !isAdminEmail(email, env("ADMIN_EMAILS"))) return null;
-    return { id: session.user.id, email: email as string };
+    const kind = adminAccessKind(Boolean(session?.user), email, env("ADMIN_EMAILS"));
+    if (kind === "signed_out") return { kind };
+    if (kind === "not_admin" || !session?.user) return { kind: "not_admin" };
+    return { kind, user: { id: session.user.id, email: email as string } };
   } catch {
-    return null;
+    return { kind: "signed_out" };
   }
+}
+
+export async function getAdminUser(headers?: Headers): Promise<AdminUser | null> {
+  const access = await resolveAdminAccess(headers);
+  return access.kind === "admin" ? access.user : null;
 }
 
 export class AdminNotFoundError extends Error {
