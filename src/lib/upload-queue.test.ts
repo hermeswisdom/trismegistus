@@ -6,6 +6,7 @@ import {
   buildQueueRecord,
   formatBytes,
   formatDuration,
+  adminAccessKind,
   isAdminEmail,
   parseAdminEmails,
   queueBlobPath,
@@ -25,6 +26,15 @@ describe("admin allowlist", () => {
     assert.deepEqual(parseAdminEmails(undefined), [...DEFAULT_ADMIN_EMAILS]);
     assert.equal(isAdminEmail("smlc@me.com", undefined), true);
     assert.equal(isAdminEmail("SMLC@me.com ", undefined), true);
+  });
+  it("classifies signed-out vs signed-in non-admin vs admin", () => {
+    assert.equal(adminAccessKind(false, null, undefined), "signed_out");
+    assert.equal(adminAccessKind(false, "smlc@me.com", undefined), "signed_out");
+    assert.equal(adminAccessKind(true, "smlc@me.com", undefined), "admin");
+    assert.equal(adminAccessKind(true, " SMLC@me.com", undefined), "admin");
+    assert.equal(adminAccessKind(true, "smle@me.com", undefined), "not_admin");
+    assert.equal(adminAccessKind(true, null, undefined), "not_admin");
+    assert.equal(adminAccessKind(true, "", undefined), "not_admin");
   });
   it("uses a set allowlist and rejects everyone else", () => {
     assert.equal(isAdminEmail("a@example.com", "a@example.com, b@example.com"), true);
