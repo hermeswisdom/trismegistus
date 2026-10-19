@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "paper-script",
+    title: "Paper Script",
+    soundId: "",
+    slug: "paper-script",
+    image: "/images/tracks/paper-script.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/paper-script",
+    recorded: "October 2026",
+    downloadKey: "masters/paper-script.mp3",
+  },
+  {
     id: "armour-of-god",
     title: "Armour of God x Lionheart",
     soundId: "2421739632",

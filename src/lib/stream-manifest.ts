@@ -66,6 +66,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "now-i-see-you-blossom",
   "old-mens-game",
   "paper-crown",
+  "paper-script",
   "paper-tigers-in-red-ties",
   "piano-hands",
   "picnic-in-the-park",
