@@ -1,11 +1,11 @@
 export const SOUNDCLOUD_TRACKS = [
   {
     id: "armour-of-god",
-    title: "Armour of God",
-    soundId: "",
+    title: "Armour of God x Lionheart",
+    soundId: "2421739632",
     slug: "armour-of-god",
     image: "/images/tracks/armour-of-god.jpg",
-    permalink: "https://soundcloud.com/esoteric_vibrations/armour-of-god",
+    permalink: "https://soundcloud.com/esoteric_vibrations/armour-of-god-x-lionheart",
     recorded: "October 2026",
     downloadKey: "masters/armour-of-god.mp3",
   },
