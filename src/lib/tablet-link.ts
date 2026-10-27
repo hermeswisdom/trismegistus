@@ -21,6 +21,10 @@ export function tabletPageUrl(opts: {
   return `${origin}${tabletPagePath(opts)}`;
 }
 
+/**
+ * Home search. `mix` is reserved for Auto Mix share cards (`/api/og?mix=`)
+ * and is not a focus field, so it cannot change the canonical or tablet.
+ */
 export function parseHomeSearch(search: Record<string, unknown>): {
   daily?: 1;
   tablet?: string;

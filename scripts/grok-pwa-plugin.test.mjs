@@ -391,6 +391,47 @@ test("atmanmusic.app keeps tablet cover art, site_name, and og:url", () => {
   }
 });
 
+test("atmanmusic.app keeps /api/og track cards and default cards", () => {
+  const prev = process.env.VITE_PUBLIC_HOSTNAME;
+  delete process.env.VITE_PUBLIC_HOSTNAME;
+  try {
+    const track = injectGrokPwaHead(
+      atmanShareHead({
+        title: "Fragile God — Atman Music",
+        image: "https://atmanmusic.app/api/og?slug=fragile-god",
+        url: "https://atmanmusic.app/t/fragile-god",
+      }),
+      {
+        host: "atmanmusic.app",
+        site: { card: "custom", site_name: "Atman Music" },
+        cwd: mkdtempSync(join(tmpdir(), "grok-og-atman-api-track-")),
+      },
+    );
+    assert.match(
+      track,
+      /property="og:image" content="https:\/\/atmanmusic\.app\/api\/og\?slug=fragile-god"/,
+    );
+    assert.equal(track.split('property="og:image"').length - 1, 1);
+    const home = injectGrokPwaHead(
+      atmanShareHead({
+        title: "Atman Music",
+        image: "https://atmanmusic.app/api/og",
+        url: "https://atmanmusic.app/",
+      }),
+      {
+        host: "atmanmusic.app",
+        site: { card: "custom", site_name: "Atman Music" },
+        cwd: mkdtempSync(join(tmpdir(), "grok-og-atman-api-home-")),
+      },
+    );
+    assert.match(home, /property="og:image" content="https:\/\/atmanmusic\.app\/api\/og"/);
+    assert.doesNotMatch(home, /content="https:\/\/atmanmusic\.app\/og\.jpg"/);
+  } finally {
+    if (prev === undefined) delete process.env.VITE_PUBLIC_HOSTNAME;
+    else process.env.VITE_PUBLIC_HOSTNAME = prev;
+  }
+});
+
 test("atmanmusic.app home keeps brand og.jpg with site_name and og:url", () => {
   const prev = process.env.VITE_PUBLIC_HOSTNAME;
   delete process.env.VITE_PUBLIC_HOSTNAME;
@@ -474,11 +515,16 @@ test("grok.me still overwrites app cover art with the platform card", () => {
   assert.doesNotMatch(out, /images\/tracks\/fragile-god/);
 });
 
-test("page-specific og images are catalog covers, not /og.jpg", () => {
+test("page-specific og images are catalog covers or /api/og, not /og.jpg", () => {
   assert.equal(isGenericOgCardUrl("https://atmanmusic.app/og.jpg"), true);
   assert.equal(isGenericOgCardUrl("https://og.grok.me/v1/card.png?host=x"), true);
   assert.equal(
     isPageSpecificOgImage("https://atmanmusic.app/images/tracks/fragile-god.jpg"),
+    true,
+  );
+  assert.equal(isPageSpecificOgImage("https://atmanmusic.app/api/og"), true);
+  assert.equal(
+    isPageSpecificOgImage("https://atmanmusic.app/api/og?slug=fragile-god"),
     true,
   );
   assert.equal(isPageSpecificOgImage("https://atmanmusic.app/og.jpg"), false);
