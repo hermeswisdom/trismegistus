@@ -138,6 +138,33 @@
     box-shadow: var(--shadow-border-hover);
   }
 
+  .automix-energy {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--color-elevated);
+    outline: none;
+  }
+
+  .automix-energy::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--color-accent);
+    border: 0;
+    cursor: pointer;
+  }
+
+  .automix-energy::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--color-accent);
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+  }
+
   .wheel-frame {
     transform: translate3d(0, 0, 0);
     -webkit-transform: translate3d(0, 0, 0);

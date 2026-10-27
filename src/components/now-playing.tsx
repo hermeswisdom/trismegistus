@@ -17,6 +17,7 @@ import {
 import { TRACKS, getMeaning, getTrack } from "@/lib/rooms";
 import { useHearts } from "@/lib/hearts";
 import { useBowlPlayer } from "@/lib/bowl-player";
+import { useAutoMix } from "@/lib/automix/store";
 import { usePlayer } from "@/lib/player-store";
 import {
   bindLiveWidget,
@@ -137,6 +138,9 @@ function useTapOverlay(
 export function NowPlaying() {
   const entered = usePlayer((s) => s.entered);
   const bowlPlaying = useBowlPlayer((s) => s.playing);
+  const autoMixDock = useAutoMix(
+    (s) => s.open || s.playing || s.pending,
+  );
   const currentId = usePlayer((s) => s.currentId);
   const playing = usePlayer((s) => s.playing);
   const playError = usePlayer((s) => s.playError);
@@ -296,7 +300,7 @@ export function NowPlaying() {
     <div
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[transform,opacity] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]",
-        entered && !bowlPlaying ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
+        entered && !bowlPlaying && !autoMixDock ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-full opacity-0",
       )}
       data-player-current={current.id}
       data-player-playing={playing ? "true" : "false"}
