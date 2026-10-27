@@ -1,0 +1,6 @@
+# Python deps for scripts/analyze_tracks.py (npm run analyze:tracks).
+#   python3 -m venv .venv-analysis && .venv-analysis/bin/pip install -r scripts/analyze-requirements.txt
+# numpy is held below 2.4: numba (via librosa) segfaulted on 2.5 here.
+numpy>=2.0,<2.4
+librosa>=0.11
+essentia>=2.1b6.dev1389
