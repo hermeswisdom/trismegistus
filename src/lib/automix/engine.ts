@@ -13,7 +13,7 @@ export type AutoMixNotice =
   | { type: "pending"; slug: string }
   | { type: "play"; slug: string }
   | { type: "pause"; slug: string }
-  | { type: "stop" }
+  | { type: "stop"; yieldPanel?: boolean }
   | { type: "error"; slug: string; message: string }
   | {
       type: "progress";
@@ -370,13 +370,13 @@ export function startAutoMix(queue: MixTrack[]) {
   deck.el.muted = false;
   void ctx.resume();
   emit({ type: "pending", slug: first.slug });
-  playEl(deck.el);
   const onPlaying = () => {
     if (!run || mine !== seq) return;
     run.pending = false;
     emit({ type: "play", slug: first.slug });
   };
   deck.el.addEventListener("playing", onPlaying, { once: true });
+  playEl(deck.el);
   preloadNext();
   startWatch();
   return true;
@@ -409,11 +409,37 @@ export function resumeAutoMix() {
   void ctx.resume();
   const live = dks[r.currentDeck];
   live.el.muted = false;
+  const slug = currentTrack()?.slug;
+  const mine = seq;
+  const onPlaying = () => {
+    if (!run || mine !== seq) return;
+    run.pending = false;
+    if (slug) emit({ type: "play", slug });
+  };
+  live.el.addEventListener("playing", onPlaying, { once: true });
   playEl(live.el);
   if (r.xfading) playEl(dks[r.currentDeck === 0 ? 1 : 0].el);
-  const slug = currentTrack()?.slug;
   if (slug) emit({ type: "pending", slug });
   startWatch();
+}
+
+/**
+ * Keep the current track, replace what comes next, and skip-fade into the
+ * first of `nextQueue`. Used when the listener picks a new mood mid-mix.
+ */
+export function remixAutoMix(nextQueue: MixTrack[]) {
+  const r = run;
+  const dks = decks;
+  if (!r || !dks || !nextQueue.length) return false;
+  if (r.xfading) finishXfade();
+  const current = r.queue[r.index];
+  const rest = nextQueue.filter((t) => t.slug !== current?.slug);
+  if (!rest.length) return false;
+  r.queue = current ? [current, ...rest] : [...rest];
+  r.index = 0;
+  preloadNext();
+  if (r.playing) beginXfade("skip");
+  return true;
 }
 
 export function skipAutoMix() {
@@ -432,7 +458,7 @@ export function appendAutoMix(tracks: MixTrack[]) {
   preloadNext();
 }
 
-export function stopAutoMix(opts?: { silent?: boolean }) {
+export function stopAutoMix(opts?: { silent?: boolean; yieldPanel?: boolean }) {
   seq += 1;
   clearXfadeTimer();
   stopRaf();
@@ -454,15 +480,15 @@ export function stopAutoMix(opts?: { silent?: boolean }) {
     }
   }
   run = null;
-  if (!opts?.silent) emit({ type: "stop" });
+  if (!opts?.silent) emit({ type: "stop", yieldPanel: opts?.yieldPanel });
 }
 
 /**
  * Tear down the graph so the wall's native <audio> player is not competing
  * with a leftover Web Audio session on iOS.
  */
-export function hushAutoMix() {
-  stopAutoMix();
+export function hushAutoMix(opts?: { yieldPanel?: boolean }) {
+  stopAutoMix({ yieldPanel: opts?.yieldPanel });
   stopRaf();
   clearXfadeTimer();
   if (decks) {

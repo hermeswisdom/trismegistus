@@ -10,8 +10,10 @@ import {
 import { automixCatalog } from "./catalog.ts";
 import {
   appendAutoMix,
+  autoMixEngineState,
   hushAutoMix,
   pauseAutoMix,
+  remixAutoMix,
   resumeAutoMix,
   skipAutoMix,
   startAutoMix,
@@ -138,6 +140,7 @@ function ensureBridge() {
           next: null,
           xfade: null,
           queue: [],
+          ...(notice.yieldPanel ? { open: false } : {}),
         });
         return;
       case "error":
@@ -185,7 +188,59 @@ export const useAutoMix = create<AutoMixState>((set, get) => ({
     ensureBridge();
     set({ open: !get().open });
   },
-  setMood: (mood) => set({ mood }),
+  setMood: (mood) => {
+    const state = get();
+    if (mood === state.mood && (state.playing || state.pending)) return;
+    if (!state.playing && !state.pending) {
+      set({ mood, error: null });
+      return;
+    }
+    ensureBridge();
+    unlockAutoMix();
+    const seed = (Date.now() ^ (Math.floor(Math.random() * 0x7fffffff) || 1)) >>> 0;
+    const recent = state.now ? remember(state.recent, state.now.slug) : state.recent;
+    const built = buildMix({
+      catalog: automixCatalog(),
+      mood,
+      energyTarget: state.energy,
+      seed,
+      endless: state.endless,
+      recent,
+    });
+    const incoming = state.now
+      ? built.filter((t) => t.slug !== state.now!.slug)
+      : built;
+    if (!incoming.length) {
+      set({ mood, error: "No streams for that mood" });
+      return;
+    }
+    if (remixAutoMix(incoming)) {
+      const live = autoMixEngineState();
+      const current = live.current ?? state.now;
+      const rest = incoming.filter((t) => t.slug !== current?.slug);
+      set({
+        mood,
+        seed,
+        queue: current ? [current, ...rest] : rest,
+        now: current,
+        next: live.next ?? rest[0] ?? null,
+        error: null,
+      });
+      return;
+    }
+    set({
+      mood,
+      seed,
+      queue: incoming,
+      now: incoming[0] ?? null,
+      next: incoming[1] ?? null,
+      error: null,
+      pending: true,
+      playing: false,
+      xfade: null,
+    });
+    startAutoMix(incoming);
+  },
   setEnergy: (energy) => set({ energy: Math.min(1, Math.max(0, energy)) }),
   setEndless: (endless) => set({ endless }),
 
@@ -269,5 +324,19 @@ export const useAutoMix = create<AutoMixState>((set, get) => ({
     });
   },
 }));
+
+/** Wall / native player is taking over: stop the mix and hide the dock. */
+export function yieldAutoMixPanel() {
+  hushAutoMix({ yieldPanel: true });
+  useAutoMix.setState({
+    open: false,
+    playing: false,
+    pending: false,
+    now: null,
+    next: null,
+    xfade: null,
+    queue: [],
+  });
+}
 
 export { unlockAutoMix };

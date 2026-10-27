@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import { AudioLines, Pause, Play, SkipForward, X } from "lucide-react";
 import { noteUserGesture } from "@/lib/sc-widget";
 import { getTrack } from "@/lib/rooms";
+import { autoMixHandlesEscape, autoMixPanelHasFocus } from "@/lib/automix/keys";
 import { MOODS, type Mood } from "@/lib/automix/types";
 import { unlockAutoMix, useAutoMix } from "@/lib/automix/store";
 import { cn } from "@/lib/utils";
@@ -94,13 +95,13 @@ function AutoMixPanel() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const root = document.getElementById("automix-panel");
       if (e.key === "Escape") {
-        e.preventDefault();
-        e.stopPropagation();
+        const focused = autoMixPanelHasFocus(root, e, document.activeElement);
+        if (!autoMixHandlesEscape({ expanded: open, panelHasFocus: focused })) return;
         dismiss();
         return;
       }
-      const root = document.getElementById("automix-panel");
       if (!root || !root.contains(e.target as Node)) return;
       const tag = (e.target as HTMLElement).tagName;
       if (e.key === " " && tag !== "INPUT" && tag !== "BUTTON" && tag !== "TEXTAREA") {
@@ -112,9 +113,9 @@ function AutoMixPanel() {
         skip();
       }
     };
-    window.addEventListener("keydown", onKey, true);
-    return () => window.removeEventListener("keydown", onKey, true);
-  }, [closePanel, playing, skip, stop, toggle]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [closePanel, open, playing, skip, stop, toggle]);
 
   function onPlay() {
     noteUserGesture();
@@ -206,7 +207,10 @@ function AutoMixPanel() {
                     type="button"
                     role="radio"
                     aria-checked={selected}
-                    onPointerDown={noteUserGesture}
+                    onPointerDown={() => {
+                      noteUserGesture();
+                      unlockAutoMix();
+                    }}
                     onClick={() => setMood(m)}
                     className={cn(
                       "inline-flex h-9 min-w-11 touch-manipulation items-center justify-center px-2.5 text-[0.65rem] font-medium tracking-[0.16em] uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]",
