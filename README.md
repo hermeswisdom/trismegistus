@@ -116,6 +116,58 @@ The script puts the file at `masters/<slug>.mp3` (`access: 'private'`, no random
 
 The Sleepers Waking master is live in Blob (`masters/the-sleepers-waking.mp3`). Local `masters/` (gitignored) or `fixtures/masters/` are only used when Blob is unset.
 
+### Analyse the track for Auto Mix (every new track)
+
+Every release that adds a stream (`streams/<slug>.mp3`) must also add its row to
+`src/data/track-analysis.json` — the mood Auto Mix reads BPM, key/Camelot,
+energy, brightness, outro point and mood from there. After the stream is on Blob:
+
+```bash
+# once: Python 3 venv with librosa + essentia
+python3 -m venv .venv-analysis && .venv-analysis/bin/pip install -r scripts/analyze-requirements.txt
+
+# the new track only (works before it is in stream-manifest.ts)
+BLOB_READ_WRITE_TOKEN=… npm run analyze:tracks -- --slug <slug>
+
+# whole catalogue (~2 min), or just re-apply rules/overrides without audio
+BLOB_READ_WRITE_TOKEN=… npm run analyze:tracks
+npm run analyze:tracks -- --rebuild
+```
+
+Commit the updated JSON with the release. Energy and brightness are normalised
+across the catalogue, so one new track can shift other tracks' moods slightly;
+that is expected. Fix a wrong value by hand in
+`src/data/track-analysis-overrides.json` (keyed by slug, any field, e.g.
+`{ "armour-of-god": { "mood": "epic", "bpm": 86.1 } }`), then `--rebuild`.
+
+Measurements: tempo, beats and key from essentia (`RhythmExtractor2013`,
+`KeyExtractor` edma profile), cross-checked against librosa's tempo; when the
+two disagree by an octave the one nearer 120 BPM wins (`bpmAmbiguous`), and
+any tempo is folded into 70–180. Energy = 0.6·RMS loudness + 0.4·spectral flux,
+brightness = 0.6·spectral centroid + 0.4·85% rolloff, each min–max scaled over
+the catalogue's 5th–95th percentile. The outro is the last detected downbeat
+that leaves 16 bars before the audio ends (8 bars when 16 would exceed the
+last quarter of the track).
+
+Mood rules (`scripts/track-analysis-core.mjs`, first match wins), with `e`/`b`
+the track's percentile rank for energy/brightness in the catalogue:
+
+| Rule | Mood |
+| --- | --- |
+| genre hint dance/trap and e ≥ ⅓ | hype |
+| genre hint ambient/handpan and e < ⅔ | dreamy if b ≥ ½, else chill |
+| genre hint cinematic and e ≥ ⅓ | epic |
+| e ≥ ⅔ | hype if b ≥ ½ and bpm ≥ 110, else epic |
+| e < ⅓ | dreamy if b ≥ ½, else chill |
+| middle third, major key or b ≥ ⅔ | happy |
+| middle third, b < ½ | dark |
+| middle third, otherwise | epic if bpm ≥ 120, else dark |
+
+The catalogue has no genre field, so the hint is the override's `genre` or a
+title keyword (bowl/meditation → ambient, handpan, dancefloor/warehouse/pulse →
+dance, armour/kingdom/lionheart → cinematic, …). The secondary mood is the one
+a borderline track tips into when its energy or brightness rank moves ±0.08.
+
 ### Stripe (test mode first)
 
 1. Stripe Dashboard → Developers → API keys → **test** `sk_test_…` and `pk_test_…`.

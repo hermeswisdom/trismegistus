@@ -17,3 +17,4 @@ coverage
 .nitro
 .tanstack
 .vite
+.venv-analysis
