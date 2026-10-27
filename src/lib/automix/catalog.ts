@@ -17,7 +17,7 @@ type AnalysisRow = {
 let cached: MixTrack[] | null = null;
 
 /**
- * Analysed streams only. Tablets without a 128k stream stay out of Auto Mix
+ * Analysed streams only. Tablets without a native stream stay out of Auto Mix
  * (they would need the SoundCloud widget, which this engine does not use).
  */
 export function automixCatalog(): MixTrack[] {

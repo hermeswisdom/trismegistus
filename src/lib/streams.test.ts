@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   canUseSoundCloud,
   nextPlayable,
@@ -11,9 +12,14 @@ import {
   popHistoryTo,
   pushHistory,
   resolvePrevious,
+  pickStreamBlobPath,
+  STREAM_BLOB_PREFIX,
+  STREAM_HQ_BLOB_PREFIX,
+  STREAM_HQ_PARAM,
   streamBlobPath,
   streamFailureAction,
   streamUrl,
+  wantsHqStream,
 } from "./streams.ts";
 import { STREAM_SLUGS } from "./stream-manifest.ts";
 import { SOUNDCLOUD_TRACKS } from "./soundcloud-tracks.ts";
@@ -42,10 +48,44 @@ describe("stream URLs", () => {
     assert.equal(streamBlobPath(slug), `streams/${slug}.mp3`);
     assert.equal(streamUrl("not-a-track"), null);
   });
+  it("Auto Mix asks the same route for HQ with a streams-hq/ blob path", () => {
+    const slug = STREAM_SLUGS[0];
+    assert.equal(streamUrl(slug, { hq: true }), `/api/stream/${slug}?${STREAM_HQ_PARAM}=1`);
+    assert.equal(streamBlobPath(slug, { hq: true }), `${STREAM_HQ_BLOB_PREFIX}${slug}.mp3`);
+    assert.equal(streamBlobPath(slug), `${STREAM_BLOB_PREFIX}${slug}.mp3`);
+    assert.doesNotMatch(streamBlobPath(slug, { hq: true }) ?? "", /masters/);
+  });
+  it("falls back to the 128k path when the HQ object is not there yet", () => {
+    const slug = STREAM_SLUGS[0]!;
+    assert.equal(pickStreamBlobPath({ slug, preferHq: true, hqAvailable: true }), `streams-hq/${slug}.mp3`);
+    assert.equal(pickStreamBlobPath({ slug, preferHq: true, hqAvailable: false }), `streams/${slug}.mp3`);
+    assert.equal(pickStreamBlobPath({ slug, preferHq: false, hqAvailable: true }), `streams/${slug}.mp3`);
+    assert.equal(pickStreamBlobPath({ slug: "not-a-track", preferHq: true, hqAvailable: true }), null);
+  });
   it("rejects anything that is not a known slug", () => {
     for (const bad of ["../masters/awake", "masters/awake", "AWAKE", "", null, undefined, "awake.mp3"]) {
       assert.equal(streamBlobPath(bad as string), null, String(bad));
+      assert.equal(streamBlobPath(bad as string, { hq: true }), null, String(bad));
+      assert.equal(pickStreamBlobPath({ slug: bad as string, preferHq: true, hqAvailable: true }), null, String(bad));
     }
+  });
+  it("reads ?hq=1 cleanly, independent of ?via=direct", () => {
+    assert.equal(wantsHqStream("?hq=1"), true);
+    assert.equal(wantsHqStream("hq=true"), true);
+    assert.equal(wantsHqStream("?hq=1&via=direct"), true);
+    assert.equal(wantsHqStream(new URLSearchParams("hq=1")), true);
+    assert.equal(wantsHqStream(`https://atmanmusic.app/api/stream/${STREAM_SLUGS[0]}?hq=1`), true);
+    assert.equal(wantsHqStream("?via=direct"), false);
+    assert.equal(wantsHqStream("?hq=0"), false);
+    assert.equal(wantsHqStream(null), false);
+  });
+  it("the /api/stream route accepts hq without opening masters/", () => {
+    const src = readFileSync(new URL("../routes/api/stream/$slug.ts", import.meta.url), "utf8");
+    assert.match(src, /wantsHqStream/);
+    assert.match(src, /presignedStreamUrl\(slug, \{ hq \}\)/);
+    assert.match(src, /hasStream\(slug\)/);
+    assert.match(src, /Never serves masters/);
+    assert.doesNotMatch(src, /masters\/\$\{/);
   });
 });
 

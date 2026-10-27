@@ -2,32 +2,92 @@
  * Lock-screen playback: which tablets have a native stream, and the rules the
  * native <audio> player follows. Pure (no DOM), so node tests can load it.
  *
- * Streams are 128 kbps MP3 transcodes at streams/<slug>.mp3 in the private
- * Blob store, reached through /api/stream/<slug> (a short-lived presigned
- * redirect). The paid raw masters (masters/<slug>.mp3) are never streamed.
+ * Streams are MP3 transcodes in the private Blob store, reached through
+ * /api/stream/<slug> (a short-lived presigned redirect). The wall player uses
+ * the 128 kbps copy at streams/<slug>.mp3. Auto Mix asks for the 320 kbps
+ * copy with ?hq=1 (streams-hq/<slug>.mp3), and the route falls back to the
+ * 128k file when the HQ object is not there yet. The paid raw masters
+ * (masters/<slug>.mp3) are never streamed.
  */
 import { STREAM_SLUGS } from "./stream-manifest.ts";
 
 const STREAMS = new Set(STREAM_SLUGS);
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
+/** 128 kbps transcodes the wall player uses. */
+export const STREAM_BLOB_PREFIX = "streams/";
+/** 320 kbps transcodes Auto Mix prefers. Uploaded separately; may be absent. */
+export const STREAM_HQ_BLOB_PREFIX = "streams-hq/";
+/** Query flag /api/stream/<slug> accepts for the HQ copy. */
+export const STREAM_HQ_PARAM = "hq";
+
 /** Player backend for one tablet. */
 export type PlayerBackend = "native" | "sc";
+
+export type StreamUrlOpts = {
+  /** Auto Mix: ask the route for streams-hq/, with a 128k fallback. */
+  hq?: boolean;
+};
 
 export function hasStream(slug: string | null | undefined): boolean {
   return typeof slug === "string" && STREAMS.has(slug);
 }
 
+function isStreamSlug(slug: string | null | undefined): slug is string {
+  return typeof slug === "string" && SLUG_RE.test(slug) && STREAMS.has(slug);
+}
+
 /** Same-origin URL the <audio> element loads; null when there is no stream. */
-export function streamUrl(slug: string | null | undefined): string | null {
+export function streamUrl(
+  slug: string | null | undefined,
+  opts?: StreamUrlOpts,
+): string | null {
   if (!hasStream(slug)) return null;
-  return `/api/stream/${slug}`;
+  const path = `/api/stream/${slug}`;
+  return opts?.hq ? `${path}?${STREAM_HQ_PARAM}=1` : path;
 }
 
 /** Blob pathname of a stream (server side), or null for an unknown slug. */
-export function streamBlobPath(slug: string | null | undefined): string | null {
-  if (typeof slug !== "string" || !SLUG_RE.test(slug) || !hasStream(slug)) return null;
-  return `streams/${slug}.mp3`;
+export function streamBlobPath(
+  slug: string | null | undefined,
+  opts?: StreamUrlOpts,
+): string | null {
+  if (!isStreamSlug(slug)) return null;
+  const prefix = opts?.hq ? STREAM_HQ_BLOB_PREFIX : STREAM_BLOB_PREFIX;
+  return `${prefix}${slug}.mp3`;
+}
+
+/**
+ * Pathname to sign for a stream request. HQ is used only when the caller
+ * asked for it *and* the HQ object is known to exist; otherwise the 128k
+ * file. Never returns masters/.
+ */
+export function pickStreamBlobPath(opts: {
+  slug: string | null | undefined;
+  preferHq?: boolean;
+  hqAvailable?: boolean;
+}): string | null {
+  const std = streamBlobPath(opts.slug);
+  if (!std) return null;
+  if (opts.preferHq && opts.hqAvailable) return streamBlobPath(opts.slug, { hq: true });
+  return std;
+}
+
+/** True when /api/stream should try the 320k copy (`?hq=1` or `?hq=true`). */
+export function wantsHqStream(
+  search: string | URLSearchParams | null | undefined,
+): boolean {
+  let params: URLSearchParams;
+  try {
+    if (search instanceof URLSearchParams) params = search;
+    else if (!search) params = new URLSearchParams();
+    else if (/^https?:\/\//i.test(search)) params = new URL(search).searchParams;
+    else params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  } catch {
+    return false;
+  }
+  const hq = params.get(STREAM_HQ_PARAM);
+  return hq === "1" || hq === "true";
 }
 
 /** `?player=sc` forces the SoundCloud widget (comparison / escape hatch). */

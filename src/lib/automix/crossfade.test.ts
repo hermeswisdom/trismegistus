@@ -8,6 +8,7 @@ import {
   equalPowerGains,
   mixHandoff,
   overlapSeconds,
+  scaleCurve,
 } from "./crossfade.ts";
 
 describe("crossfade timing", () => {
@@ -88,5 +89,13 @@ describe("equal-power curve", () => {
     assert.equal(curveIn[0], 0);
     assert.ok(Math.abs(curveOut[4]!) < 1e-12);
     assert.ok(Math.abs(curveIn[4]! - 1) < 1e-12);
+  });
+
+  it("unity peak leaves the equal-power curve unchanged", () => {
+    const curve = equalPowerCurve(false, 5);
+    assert.equal(scaleCurve(curve, 1), curve);
+    const half = scaleCurve(curve, 0.5);
+    assert.ok(Math.abs(half[0]!) < 1e-12);
+    assert.ok(Math.abs(half[4]! - 0.5) < 1e-12);
   });
 });
