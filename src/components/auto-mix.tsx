@@ -81,11 +81,23 @@ function AutoMixPanel() {
     if (open) headingRef.current?.focus();
   }, [open]);
 
+  function dismiss() {
+    // A mix that is actually sounding keeps a mini dock. Escape after Play
+    // while still pending (or after a failed start) must fully hide, or the
+    // panel looks stuck.
+    if (playing) closePanel();
+    else {
+      stop();
+      closePanel();
+    }
+  }
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
-        closePanel();
+        e.stopPropagation();
+        dismiss();
         return;
       }
       const root = document.getElementById("automix-panel");
@@ -100,9 +112,9 @@ function AutoMixPanel() {
         skip();
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [closePanel, skip, toggle]);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [closePanel, playing, skip, stop, toggle]);
 
   function onPlay() {
     noteUserGesture();
@@ -139,24 +151,25 @@ function AutoMixPanel() {
       </div>
       <div className="mx-auto max-w-6xl px-3 pt-2 sm:px-8">
         <div className="flex items-center gap-2">
-          <h2
-            id={panelId}
-            ref={headingRef}
-            tabIndex={-1}
-            className="min-w-0 flex-1 truncate text-[0.65rem] font-medium tracking-[0.28em] text-accent uppercase outline-none"
-          >
-            {expanded ? (
-              <>Auto Mix{mood ? ` · ${MOOD_LABEL[mood]}` : ""}</>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openPanel()}
-                className="truncate tracking-[0.28em] uppercase"
-              >
-                Auto Mix{mood ? ` · ${MOOD_LABEL[mood]}` : ""}
-              </button>
-            )}
-          </h2>
+          {expanded ? (
+            <h2
+              id={panelId}
+              ref={headingRef}
+              tabIndex={-1}
+              className="min-w-0 flex-1 truncate text-[0.65rem] font-medium tracking-[0.28em] text-accent uppercase outline-none"
+            >
+              Auto Mix{mood ? ` · ${MOOD_LABEL[mood]}` : ""}
+            </h2>
+          ) : (
+            <button
+              type="button"
+              id={panelId}
+              onClick={() => openPanel()}
+              className="min-w-0 flex-1 truncate text-left text-[0.65rem] font-medium tracking-[0.28em] text-accent uppercase"
+            >
+              Auto Mix{mood ? ` · ${MOOD_LABEL[mood]}` : ""}
+            </button>
+          )}
           {playing || pending ? (
             <button
               type="button"
@@ -169,7 +182,7 @@ function AutoMixPanel() {
           {expanded ? (
             <button
               type="button"
-              onClick={() => closePanel()}
+              onClick={() => dismiss()}
               className="flex size-9 touch-manipulation items-center justify-center text-muted hover:text-fg"
               aria-label="Hide Auto Mix"
             >
