@@ -41,6 +41,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "half-way-heart-mp3",
   "hidden-circuits-of-the-one",
   "hold-lightly",
+  "honest-and-true",
   "hyperdimensional-dancefloor",
   "i-am-here",
   "i-never-left-you-i-left-the-i",

@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "honest-and-true",
+    title: "Honest and True",
+    soundId: "2427115269",
+    slug: "honest-and-true",
+    image: "/images/tracks/honest-and-true.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/honest-and-true",
+    recorded: "October 2026",
+    downloadKey: "masters/honest-and-true.mp3",
+  },
+  {
     id: "as-above-so-below",
     title: "As Above, So Below",
     soundId: "2421845208",
