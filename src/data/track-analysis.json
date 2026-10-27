@@ -692,13 +692,16 @@
     "duration": 145.32,
     "firstDownbeat": 0.476,
     "genre": null,
+    "mood": "epic",
     "energyPercentile": 0.62,
     "brightnessPercentile": 0.87,
     "outroStart": 114.82,
     "outroBars": 16,
     "crossfadeSeconds": 29.73,
-    "mood": "happy",
-    "secondaryMood": "hype",
+    "secondaryMood": null,
+    "overridden": [
+      "mood"
+    ],
     "raw": {
       "duration": 145.32,
       "analyzer": "essentia+librosa",
@@ -1457,13 +1460,16 @@
     "duration": 199.96,
     "firstDownbeat": 0.464,
     "genre": null,
+    "mood": "epic",
     "energyPercentile": 0.06,
     "brightnessPercentile": 0.51,
     "outroStart": 170.09,
     "outroBars": 16,
     "crossfadeSeconds": 28.24,
-    "mood": "dreamy",
-    "secondaryMood": "chill",
+    "secondaryMood": null,
+    "overridden": [
+      "mood"
+    ],
     "raw": {
       "duration": 199.96,
       "analyzer": "essentia+librosa",
