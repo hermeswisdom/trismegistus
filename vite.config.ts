@@ -171,6 +171,8 @@ export default defineConfig(({ command, isPreview }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
+  // Keep @vercel/og unbundled so `import.meta.url` still finds dist/*.wasm.
+  ssr: { external: ["@vercel/og"] },
   plugins: [
     pgliteBootstrapPlugin(),
     // Before tanstackStart so /auth/popup never falls through to the SPA.

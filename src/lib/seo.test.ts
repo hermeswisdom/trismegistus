@@ -169,8 +169,10 @@ describe("og:url and twitter:url match the canonical", () => {
   });
 
   it("the home route emits twitter:url from the same card url", () => {
-    assert.match(read("src/routes/index.tsx"), /\{ name: "twitter:url", content: card\.url \}/);
-    assert.match(read("src/routes/index.tsx"), /\{ property: "og:url", content: card\.url \}/);
+    assert.match(read("src/routes/index.tsx"), /shareMetaTags\(card, description\)/);
+    assert.match(read("src/lib/share.ts"), /shareMetaTags/);
+    assert.match(read("src/lib/og-card.ts"), /name: "twitter:url"/);
+    assert.match(read("src/lib/og-card.ts"), /property: "og:url"/);
   });
 });
 
@@ -323,5 +325,38 @@ describe("home description and verification", () => {
     assert.deepEqual(siteVerificationMeta(undefined), []);
     assert.match(read("vite.config.ts"), /__GOOGLE_SITE_VERIFICATION__: JSON\.stringify\(String\(process\.env\.GOOGLE_SITE_VERIFICATION/);
     assert.match(read("src/routes/__root.tsx"), /\.\.\.siteVerificationMeta\(GOOGLE_SITE_VERIFICATION\)/);
+  });
+});
+
+describe("share cards", () => {
+  it("home and tablet routes emit 1200×630 /api/og images with twitter:card summary_large_image", () => {
+    const tags = read("src/lib/og-card.ts");
+    assert.match(tags, /og:image:width/);
+    assert.match(tags, /og:image:height/);
+    assert.match(tags, /summary_large_image/);
+    assert.match(tags, /1200/);
+    assert.match(tags, /630/);
+    assert.match(read("src/routes/index.tsx"), /shareMetaTags\(card, description\)/);
+    assert.match(read("src/routes/t/\\$slug.tsx"), /shareMetaTags/);
+    assert.match(read("src/routes/api/og.ts"), /createFileRoute\("\/api\/og"\)/);
+    assert.match(read("src/routes/api/og.ts"), /import\("@\/lib\/og-image"\)/);
+    assert.match(read("src/lib/og-image.ts"), /new ImageResponse/);
+    assert.match(read("src/lib/og-image.ts"), /arrayBuffer\(\)/);
+    assert.match(read("src/lib/og-image.ts"), /SITE_ORIGIN.*images\/tracks/);
+    assert.match(read("src/lib/og-image.ts"), /asJpegDataUri/);
+    assert.match(read("package.json"), /"@vercel\/og": "0\.6\.8"/);
+  });
+
+  it("share route /t/<slug> is noindex, canonicalises to /?tablet=, and redirects humans", () => {
+    const src = read("src/routes/t/$slug.tsx");
+    assert.match(src, /noindex, follow/);
+    assert.match(src, /rel: "canonical", href: card\.url/);
+    assert.match(src, /window\.location\.replace\(href\)/);
+    assert.match(src, /tabletPagePath\(\{ tablet:/);
+  });
+
+  it("Share button uses /t/<slug> so crawlers do not depend on query-string SSR", () => {
+    assert.match(read("src/lib/share.ts"), /shareTabletUrl\(track\.slug/);
+    assert.match(read("src/components/track-actions.tsx"), /tabletSharePayload/);
   });
 });

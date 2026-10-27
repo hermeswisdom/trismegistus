@@ -1,6 +1,17 @@
+import {
+  OG_IMAGE_SIZE,
+  SITE_NAME as OG_SITE_NAME,
+  ogCardUrl,
+  shareMetaTags as buildShareMetaTags,
+  shareTabletUrl,
+  type OgCardMeta,
+  type ShareMetaTag,
+} from "./og-card.ts";
 import { SITE_ORIGIN, tabletPageUrl } from "./tablet-link.ts";
 
-export const SITE_NAME = "Atman Music";
+export const SITE_NAME = OG_SITE_NAME;
+export { OG_IMAGE_SIZE, ogCardUrl, shareTabletUrl };
+export type { OgCardMeta, ShareMetaTag };
 
 export type SharePayload = {
   title: string;
@@ -47,7 +58,9 @@ export function tabletSharePayload(
     text: verse
       ? `${track.title} on Atman Music. ${verse}`
       : `Play ${track.title} on Atman Music.`,
-    url,
+    // Path-based share URL so crawlers that skip query-string SSR still
+    // receive the track card from `/t/<slug>`.
+    url: shareTabletUrl(track.slug, opts.origin),
   };
 }
 
@@ -87,19 +100,17 @@ function originFrom(origin?: string): string {
   return (origin ?? SITE_ORIGIN).replace(/\/$/, "");
 }
 
-function absoluteAssetUrl(path: string, origin?: string): string {
-  const root = originFrom(origin);
-  return `${root}${path.startsWith("/") ? path : `/${path}`}`;
-}
-
-/** Brand card on unmarked home; catalog cover on tablet / daily deep links. */
+/** Brand `/api/og` on unmarked home; track card (`?slug=`) on tablet / daily. */
 export function homeOgImage(input: {
   source: "daily" | "tablet" | "none";
-  image: string;
+  slug: string;
   origin?: string;
+  /** Reserved: Auto Mix cards (`/api/og?mix=`). */
+  mix?: string;
 }): string {
-  if (input.source === "none") return absoluteAssetUrl("/og.jpg", input.origin);
-  return absoluteAssetUrl(input.image, input.origin);
+  if (input.mix) return ogCardUrl({ mix: input.mix, origin: input.origin });
+  if (input.source === "none") return ogCardUrl({ origin: input.origin });
+  return ogCardUrl({ slug: input.slug, origin: input.origin });
 }
 
 /**
@@ -133,6 +144,7 @@ export function homeOgCard(input: {
   image: string;
   slug: string;
   origin?: string;
+  mix?: string;
 }): HomeOgCard {
   const copy = homeOgCopy(input);
   return {
@@ -143,4 +155,11 @@ export function homeOgCard(input: {
       input.source === "none" ? SITE_NAME : `${input.title} — ${SITE_NAME}`,
     siteName: SITE_NAME,
   };
+}
+
+export function shareMetaTags(
+  card: HomeOgCard,
+  description = card.description,
+): ShareMetaTag[] {
+  return buildShareMetaTags(card, description);
 }

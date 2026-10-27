@@ -84,6 +84,7 @@ describe("public/robots.txt", () => {
   it("allows the site, disallows /api/ and points at the sitemap", () => {
     const txt = read("public/robots.txt");
     assert.match(txt, /^User-agent: \*$/m);
+    assert.match(txt, /^Allow: \/api\/og$/m);
     assert.match(txt, /^Allow: \/$/m);
     assert.match(txt, /^Disallow: \/api\/$/m);
     assert.match(txt, /^Sitemap: https:\/\/atmanmusic\.app\/sitemap\.xml$/m);

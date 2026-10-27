@@ -18,7 +18,7 @@ describe("tabletSharePayload", () => {
       meaning: "They come in robes.\nSecond line.",
     });
     assert.equal(payload.title, "Fragile God — Atman Music");
-    assert.equal(payload.url, `${SITE_ORIGIN}/?tablet=fragile-god`);
+    assert.equal(payload.url, `${SITE_ORIGIN}/t/fragile-god`);
     assert.match(payload.text, /Fragile God on Atman Music/);
     assert.match(payload.text, /They come in robes/);
     assert.equal(payload.text.includes("Esoteric Vibrations"), false);
@@ -27,8 +27,8 @@ describe("tabletSharePayload", () => {
 
   it("falls back to atmanmusic.app when origin is omitted", () => {
     const payload = tabletSharePayload(TRACK);
-    assert.equal(payload.url, `${SITE_ORIGIN}/?tablet=fragile-god`);
-    assert.equal(payload.url, "https://atmanmusic.app/?tablet=fragile-god");
+    assert.equal(payload.url, `${SITE_ORIGIN}/t/fragile-god`);
+    assert.equal(payload.url, "https://atmanmusic.app/t/fragile-god");
     assert.equal(payload.url.includes("trismegistus-three"), false);
     assert.equal(payload.url.includes("vercel.app"), false);
   });
@@ -103,33 +103,33 @@ describe("homeOgCard", () => {
     assert.equal(card.title, "Atman Music");
     assert.equal(card.siteName, "Atman Music");
     assert.equal(card.url, "https://atmanmusic.app/");
-    assert.equal(card.image, "https://atmanmusic.app/og.jpg");
+    assert.equal(card.image, "https://atmanmusic.app/api/og");
     assert.equal(card.imageAlt, "Atman Music");
     assert.equal(card.url.includes("atmanmusic.com"), false);
   });
 
-  it("uses catalog cover art on a tablet deep link", () => {
+  it("uses the track /api/og card on a tablet deep link", () => {
     const card = homeOgCard({ source: "tablet", ...track });
     assert.equal(card.title, "Fragile God — Atman Music");
     assert.equal(card.siteName, "Atman Music");
     assert.equal(card.url, "https://atmanmusic.app/?tablet=fragile-god");
-    assert.equal(
-      card.image,
-      "https://atmanmusic.app/images/tracks/fragile-god.jpg",
-    );
-    assert.equal(card.image, `${SITE_ORIGIN}/images/tracks/fragile-god.jpg`);
+    assert.equal(card.image, "https://atmanmusic.app/api/og?slug=fragile-god");
+    assert.equal(card.image, `${SITE_ORIGIN}/api/og?slug=fragile-god`);
     assert.equal(card.image.includes("/og.jpg"), false);
+    assert.equal(card.image.includes("/images/tracks/"), false);
   });
 
-  it("uses catalog cover art on today's tablet", () => {
+  it("uses the track /api/og card on today's tablet", () => {
     const card = homeOgCard({ source: "daily", ...track });
     assert.equal(card.title, "Today's tablet — Fragile God — Atman Music");
     assert.equal(card.siteName, "Atman Music");
     // og:url is the canonical (today's tablet), not the rotating /?daily=1.
     assert.equal(card.url, "https://atmanmusic.app/?tablet=fragile-god");
-    assert.equal(
-      card.image,
-      "https://atmanmusic.app/images/tracks/fragile-god.jpg",
-    );
+    assert.equal(card.image, "https://atmanmusic.app/api/og?slug=fragile-god");
+  });
+
+  it("leaves a ?mix= hook for Auto Mix cards", () => {
+    const card = homeOgCard({ source: "none", ...track, mix: "abc" });
+    assert.equal(card.image, "https://atmanmusic.app/api/og?mix=abc");
   });
 });
