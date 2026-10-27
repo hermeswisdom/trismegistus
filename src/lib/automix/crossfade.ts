@@ -48,6 +48,14 @@ export function equalPowerCurve(outgoing: boolean, samples = 65): Float32Array {
   return arr;
 }
 
+/** Multiply an equal-power curve by a per-track peak (1.0 = unity). */
+export function scaleCurve(curve: Float32Array, peak: number): Float32Array {
+  if (peak === 1) return curve;
+  const out = new Float32Array(curve.length);
+  for (let i = 0; i < curve.length; i += 1) out[i] = curve[i]! * peak;
+  return out;
+}
+
 export type MixHandoff = {
   /** Current-track time when the next deck should start. */
   startAt: number;

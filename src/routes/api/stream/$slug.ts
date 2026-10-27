@@ -1,15 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { presignedStreamUrl } from "@/lib/stream-store";
 import { blobHostFromToken, sameOriginStreamPath } from "@/lib/stream-proxy";
-import { hasStream } from "@/lib/streams";
+import { hasStream, wantsHqStream } from "@/lib/streams";
 
 /**
- * GET /api/stream/<slug> → 302 to a short-lived presigned URL for the 128 kbps
- * stream (streams/<slug>.mp3). Never serves masters/. Does not count plays.
+ * GET /api/stream/<slug> → 302 to a short-lived presigned URL for the stream
+ * file. Default is the 128 kbps copy (streams/<slug>.mp3). `?hq=1` prefers the
+ * 320 kbps copy (streams-hq/<slug>.mp3) and falls back to 128k when that
+ * object is missing. Never serves masters/. Does not count plays.
  *
- * On Vercel the redirect stays on our own origin (/media/streams/<slug>.mp3?sig,
- * rewritten to Blob by the CDN; see vite.config.ts) so iOS plays a same-origin
- * media resource. `?via=direct` keeps the old cross-origin redirect for A/B.
+ * On Vercel the redirect stays on our own origin (/media/streams/<slug>.mp3?sig
+ * or /media/streams-hq/<slug>.mp3?sig, rewritten to Blob by the CDN; see
+ * vite.config.ts) so iOS / Web Audio play a same-origin media resource.
+ * `?via=direct` keeps the old cross-origin redirect for A/B.
  */
 declare const __STREAM_PROXY_HOST__: string;
 
@@ -24,16 +27,18 @@ async function handle(slug: string | undefined, request?: Request) {
   if (!slug || !hasStream(slug)) {
     return new Response("Not found", { status: 404, headers: { "Cache-Control": "no-store" } });
   }
+  const search = request ? new URL(request.url).searchParams : new URLSearchParams();
+  const hq = wantsHqStream(search);
   let url: string | null = null;
   try {
-    url = await presignedStreamUrl(slug);
+    url = await presignedStreamUrl(slug, { hq });
   } catch {
     url = null;
   }
   if (!url) {
     return new Response("Stream unavailable", { status: 503, headers: { "Cache-Control": "no-store" } });
   }
-  const direct = request ? new URL(request.url).searchParams.get("via") === "direct" : false;
+  const direct = search.get("via") === "direct";
   const location = (!direct && sameOriginStreamPath(url, proxyHost())) || url;
   return new Response(null, {
     status: 302,

@@ -1,12 +1,14 @@
 /**
  * Two-deck Auto Mix engine: HTMLAudioElement → MediaElementSource → GainNode.
- * Plays the 128k streams at /api/stream/<slug>. Unlock the AudioContext and
- * call play() in the same tap as the UI (iOS one-tap), matching native-audio.ts.
+ * Prefers the 320k streams at /api/stream/<slug>?hq=1 (Blob streams-hq/),
+ * falling back to 128k inside that route. Unlock the AudioContext and call
+ * play() in the same tap as the UI (iOS one-tap), matching native-audio.ts.
  */
 import { claimPlaybackAudioSession } from "../native-audio.ts";
 import { streamVia } from "../stream-proxy.ts";
 import { streamUrl } from "../streams.ts";
-import { equalPowerCurve, mixHandoff } from "./crossfade.ts";
+import { equalPowerCurve, mixHandoff, scaleCurve } from "./crossfade.ts";
+import { trackPlaybackGain } from "./level.ts";
 import { type MixTrack } from "./types.ts";
 
 export type AutoMixNotice =
@@ -31,6 +33,8 @@ type Deck = {
   gain: GainNode;
   source: MediaElementAudioSourceNode | null;
   slug: string | null;
+  /** Per-track peak; 1.0 while APPLY_TRACK_LEVEL is off. */
+  level: number;
 };
 
 export type AutoMixEngineState = {
@@ -84,10 +88,14 @@ function AudioContextCtor(): typeof AudioContext | null {
 }
 
 function mixStreamUrl(slug: string): string | null {
-  const base = streamUrl(slug);
+  const base = streamUrl(slug, { hq: true });
   if (!base) return null;
   if (typeof window !== "undefined" && streamVia(window.location.search) === "direct") {
-    return `${base}?via=direct`;
+    const qIndex = base.indexOf("?");
+    const path = qIndex >= 0 ? base.slice(0, qIndex) : base;
+    const q = new URLSearchParams(qIndex >= 0 ? base.slice(qIndex + 1) : "");
+    q.set("via", "direct");
+    return `${path}?${q}`;
   }
   return base;
 }
@@ -116,7 +124,7 @@ function makeDeck(audioCtx: AudioContext, output: GainNode): Deck {
     const slug = run?.queue[run.index]?.slug;
     if (slug) emit({ type: "error", slug, message: "stream failed" });
   });
-  return { el, gain, source, slug: null };
+  return { el, gain, source, slug: null, level: 1 };
 }
 
 /**
@@ -139,12 +147,13 @@ export function unlockAutoMix() {
 }
 
 function setGain(deck: Deck, value: number, at?: number) {
+  const peak = value * deck.level;
   if (useWebAudio && ctx) {
     const t = at ?? ctx.currentTime;
     deck.gain.gain.cancelScheduledValues(t);
-    deck.gain.gain.setValueAtTime(value, t);
+    deck.gain.gain.setValueAtTime(peak, t);
   } else {
-    deck.el.volume = Math.min(1, Math.max(0, value));
+    deck.el.volume = Math.min(1, Math.max(0, peak));
   }
 }
 
@@ -155,14 +164,18 @@ function curveGain(deck: Deck, outgoing: boolean, start: number, duration: numbe
   }
   if (useWebAudio && ctx) {
     deck.gain.gain.cancelScheduledValues(start);
-    deck.gain.gain.setValueCurveAtTime(equalPowerCurve(outgoing), start, duration);
+    deck.gain.gain.setValueCurveAtTime(
+      scaleCurve(equalPowerCurve(outgoing), deck.level),
+      start,
+      duration,
+    );
     return;
   }
   const begun = performance.now();
   const tick = () => {
     const t = Math.min(1, (performance.now() - begun) / (duration * 1000));
     const { out, inn } = equalPowerGainsLocal(t);
-    deck.el.volume = outgoing ? out : inn;
+    deck.el.volume = (outgoing ? out : inn) * deck.level;
     if (t < 1) requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -177,6 +190,7 @@ function equalPowerGainsLocal(t: number) {
 function load(deck: Deck, track: MixTrack) {
   const url = mixStreamUrl(track.slug);
   if (!url) return false;
+  deck.level = trackPlaybackGain(track.energy);
   if (deck.slug === track.slug && deck.el.getAttribute("src")) return true;
   deck.el.src = url;
   deck.slug = track.slug;

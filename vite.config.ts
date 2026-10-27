@@ -11,7 +11,11 @@ import { grokPwaPlugin } from "./scripts/grok-pwa-plugin.mjs";
 // @ts-expect-error JS plugin alongside the TS vite config
 import { appEnvPlugin } from "./scripts/app-env-plugin.mjs";
 import { isMigrationFile } from "./scripts/migration-plan.mjs";
-import { blobHostFromToken, SAME_ORIGIN_STREAM_PREFIX } from "./src/lib/stream-proxy.ts";
+import {
+  blobHostFromToken,
+  SAME_ORIGIN_STREAM_HQ_PREFIX,
+  SAME_ORIGIN_STREAM_PREFIX,
+} from "./src/lib/stream-proxy.ts";
 import { ebookHeaders } from "./src/lib/ebook.ts";
 
 /** The files `src/lib/db.ts` globs — same directory, same non-recursive scope. */
@@ -148,9 +152,10 @@ function authPopupPlugin(): Plugin {
 // The dev server starts once `src/router.tsx` and `src/routes/` exist — see
 // AGENTS.md § "First scaffold".
 // Same-origin streams: /media/streams/* → the private Blob store's streams/
-// prefix as a Vercel CDN rewrite (Nitro `proxy` route rule; signed query and
-// Range pass through, no Function in the byte path). Only the store host is
-// derived from the token; nothing secret is embedded.
+// prefix (and /media/streams-hq/* → streams-hq/) as a Vercel CDN rewrite
+// (Nitro `proxy` route rule; signed query and Range pass through, no Function
+// in the byte path). Only the store host is derived from the token; nothing
+// secret is embedded.
 const streamProxyHost = blobHostFromToken(process.env.BLOB_READ_WRITE_TOKEN);
 
 export default defineConfig(({ command, isPreview }) => ({
@@ -201,6 +206,10 @@ export default defineConfig(({ command, isPreview }) => ({
                 ? {
                     [`${SAME_ORIGIN_STREAM_PREFIX}**`]: {
                       proxy: `https://${streamProxyHost}/streams/**`,
+                      headers: { "x-robots-tag": "noindex" },
+                    },
+                    [`${SAME_ORIGIN_STREAM_HQ_PREFIX}**`]: {
+                      proxy: `https://${streamProxyHost}/streams-hq/**`,
                       headers: { "x-robots-tag": "noindex" },
                     },
                   }

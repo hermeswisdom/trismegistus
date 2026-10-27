@@ -1,5 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { blobHostFromToken, sameOriginStreamPath, streamVia } from "./stream-proxy.ts";
 
 const HOST = "abcdef123.private.blob.vercel-storage.com";
@@ -19,13 +20,28 @@ describe("same-origin streams", () => {
     );
   });
 
+  it("maps a presigned streams-hq/ URL to /media/streams-hq/, keeping the signature", () => {
+    assert.equal(
+      sameOriginStreamPath(`https://${HOST}/streams-hq/awake.mp3?vercel-blob-signature=x&exp=1`, HOST),
+      "/media/streams-hq/awake.mp3?vercel-blob-signature=x&exp=1",
+    );
+  });
+
   it("never maps masters/, other hosts or odd paths", () => {
     assert.equal(sameOriginStreamPath(`https://${HOST}/masters/awake.mp3?s=1`, HOST), null);
     assert.equal(sameOriginStreamPath(`https://${HOST}/streams/../masters/a.mp3`, HOST), null);
+    assert.equal(sameOriginStreamPath(`https://${HOST}/streams-hq/../masters/a.mp3`, HOST), null);
     assert.equal(sameOriginStreamPath(`https://evil.example/streams/awake.mp3`, HOST), null);
     assert.equal(sameOriginStreamPath(`http://${HOST}/streams/awake.mp3`, HOST), null);
     assert.equal(sameOriginStreamPath(`https://${HOST}/streams/awake.mp3`, null), null);
     assert.equal(sameOriginStreamPath("not a url", HOST), null);
+  });
+
+  it("the CDN rewrite covers both stream prefixes, never masters/", () => {
+    const vite = readFileSync(new URL("../../vite.config.ts", import.meta.url), "utf8");
+    assert.match(vite, /SAME_ORIGIN_STREAM_HQ_PREFIX/);
+    assert.match(vite, /streams-hq\/\*\*/);
+    assert.doesNotMatch(vite, /\/masters\/\*\*/);
   });
 
   it("?stream=direct opts back into the cross-origin redirect", () => {

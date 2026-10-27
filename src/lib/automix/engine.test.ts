@@ -59,20 +59,32 @@ class FakeAudio extends EventTarget {
 class FakeGain {
   gain = {
     value: 0,
+    sets: [] as number[],
+    curves: [] as Float32Array[],
     cancelScheduledValues() {},
-    setValueAtTime() {},
-    setValueCurveAtTime() {},
+    setValueAtTime(v: number) {
+      this.value = v;
+      this.sets.push(v);
+    },
+    setValueCurveAtTime(curve: Float32Array) {
+      this.curves.push(curve);
+      this.value = curve[curve.length - 1] ?? this.value;
+    },
   };
   connect() {}
   disconnect() {}
 }
+
+let gains: FakeGain[] = [];
 
 class FakeAudioContext {
   currentTime = 0;
   state = "running";
   destination = {};
   createGain() {
-    return new FakeGain();
+    const g = new FakeGain();
+    gains.push(g);
+    return g;
   }
   createMediaElementSource() {
     return { connect() {}, disconnect() {} };
@@ -115,8 +127,9 @@ let audios: FakeAudio[] = [];
 let notices: AutoMixNotice[] = [];
 let unsub: (() => void) | null = null;
 
-function installDom() {
+function installDom(search = "") {
   audios = [];
+  gains = [];
   const document = {
     createElement: (tag: string) => {
       if (tag !== "audio") return { setAttribute() {}, style: {} };
@@ -129,7 +142,7 @@ function installDom() {
   Object.assign(globalThis, {
     window: {
       AudioContext: FakeAudioContext,
-      location: { search: "" },
+      location: { search },
     },
     document,
     AudioContext: FakeAudioContext,
@@ -154,6 +167,25 @@ afterEach(() => {
 const types = () => notices.map((n) => n.type);
 
 describe("Auto Mix engine", () => {
+  it("loads the HQ stream URL and plays the first deck at unity gain", () => {
+    assert.equal(startAutoMix([track(A, { energy: 0.12 }), track(B, { energy: 0.9 })]), true);
+    assert.equal(audios[0]!.src, `/api/stream/${A}?hq=1`);
+    assert.equal(audios[1]!.src, `/api/stream/${B}?hq=1`);
+    assert.doesNotMatch(audios[0]!.src, /masters/);
+    // gains[0] is master (value 1); deck 0 then deck 1.
+    assert.ok(gains[1]!.gain.sets.includes(1));
+    assert.equal(gains[1]!.gain.sets.at(-1), 1);
+    assert.ok(gains[2]!.gain.sets.includes(0));
+    assert.equal(gains[0]!.gain.value, 1);
+  });
+
+  it("keeps ?via=direct on the HQ request so CORS A/B still works", () => {
+    resetAutoMixForTests();
+    installDom("?stream=direct");
+    assert.equal(startAutoMix([track(A)]), true);
+    assert.equal(audios[0]!.src, `/api/stream/${A}?hq=1&via=direct`);
+  });
+
   it("claims playing on the resumed deck once it is actually playing", () => {
     assert.equal(startAutoMix([track(A), track(B)]), true);
     assert.deepEqual(types(), ["pending"]);
@@ -179,8 +211,8 @@ describe("Auto Mix engine", () => {
     assert.equal(remixAutoMix([track(C), track(D)]), true);
     assert.equal(autoMixEngineState().current?.slug, A);
     assert.equal(autoMixEngineState().next?.slug, C);
-    assert.ok(audios[1]!.src.includes(C));
-    assert.ok(audios[1]!.plays.some((p) => p.src.includes(C)));
+    assert.equal(audios[1]!.src, `/api/stream/${C}?hq=1`);
+    assert.ok(audios[1]!.plays.some((p) => p.src === `/api/stream/${C}?hq=1`));
   });
 
   it("marks a yielded hush so the wall can close the panel", () => {
