@@ -342,6 +342,8 @@ describe("share cards", () => {
     assert.match(read("src/routes/api/og.ts"), /import\("@\/lib\/og-image"\)/);
     assert.match(read("src/lib/og-image.ts"), /new ImageResponse/);
     assert.match(read("src/lib/og-image.ts"), /arrayBuffer\(\)/);
+    assert.match(read("src/lib/og-image.ts"), /SITE_ORIGIN.*images\/tracks/);
+    assert.match(read("src/lib/og-image.ts"), /asJpegDataUri/);
     assert.match(read("package.json"), /"@vercel\/og": "0\.6\.8"/);
   });
 

@@ -18,6 +18,7 @@ import {
   type OgPalette,
 } from "./og-card.ts";
 import { moodForSlug } from "./og-mood.ts";
+import { SITE_ORIGIN } from "./tablet-link.ts";
 
 const PNG_HEADERS = {
   "Content-Type": "image/png",
@@ -53,11 +54,17 @@ function trackBySlug(slug: string) {
   return SOUNDCLOUD_TRACKS.find((track) => track.slug === slug || track.id === slug);
 }
 
+function asJpegDataUri(buf: Buffer): string | null {
+  if (buf.length < 3 || buf[0] !== 0xff || buf[1] !== 0xd8 || buf[2] !== 0xff) return null;
+  return `data:image/jpeg;base64,${buf.toString("base64")}`;
+}
+
 function coverFromDisk(slug: string): string | null {
   const rel = join("images", "tracks", `${slug}.jpg`);
   for (const path of [join(process.cwd(), "public", rel), join(process.cwd(), rel)]) {
     try {
-      return `data:image/jpeg;base64,${readFileSync(path).toString("base64")}`;
+      const uri = asJpegDataUri(readFileSync(path));
+      if (uri) return uri;
     } catch {
       /* try the next path / origin fetch */
     }
@@ -65,17 +72,27 @@ function coverFromDisk(slug: string): string | null {
   return null;
 }
 
-async function coverSrc(slug: string, origin: string): Promise<string | null> {
-  const fromDisk = coverFromDisk(slug);
-  if (fromDisk) return fromDisk;
+async function fetchJpeg(url: string): Promise<string | null> {
   try {
-    const res = await fetch(`${origin.replace(/\/$/, "")}/images/tracks/${slug}.jpg`);
+    const res = await fetch(url, { redirect: "follow" });
     if (!res.ok) return null;
-    const buf = Buffer.from(await res.arrayBuffer());
-    return `data:image/jpeg;base64,${buf.toString("base64")}`;
+    const type = res.headers.get("content-type") ?? "";
+    if (!type.startsWith("image/")) return null;
+    return asJpegDataUri(Buffer.from(await res.arrayBuffer()));
   } catch {
     return null;
   }
+}
+
+async function coverSrc(slug: string, origin: string): Promise<string | null> {
+  const fromDisk = coverFromDisk(slug);
+  if (fromDisk) return fromDisk;
+  // Preview hosts are behind Vercel SSO; Satori cannot parse the login HTML.
+  const fromSite = await fetchJpeg(`${SITE_ORIGIN}/images/tracks/${slug}.jpg`);
+  if (fromSite) return fromSite;
+  const host = origin.replace(/\/$/, "");
+  if (host !== SITE_ORIGIN) return fetchJpeg(`${host}/images/tracks/${slug}.jpg`);
+  return null;
 }
 
 function DefaultCard(palette: OgPalette = SITE_PALETTE): ReactElement {
@@ -303,16 +320,28 @@ export async function renderOgImage(request: Request): Promise<Response> {
   const origin = `${url.protocol}//${url.host}`;
 
   let element: ReactElement = DefaultCard();
+  let trackCard: { title: string; palette: OgPalette } | null = null;
   // `?mix=` is recognised so the URL stays stable; mix cards land later.
   if (parsed.kind === "track" && parsed.slug) {
     const track = trackBySlug(parsed.slug);
     if (track) {
       const mood = moodForSlug(track.slug);
+      trackCard = { title: track.title, palette: MOOD_PALETTES[mood] };
       const cover = await coverSrc(track.slug, origin);
-      element = TrackCard({ title: track.title, cover, palette: MOOD_PALETTES[mood] });
+      element = TrackCard({ ...trackCard, cover });
     }
   }
 
+  try {
+    return await pngResponse(element, request.method);
+  } catch {
+    // Bad cover bytes (SSO HTML mistaken for JPEG) — still emit a card.
+    const fallback = trackCard ? TrackCard({ ...trackCard, cover: null }) : DefaultCard();
+    return pngResponse(fallback, request.method);
+  }
+}
+
+async function pngResponse(element: ReactElement, method: string): Promise<Response> {
   // Buffer the PNG. ImageResponse's stream is dropped by Nitro ESM, and
   // @vercel/og 1.x's node entry crashes here (harfbuzz `require("fs")`).
   const image = new ImageResponse(element, {
@@ -322,7 +351,7 @@ export async function renderOgImage(request: Request): Promise<Response> {
   const body = await image.arrayBuffer();
   const headers = new Headers(PNG_HEADERS);
   headers.set("Content-Length", String(body.byteLength));
-  if (request.method === "HEAD") {
+  if (method === "HEAD") {
     return new Response(null, { status: 200, headers });
   }
   return new Response(body, { status: 200, headers });
