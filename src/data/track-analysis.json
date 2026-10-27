@@ -91,7 +91,7 @@
   },
   "armour-of-god": {
     "title": "Armour of God x Lionheart",
-    "bpm": 172.3,
+    "bpm": 86,
     "bpmFolded": null,
     "bpmAmbiguous": null,
     "key": "G",
@@ -103,13 +103,17 @@
     "duration": 196.4,
     "firstDownbeat": 2.752,
     "genre": "cinematic",
+    "mood": "epic",
     "energyPercentile": 0.11,
     "brightnessPercentile": 0.88,
-    "outroStart": 162.99,
+    "outroStart": 150.66,
     "outroBars": 16,
-    "crossfadeSeconds": 32.69,
-    "mood": "dreamy",
+    "crossfadeSeconds": 44.65,
     "secondaryMood": null,
+    "overridden": [
+      "bpm",
+      "mood"
+    ],
     "raw": {
       "duration": 196.4,
       "analyzer": "essentia+librosa",
