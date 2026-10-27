@@ -2,11 +2,9 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "honest-and-true",
     title: "Honest and True",
-    // TODO(soundcloud): set soundId once SoundCloud publishes the track (empty = native stream only, see streams.ts canUseSoundCloud).
-    soundId: "",
+    soundId: "2427115269",
     slug: "honest-and-true",
     image: "/images/tracks/honest-and-true.jpg",
-    // TODO(soundcloud): placeholder permalink (expected URL, same pattern as the rest of the catalogue); confirm or replace once published.
     permalink: "https://soundcloud.com/esoteric_vibrations/honest-and-true",
     recorded: "October 2026",
     downloadKey: "masters/honest-and-true.mp3",

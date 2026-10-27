@@ -4,7 +4,7 @@
  * native player is in use and the SoundCloud iframe is not loaded.
  */
 export const WAVEFORM_URLS: Readonly<Record<string, string>> = {
-  // TODO(soundcloud): honest-and-true: add "<soundId>": "https://wave.sndcdn.com/<id>_m.json" once published.
+  "2427115269": "https://wave.sndcdn.com/PAc4k2Ffni05_m.json",
   "2421845208": "https://wave.sndcdn.com/HpyQoV1YOmyQ_m.json",
   "2421782430": "https://wave.sndcdn.com/XsXXX57n4dIB_m.json",
   "2421739632": "https://wave.sndcdn.com/E4diBNIOTuOf_m.json",
