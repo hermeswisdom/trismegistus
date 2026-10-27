@@ -5,6 +5,7 @@ import { AtmanWord } from "@/components/atman-word";
 import { DailyRite } from "@/components/daily-rite";
 import { HermesNote } from "@/components/hermes-note";
 import { MarksPulse } from "@/components/marks-pulse";
+import { AutoMixButton } from "@/components/auto-mix";
 import { BuyMasterButton } from "@/components/buy-master";
 import { HeartButton, ShareButton, ShareDayButton } from "@/components/track-actions";
 import { FavoritesShelf } from "@/components/favorites-shelf";
@@ -134,6 +135,7 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
                 <Dices className="size-3.5" />
                 Random
               </button>
+              <AutoMixButton />
               <ReadButton trackId={current.id} className="bg-elevated" />
               <HeartButton id={current.id} className="bg-elevated" />
               {isDaily ? (

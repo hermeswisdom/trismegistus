@@ -5,6 +5,7 @@ import {
   hushBowlGraph,
   onBowlGraphStopped,
 } from "./bowl-synth.ts";
+import { hushAutoMix } from "./automix/engine.ts";
 import { usePlayer } from "./player-store.ts";
 
 export const DEFAULT_BOWL_VOLUME = 0.48;
@@ -53,6 +54,7 @@ export const useBowlPlayer = create<BowlPlayerState>((set, get) => ({
     const engine = getBowlEngine();
     if (!bowl || !engine) return;
     usePlayer.getState().pause();
+    hushAutoMix();
     engine.setVolume(get().volume);
     engine.play(bowl);
     if (typeof navigator !== "undefined" && navigator.mediaSession) {

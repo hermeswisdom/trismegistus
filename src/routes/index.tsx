@@ -10,6 +10,7 @@ import { Leaderboard } from "@/components/leaderboard";
 import { MarksBoardSync } from "@/components/marks-board-sync";
 import { MarksSheet } from "@/components/marks-sheet";
 import { MeaningSheet } from "@/components/meaning-sheet";
+import { AutoMixDock } from "@/components/auto-mix";
 import { NowPlaying } from "@/components/now-playing";
 import { Signal } from "@/components/signal";
 import { SiteFooter } from "@/components/site-footer";
@@ -92,6 +93,7 @@ function Home() {
       </main>
       <SiteFooter />
       <NowPlaying />
+      <AutoMixDock />
       <AudioDebugPanel />
       <MarksSheet />
       <MeaningSheet />
