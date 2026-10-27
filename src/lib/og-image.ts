@@ -1,6 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement as h, type ReactElement } from "react";
+// 0.6.8's node entry reads wasm via ESM fs + import.meta.url. 1.x crashes in
+// Nitro ESM (harfbuzz `require("fs")`) and returns an empty PNG body.
 import { ImageResponse } from "@vercel/og";
 import outfitWoff from "./og-fonts/outfit-400.woff?inline";
 import syneWoff from "./og-fonts/syne-700.woff?inline";
@@ -311,9 +313,17 @@ export async function renderOgImage(request: Request): Promise<Response> {
     }
   }
 
-  return new ImageResponse(element, {
+  // Buffer the PNG. ImageResponse's stream is dropped by Nitro ESM, and
+  // @vercel/og 1.x's node entry crashes here (harfbuzz `require("fs")`).
+  const image = new ImageResponse(element, {
     ...OG_IMAGE_SIZE,
     fonts: ogFonts(),
-    headers: PNG_HEADERS,
   });
+  const body = await image.arrayBuffer();
+  const headers = new Headers(PNG_HEADERS);
+  headers.set("Content-Length", String(body.byteLength));
+  if (request.method === "HEAD") {
+    return new Response(null, { status: 200, headers });
+  }
+  return new Response(body, { status: 200, headers });
 }

@@ -171,7 +171,7 @@ export default defineConfig(({ command, isPreview }) => ({
     strictPort: true,
   },
   resolve: { tsconfigPaths: true },
-  // Keep @vercel/og on Node's module loader (it uses require for harfbuzz/wasm).
+  // Keep @vercel/og unbundled so `import.meta.url` still finds dist/*.wasm.
   ssr: { external: ["@vercel/og"] },
   plugins: [
     pgliteBootstrapPlugin(),

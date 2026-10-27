@@ -339,6 +339,10 @@ describe("share cards", () => {
     assert.match(read("src/routes/index.tsx"), /shareMetaTags\(card, description\)/);
     assert.match(read("src/routes/t/\\$slug.tsx"), /shareMetaTags/);
     assert.match(read("src/routes/api/og.ts"), /createFileRoute\("\/api\/og"\)/);
+    assert.match(read("src/routes/api/og.ts"), /import\("@\/lib\/og-image"\)/);
+    assert.match(read("src/lib/og-image.ts"), /new ImageResponse/);
+    assert.match(read("src/lib/og-image.ts"), /arrayBuffer\(\)/);
+    assert.match(read("package.json"), /"@vercel\/og": "0\.6\.8"/);
   });
 
   it("share route /t/<slug> is noindex, canonicalises to /?tablet=, and redirects humans", () => {
