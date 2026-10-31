@@ -1,5 +1,25 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "where-comfort-ends",
+    title: "Where Comfort Ends",
+    soundId: "2429738937",
+    slug: "where-comfort-ends",
+    image: "/images/tracks/where-comfort-ends.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/where-comfort-ends",
+    recorded: "October 2026",
+    downloadKey: "masters/where-comfort-ends.mp3",
+  },
+  {
+    id: "the-house-of-reasons",
+    title: "The House of Reasons",
+    soundId: "2429739129",
+    slug: "the-house-of-reasons",
+    image: "/images/tracks/the-house-of-reasons.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/the-house-of-reasons",
+    recorded: "October 2026",
+    downloadKey: "masters/the-house-of-reasons.mp3",
+  },
+  {
     id: "honest-and-true",
     title: "Honest and True",
     soundId: "2427115269",

@@ -97,6 +97,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "the-best-of-the-worst-mp3",
   "the-city-of-london",
   "the-endless-mirror",
+  "the-house-of-reasons",
   "the-last-one",
   "the-mushroom-alchemist",
   "the-shadow-learned-my-name",
@@ -115,5 +116,6 @@ export const STREAM_SLUGS: readonly string[] = [
   "welcome-home-neville",
   "whats-in-it-for-me",
   "when-we-were-cool",
+  "where-comfort-ends",
   "your-first-pill",
 ];
