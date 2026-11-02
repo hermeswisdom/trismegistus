@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { authClient, authEnabled, signIn } from "@/lib/auth/client";
 import { GROK_PROVIDERS } from "@/lib/auth/providers";
 import { parseAccountForm, type AccountMode } from "@/lib/auth/account-form";
+import { loginPathWithReturn, oauthCallbackPath, safeLoginReturnTo } from "@/lib/auth/login-return";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { UserButton } from "@/lib/auth/gates";
 
@@ -11,9 +12,12 @@ export function LoginForm({
   returnTo,
 }: {
   oauthEnabled?: boolean;
-  /** Allowlisted post-sign-in destination (e.g. /admin); default the wall. */
+  /** Same-origin post-sign-in path (e.g. /admin); default the wall. */
   returnTo?: string;
 }) {
+  // Re-checked here as well as in the route's validateSearch, so this form
+  // can never be handed an off-site destination by another caller.
+  const destination = safeLoginReturnTo(returnTo) ?? "/";
   const { user, isPending } = useCurrentUserState();
   const [mode, setMode] = useState<AccountMode>("sign-in");
   const [name, setName] = useState("");
@@ -47,7 +51,7 @@ export function LoginForm({
         });
         if (next) throw new Error(next.message ?? "The door did not know you.");
       }
-      window.location.href = returnTo ?? "/";
+      window.location.assign(destination);
     } catch (err) {
       setError(err instanceof Error ? err.message : "The door stayed shut.");
       setBusy(false);
@@ -59,7 +63,12 @@ export function LoginForm({
     setBusy(true);
     setError(null);
     try {
-      await signIn(providerId, { callbackURL: returnTo ?? "/", errorCallbackURL: "/login" });
+      // Both legs of the OAuth round-trip keep the return path: success lands
+      // on it, failure lands back on /login still carrying ?next=.
+      await signIn(providerId, {
+        callbackURL: oauthCallbackPath(destination),
+        errorCallbackURL: loginPathWithReturn(destination),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "The outer door failed.");
       setBusy(false);
@@ -77,12 +86,12 @@ export function LoginForm({
         <p className="text-sm leading-relaxed text-muted">
           The wall knows this name. Listening still works if you leave it.
         </p>
-        {returnTo ? (
+        {destination !== "/" ? (
           <a
-            href={returnTo}
+            href={destination}
             className="inline-flex h-12 w-fit items-center bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase"
           >
-            Continue to admin
+            {/^\/admin(?:[/?]|$)/.test(destination) ? "Continue to admin" : "Continue"}
           </a>
         ) : null}
         <Link
