@@ -11,7 +11,10 @@
  *   - no backslashes (`/\evil.example` is normalised to `//evil.example`);
  *   - no control characters or whitespace (browsers strip tabs/newlines, so
  *     `/\t/evil.example` would also become `//evil.example`);
- *   - still resolves to this origin once parsed.
+ *   - still resolves to this origin once parsed;
+ *   - after `new URL` has resolved `.` / `..` / `%2e` segments, the result
+ *     still must not start with `//` (so `/..//evil.example` cannot slip
+ *     through) and must not contain a backslash.
  *
  * `/login` itself is refused so a bad value can never loop the visitor back
  * onto the sign-in page. A `#hash` is dropped (it never reaches the server
@@ -35,7 +38,12 @@ export function safeLoginReturnTo(value: unknown): string | undefined {
   }
   if (url.origin !== PROBE_ORIGIN) return undefined;
   if (url.pathname === "/login" || url.pathname.startsWith("/login/")) return undefined;
-  return `${url.pathname}${url.search}`;
+  // Check the *normalised* path: `new URL` resolves `/..//host` to `//host`
+  // while leaving origin unchanged, so the raw `startsWith("//")` above is
+  // not enough.
+  const result = `${url.pathname}${url.search}`;
+  if (result.startsWith("//") || result.includes("\\")) return undefined;
+  return result;
 }
 
 /**
@@ -52,8 +60,12 @@ export function oauthCallbackPath(next: string | undefined): string {
   const safe = safeLoginReturnTo(next);
   if (!safe) return "/";
   if (BETTER_AUTH_RELATIVE_URL.test(safe)) return safe;
-  const path = new URL(safe, PROBE_ORIGIN).pathname;
-  return BETTER_AUTH_RELATIVE_URL.test(path) ? path : "/";
+  // Query-stripped fallback is taken from the already-checked path, then
+  // re-validated so we never emit a value that skipped the // / backslash
+  // checks (Better Auth would otherwise get a protocol-relative callbackURL).
+  const q = safe.indexOf("?");
+  const path = safeLoginReturnTo(q === -1 ? safe : safe.slice(0, q));
+  return path && BETTER_AUTH_RELATIVE_URL.test(path) ? path : "/";
 }
 
 export function parseLoginSearch(search: Record<string, unknown>): {

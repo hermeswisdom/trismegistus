@@ -31,6 +31,10 @@ describe("safeLoginReturnTo", () => {
       "//evil.example/admin",
       "/\\evil.example",
       "\\\\evil.example",
+      "/..//evil.example",
+      "/.//evil.example",
+      "/admin/..//evil.example",
+      "/%2e%2e//evil.example",
       "/\t/evil.example",
       "/\n/evil.example",
       " /admin",
@@ -59,6 +63,14 @@ describe("loginPathWithReturn", () => {
   it("drops an unsafe or missing return path", () => {
     assert.equal(loginPathWithReturn(undefined), "/login");
     assert.equal(loginPathWithReturn("//evil.example"), "/login");
+    for (const bad of [
+      "/..//evil.example",
+      "/.//evil.example",
+      "/admin/..//evil.example",
+      "/%2e%2e//evil.example",
+    ]) {
+      assert.equal(loginPathWithReturn(bad), "/login", bad);
+    }
   });
 });
 
@@ -72,5 +84,13 @@ describe("oauthCallbackPath", () => {
     assert.equal(oauthCallbackPath("/caf%C3%A9?x=1"), "/");
     assert.equal(oauthCallbackPath("//evil.example"), "/");
     assert.equal(oauthCallbackPath(undefined), "/");
+    for (const bad of [
+      "/..//evil.example",
+      "/.//evil.example",
+      "/admin/..//evil.example",
+      "/%2e%2e//evil.example",
+    ]) {
+      assert.equal(oauthCallbackPath(bad), "/", bad);
+    }
   });
 });
