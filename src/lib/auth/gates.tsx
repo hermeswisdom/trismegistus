@@ -3,6 +3,7 @@ import { Navigate } from "@tanstack/react-router";
 import { GROK_PROVIDERS, authEnabled, signIn, signOut } from "./client";
 import { getAuthDoors } from "./doors";
 import { hasGateSessionMarker } from "./gate-session-marker";
+import { loginPathWithReturn, oauthCallbackPath, safeLoginReturnTo } from "./login-return";
 import { resolveSignInGateState } from "./sign-in-gate";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 
@@ -64,7 +65,8 @@ export function SignInGate({
   return <>{fallback ?? <SignInButtons />}</>;
 }
 
-export function SignInButtons() {
+export function SignInButtons({ returnTo }: { returnTo?: string } = {}) {
+  const destination = safeLoginReturnTo(returnTo) ?? "/";
   const [oauthEnabled, setOauthEnabled] = useState(false);
   useEffect(() => {
     void getAuthDoors()
@@ -80,7 +82,10 @@ export function SignInButtons() {
           key={p.providerId}
           type="button"
           onClick={() =>
-            signIn(p.providerId, { callbackURL: "/", errorCallbackURL: "/login" })
+            signIn(p.providerId, {
+              callbackURL: oauthCallbackPath(destination),
+              errorCallbackURL: loginPathWithReturn(destination),
+            })
           }
           className="inline-flex h-12 w-full touch-manipulation items-center justify-center border border-border bg-elevated px-4 text-xs font-medium tracking-[0.18em] text-fg uppercase transition-opacity duration-150 hover:opacity-90"
         >
