@@ -5,7 +5,8 @@ import { FEATURED_ID, TRACKS, getTrack, nextTrack, randomTrack, type Track } fro
 import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
 import { isQcBrowser } from "@/lib/qc-client";
-import { PLAY_BLOCKED_COPY, PLAY_FAILED_COPY, resolvePlayTap } from "@/lib/playback";
+import { PLAY_BLOCKED_COPY, PLAY_FAILED_COPY, PLAY_OFFLINE_COPY, resolvePlayTap } from "@/lib/playback";
+import { peekOfflineObjectUrl, shouldRecordListen } from "@/lib/offline-library";
 import {
   applyPlayback,
   getAttemptPhase,
@@ -120,6 +121,11 @@ function backendFor(track: Track): PlayerBackend {
 
 /** Neither engine can play the tablet right now: the Try again face. */
 const PLAY_FAILED_STATE = { playing: false, playPending: false, playError: PLAY_FAILED_COPY } as const;
+const PLAY_OFFLINE_STATE = { playing: false, playPending: false, playError: PLAY_OFFLINE_COPY } as const;
+
+function pageIsOffline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
 
 /**
  * UI state right after a start: normally pending, but a start the widget
@@ -147,9 +153,13 @@ function hushWidget(track: Track | undefined) {
  * the native `ended` event) that reaches here synchronously keeps its user
  * gesture / media session. Returns the backend used.
  */
-function startTrack(nextId: string): PlayerBackend | "failed" | null {
+function startTrack(nextId: string): PlayerBackend | "failed" | "offline" | null {
   const track = getTrack(nextId);
   if (!track) return null;
+  if (pageIsOffline() && !peekOfflineObjectUrl(track.slug)) {
+    nativePause(`${track.slug}: not saved offline`);
+    return "offline";
+  }
   const backend = backendFor(track);
   if (backend === "native") {
     hushWidget(track);
@@ -186,7 +196,10 @@ function countPlay(id: string) {
   const now = Date.now();
   if ((countedAt.get(id) ?? 0) > now - 8000) return;
   // Automated QC (?qc=1, headless / emulated test browsers) never counts.
-  if (isQcBrowser()) return;
+  // Offline playback must not invent or replay listen marks.
+  if (!shouldRecordListen({ online: typeof navigator === "undefined" ? undefined : navigator.onLine, qc: isQcBrowser() })) {
+    return;
+  }
   countedAt.set(id, now);
   // Allowed while hidden (visible-gate.ts): a tablet that starts on a locked
   // phone (auto-advance, lock-screen next) is a real listen and counts.
@@ -413,7 +426,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     // leaves first, before any state update or re-render, so it rides the
     // tap's user activation.
     const started = startTrack(nextId);
-    const backend = started === "failed" ? "native" : (started ?? get().backend);
+    const backend = started === "failed" || started === "offline" ? "native" : (started ?? get().backend);
     debugEvent("engine", `${started ?? backend} ${track.slug}`);
     // Honest UI: pending until audio really flows (see reduceAttempt and
     // native-audio.ts). `playing` flips on the first real progress.
@@ -421,7 +434,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
       ...(opts?.markEntered || get().entered ? { entered: true } : {}),
       currentId: nextId,
       backend,
-      ...(started === "failed" ? PLAY_FAILED_STATE : afterStart(backend)),
+      ...(started === "offline" ? PLAY_OFFLINE_STATE : started === "failed" ? PLAY_FAILED_STATE : afterStart(backend)),
       elapsed: reset ? 0 : get().elapsed,
       duration: reset ? 0 : get().duration,
       ...(reset && get().entered && !opts?.fromHistory
@@ -429,7 +442,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
         : {}),
     });
     writeLastTablet(nextId);
-    if (reset || !wasPlaying) {
+    if ((reset || !wasPlaying) && started !== "failed" && started !== "offline") {
       countPlay(nextId);
     }
   },
@@ -470,13 +483,17 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   },
 
   playNext: () => {
+    const offline = pageIsOffline();
     const next = nativeAllowed()
       ? nextPlayable(TRACKS, get().currentId, (slug) => {
           const t = TRACKS.find((x) => x.slug === slug);
-          return Boolean(t && backendFor(t) === "native");
+          if (!t || backendFor(t) !== "native") return false;
+          return offline ? Boolean(peekOfflineObjectUrl(slug)) : true;
         })
       : nextTrack(get().currentId);
-    if (next) get().play(next);
+    if (!next) return;
+    if (offline && !peekOfflineObjectUrl(getTrack(next)?.slug ?? "")) return;
+    get().play(next);
   },
 
   playPrevious: () => {
@@ -504,10 +521,13 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     // the widget a plain play() / skip + play. No await, no state update and
     // no iframe rewrite ahead of it.
     const started = startTrack(id);
-    const backend = started === "failed" ? "native" : (started ?? get().backend);
+    const backend = started === "failed" || started === "offline" ? "native" : (started ?? get().backend);
     ensurePlaybackBridge();
     noteUserGesture();
-    set({ backend, ...(started === "failed" ? PLAY_FAILED_STATE : afterStart(backend)) });
+    set({
+      backend,
+      ...(started === "offline" ? PLAY_OFFLINE_STATE : started === "failed" ? PLAY_FAILED_STATE : afterStart(backend)),
+    });
   },
 
   seek: (ratio) => {

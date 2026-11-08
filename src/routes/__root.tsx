@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { InstallAppProvider } from "@/components/install-app";
+import { OfflineRuntime } from "@/components/offline-runtime";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { INSTALL_CAPTURE_SCRIPT } from "@/lib/install-app";
 import { ViewportLock } from "@/components/viewport-lock";
@@ -26,7 +27,8 @@ export const Route = createRootRoute({
           "Atman Music. The full SoundCloud catalog. All the cover art.",
       },
       { name: "theme-color", content: "#09080e" },
-      // Home-screen install (public/manifest.webmanifest). No service worker.
+      // Home-screen install (public/manifest.webmanifest).
+      // Service worker is scoped to a public offline shell + saved listening copies.
       { name: "application-name", content: APP_NAME },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "apple-mobile-web-app-capable", content: "yes" },
@@ -65,6 +67,7 @@ export const Route = createRootRoute({
         <PreviewHostBridge />
         <AuthProvider>
           <InstallAppProvider>
+            <OfflineRuntime />
             <Outlet />
           </InstallAppProvider>
         </AuthProvider>
