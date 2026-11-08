@@ -3,10 +3,12 @@ import assert from "node:assert/strict";
 import {
   failedStreams,
   isNativeUnlocked,
+  nativeAdoptLocalSave,
   nativePause,
   nativePhase,
   nativePlay,
   nativePrime,
+  nativeSeek,
   resetNativeForTests,
   subscribeNative,
   type NativeNotice,
@@ -94,6 +96,28 @@ describe("native player", () => {
     assert.deepEqual(audio.plays, [{ src: `/api/stream/${A.slug}`, muted: false }]);
     assert.deepEqual(types(), ["pending"]);
     assert.equal(nativePhase(), "pending");
+  });
+
+  it("saving the currently playing tablet swaps src to the blob without changing track", () => {
+    nativePlay(A);
+    audio.fire("playing");
+    audio.currentTime = 12.4;
+    const beforePlays = audio.plays.length;
+    rememberOfflineObjectUrl(A.slug, new Blob([new Uint8Array(8)], { type: "audio/mpeg" }));
+    assert.equal(nativeAdoptLocalSave(A.slug), true);
+    audio.fire("pause");
+    assert.match(audio.src, /^blob:/);
+    assert.doesNotMatch(audio.src, /\/api\/stream|masters/);
+    assert.equal(audio.currentTime, 12.4);
+    assert.equal(nativePhase(), "playing");
+    assert.ok(!types().includes("pause"));
+    assert.ok(!types().includes("finish"));
+    assert.equal(audio.plays.length, beforePlays + 1);
+    nativeSeek(3.5);
+    assert.equal(audio.currentTime, 3.5);
+    // A later nativePlay of the same tablet must not snap back to /api/stream.
+    nativePlay(A);
+    assert.match(audio.src, /^blob:/);
   });
 
   it("plays an explicit local save from a blob URL, not /api/stream", () => {

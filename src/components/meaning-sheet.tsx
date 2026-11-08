@@ -1,4 +1,6 @@
 import { Play, X } from "lucide-react";
+import { BuyMasterButton } from "@/components/buy-master";
+import { SaveOfflineButton } from "@/components/save-offline";
 import { getMeaning, getTrack } from "@/lib/rooms";
 import { useMeaningSheet } from "@/lib/meaning-sheet";
 import { usePlayer } from "@/lib/player-store";
@@ -68,18 +70,22 @@ export function MeaningSheet() {
             {meaning}
           </p>
           {track ? (
-            <button
-              type="button"
-              onPointerDown={noteUserGesture}
-              onClick={() => {
-                play(track.id);
-                close();
-              }}
-              className="mt-8 inline-flex h-12 items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"
-            >
-              <Play className="size-3.5" fill="currentColor" />
-              Play the tablet
-            </button>
+            <div className="mt-8 flex flex-wrap items-end gap-2">
+              <button
+                type="button"
+                onPointerDown={noteUserGesture}
+                onClick={() => {
+                  play(track.id);
+                  close();
+                }}
+                className="inline-flex h-12 items-center gap-2 bg-accent px-7 text-xs font-medium tracking-[0.2em] text-bg uppercase transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.96]"
+              >
+                <Play className="size-3.5" fill="currentColor" />
+                Play the tablet
+              </button>
+              <SaveOfflineButton track={track} variant="sheet" />
+              <BuyMasterButton track={track} />
+            </div>
           ) : null}
         </div>
       </div>
