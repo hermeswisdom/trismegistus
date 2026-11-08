@@ -32,7 +32,7 @@ export function HeartButton({
   return (
     <button
       type="button"
-      aria-label={liked ? "Remove from saved tablets" : "Save this tablet"}
+      aria-label={liked ? "Remove from saved tablets" : "Heart this tablet"}
       aria-pressed={liked}
       onClick={(e) => {
         e.stopPropagation();

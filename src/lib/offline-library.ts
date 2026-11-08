@@ -190,6 +190,15 @@ export function listeningStreamPath(slug: string): string | null {
   return streamUrl(slug);
 }
 
+/** Why Save offline is tappable, or why it must stay visible but disabled. */
+export type SaveOfflineGate = "ready" | "no-stream" | "unsupported";
+
+export function saveOfflineGate(slug: string, supported: boolean): SaveOfflineGate {
+  if (!supported) return "unsupported";
+  if (!hasStream(slug)) return "no-stream";
+  return "ready";
+}
+
 function taggedError(kind: SaveErrorKind, message: string): Error {
   return Object.assign(new Error(message), { kind, name: kind === "interrupted" ? "AbortError" : "Error" });
 }

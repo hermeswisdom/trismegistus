@@ -102,7 +102,8 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
             </p>
           ) : null}
           {current ? (
-            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10 phone-short:mt-4">
+            <>
+            <div className="mt-8 flex flex-wrap items-center gap-2 sm:mt-10 phone-short:mt-4" data-hero-play="">
               <button
                 type="button"
                 onPointerDown={noteUserGesture}
@@ -152,9 +153,12 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
                 <ShareButton track={current} className="bg-elevated" />
               )}
               <MarkButton trackId={current.id} className="bg-elevated" labeled />
+            </div>
+            <div className="mt-3 flex flex-wrap items-end gap-2" data-hero-files="">
               <SaveOfflineButton track={current} />
               <BuyMasterButton track={current} />
             </div>
+            </>
           ) : null}
         </div>
       </div>
@@ -313,8 +317,9 @@ function TabletTile({
             className="size-8 bg-bg/55 text-fg sm:size-10"
           />
         </div>
-        {/* Full-width under the icon row so the price is never clipped by the strip. */}
-        <div className="col-span-2 min-w-0 [&_button]:pointer-events-auto">
+        {/* Full-width under the icon row so Save / price are never clipped by the strip. */}
+        <div className="col-span-2 flex min-w-0 flex-col gap-1 [&_button]:pointer-events-auto">
+          <SaveOfflineButton track={track} variant="card" />
           <BuyMasterButton track={track} variant="card" />
         </div>
       </div>
