@@ -7,8 +7,10 @@ import { HermesNote } from "@/components/hermes-note";
 import { MarksPulse } from "@/components/marks-pulse";
 import { AutoMixButton } from "@/components/auto-mix";
 import { BuyMasterButton } from "@/components/buy-master";
+import { DownloadsShelf } from "@/components/downloads-shelf";
 import { HeartButton, ShareButton, ShareDayButton } from "@/components/track-actions";
 import { FavoritesShelf } from "@/components/favorites-shelf";
+import { SaveOfflineButton } from "@/components/save-offline";
 import { MarkButton } from "@/components/mark-button";
 import { ReadButton } from "@/components/read-button";
 import { dailyTrackId } from "@/lib/daily-catalog";
@@ -150,6 +152,7 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
                 <ShareButton track={current} className="bg-elevated" />
               )}
               <MarkButton trackId={current.id} className="bg-elevated" labeled />
+              <SaveOfflineButton track={current} />
               <BuyMasterButton track={current} />
             </div>
           ) : null}
@@ -165,6 +168,8 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
         dailyId={dailyId}
         onToggle={toggleTrack}
       />
+
+      <DownloadsShelf />
 
       <div id="work" className="border-t border-border">
         <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-16">

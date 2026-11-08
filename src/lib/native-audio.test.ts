@@ -11,6 +11,7 @@ import {
   subscribeNative,
   type NativeNotice,
 } from "./native-audio.ts";
+import { rememberOfflineObjectUrl, resetOfflineObjectUrlsForTests } from "./offline-library.ts";
 import { STREAM_SLUGS } from "./stream-manifest.ts";
 import { getLastPause, resetAudioDebugForTests } from "./audio-debug.ts";
 import { readFileSync } from "node:fs";
@@ -63,6 +64,7 @@ let notices: NativeNotice[];
 let docListeners: string[];
 
 beforeEach(() => {
+  resetOfflineObjectUrlsForTests();
   resetNativeForTests();
   audio = new FakeAudio();
   docListeners = [];
@@ -80,6 +82,7 @@ beforeEach(() => {
 afterEach(() => {
   nativePause();
   resetNativeForTests();
+  resetOfflineObjectUrlsForTests();
 });
 
 const types = () => notices.map((n) => n.type);
@@ -91,6 +94,14 @@ describe("native player", () => {
     assert.deepEqual(audio.plays, [{ src: `/api/stream/${A.slug}`, muted: false }]);
     assert.deepEqual(types(), ["pending"]);
     assert.equal(nativePhase(), "pending");
+  });
+
+  it("plays an explicit local save from a blob URL, not /api/stream", () => {
+    rememberOfflineObjectUrl(A.slug, new Blob([new Uint8Array(8)], { type: "audio/mpeg" }));
+    assert.equal(nativePlay(A), true);
+    assert.match(audio.src, /^blob:/);
+    assert.doesNotMatch(audio.src, /\/api\/stream|masters/);
+    assert.deepEqual(types(), ["pending"]);
   });
 
   it("only claims playing once audio flows, then reports progress", () => {

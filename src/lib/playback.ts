@@ -25,6 +25,8 @@ export const PLAY_BLOCKED_COPY = "Tap to play";
 export const PLAY_PENDING_COPY = "Sounding…";
 /** The stream failed and there is no SoundCloud sound to fall back to. */
 export const PLAY_FAILED_COPY = "Couldn’t play this one";
+/** Offline, and this tablet has no listening copy on the device. */
+export const PLAY_OFFLINE_COPY = "Not saved on this device";
 
 export type PlayIntent = "play" | "pause";
 

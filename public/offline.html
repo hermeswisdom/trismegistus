@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#09080e" />
+    <meta name="robots" content="noindex" />
+    <title>Downloads · Atman Music</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root {
+        --bg: #09080e;
+        --surface: #15131c;
+        --elevated: #1e1b28;
+        --fg: #f4efe4;
+        --muted: #a39b8c;
+        --subtle: #6e675c;
+        --accent: #d6e24a;
+        --border: rgb(244 239 228 / 12%);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: Outfit, ui-sans-serif, system-ui, sans-serif;
+        min-height: 100%;
+      }
+      body {
+        padding: calc(1.25rem + env(safe-area-inset-top)) 1.25rem calc(2rem + env(safe-area-inset-bottom));
+      }
+      header { max-width: 40rem; margin: 0 auto 1.5rem; }
+      .kicker {
+        font-size: 0.65rem;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0;
+      }
+      h1 {
+        font-family: Syne, ui-sans-serif, system-ui, sans-serif;
+        font-size: 1.85rem;
+        letter-spacing: -0.03em;
+        margin: 0.6rem 0 0.75rem;
+      }
+      p { color: var(--muted); line-height: 1.55; margin: 0 0 0.75rem; }
+      .note { font-size: 0.8rem; color: var(--subtle); }
+      .storage { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--subtle); }
+      ul { list-style: none; padding: 0; margin: 1.25rem auto 0; max-width: 40rem; }
+      li {
+        display: grid;
+        grid-template-columns: 4.5rem 1fr;
+        gap: 0.85rem;
+        padding: 0.85rem 0;
+        border-top: 1px solid var(--border);
+      }
+      img.cover { width: 4.5rem; height: 4.5rem; object-fit: cover; background: var(--elevated); }
+      .title { font-family: Syne, ui-sans-serif, system-ui, sans-serif; margin: 0 0 0.2rem; }
+      .meta { font-size: 0.75rem; color: var(--subtle); margin: 0 0 0.6rem; }
+      .row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+      button {
+        font: inherit;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        min-height: 2.5rem;
+        padding: 0 0.9rem;
+        border: 0;
+        background: var(--elevated);
+        color: var(--fg);
+      }
+      button.play { background: var(--accent); color: var(--bg); }
+      button:disabled { opacity: 0.55; }
+      .seek {
+        width: 100%;
+        margin-top: 0.5rem;
+        accent-color: var(--accent);
+      }
+      .empty {
+        max-width: 40rem;
+        margin: 1.25rem auto 0;
+        border: 1px solid var(--border);
+        padding: 1.25rem;
+        color: var(--muted);
+      }
+      .status { color: var(--accent); font-size: 0.8rem; min-height: 1.2em; }
+      a { color: var(--accent); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="kicker">Atman Music · Offline</p>
+      <h1>Downloads on this device</h1>
+      <p>
+        You're offline, or the wall couldn't be reached. Saved listening copies
+        still play here. They are not the £0.99 master.
+      </p>
+      <p class="note">
+        Saves live on this device and this browser only. The browser may clear them.
+        Auto Mix needs a connection.
+      </p>
+      <p class="storage" id="storage"></p>
+      <p class="status" id="status" role="status"></p>
+    </header>
+    <div id="list"></div>
+    <audio id="player" playsinline></audio>
+    <script>
+      const DB = "atman-offline";
+      const VERSION = 1;
+      const SAVES = "saves";
+      const AUDIO = "audio";
+      const COVERS = "covers";
+      const player = document.getElementById("player");
+      const listEl = document.getElementById("list");
+      const statusEl = document.getElementById("status");
+      const storageEl = document.getElementById("storage");
+      const urls = new Map();
+      let active = null;
+
+      function asAudioBlob(raw, type) {
+        if (!raw) return null;
+        if (raw instanceof Blob) return raw.size ? raw : null;
+        if (raw instanceof ArrayBuffer && raw.byteLength) return new Blob([raw], { type: type || "audio/mpeg" });
+        if (ArrayBuffer.isView(raw) && raw.byteLength) return new Blob([raw], { type: type || "audio/mpeg" });
+        return null;
+      }
+
+      function asImageBlob(raw) {
+        if (!raw) return null;
+        if (raw instanceof Blob) return raw.size ? raw : null;
+        if (raw instanceof ArrayBuffer && raw.byteLength) return new Blob([raw], { type: "image/jpeg" });
+        if (ArrayBuffer.isView(raw) && raw.byteLength) return new Blob([raw], { type: "image/jpeg" });
+        return null;
+      }
+
+      function formatBytes(bytes) {
+        if (!Number.isFinite(bytes) || bytes < 0) return "0 B";
+        if (bytes < 1000) return Math.round(bytes) + " B";
+        if (bytes < 1e6) return (bytes / 1000).toFixed(bytes < 10000 ? 1 : 0) + " kB";
+        return (bytes / 1e6).toFixed(1) + " MB";
+      }
+
+      function openDb() {
+        return new Promise((resolve, reject) => {
+          if (!indexedDB) {
+            reject(new Error("unsupported"));
+            return;
+          }
+          const req = indexedDB.open(DB, VERSION);
+          req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(SAVES)) db.createObjectStore(SAVES, { keyPath: "slug" });
+            if (!db.objectStoreNames.contains(AUDIO)) db.createObjectStore(AUDIO);
+            if (!db.objectStoreNames.contains(COVERS)) db.createObjectStore(COVERS);
+          };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error || new Error("idb"));
+        });
+      }
+
+      function txGet(db, store, key) {
+        return new Promise((resolve, reject) => {
+          const req = db.transaction(store, "readonly").objectStore(store).get(key);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function txGetAll(db, store) {
+        return new Promise((resolve, reject) => {
+          const req = db.transaction(store, "readonly").objectStore(store).getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function txDelete(db, store, key) {
+        return new Promise((resolve, reject) => {
+          const req = db.transaction(store, "readwrite").objectStore(store).delete(key);
+          req.onsuccess = () => resolve();
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      function setStatus(text) {
+        statusEl.textContent = text || "";
+      }
+
+      async function load() {
+        let db;
+        try {
+          db = await openDb();
+        } catch {
+          listEl.innerHTML = '<p class="empty">This browser can\'t open saved songs.</p>';
+          return;
+        }
+        const rows = (await txGetAll(db, SAVES)).sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+        const keep = [];
+        for (const row of rows) {
+          const raw = await txGet(db, AUDIO, row.slug);
+          const blob = asAudioBlob(raw, row.contentType);
+          if (!blob || !blob.size) {
+            await txDelete(db, SAVES, row.slug).catch(() => {});
+            await txDelete(db, AUDIO, row.slug).catch(() => {});
+            await txDelete(db, COVERS, row.slug).catch(() => {});
+            continue;
+          }
+          const prev = urls.get(row.slug);
+          if (prev) URL.revokeObjectURL(prev);
+          urls.set(row.slug, URL.createObjectURL(blob));
+          const coverBlob = asImageBlob(await txGet(db, COVERS, row.slug));
+          keep.push({
+            ...row,
+            bytes: blob.size,
+            coverUrl: coverBlob ? URL.createObjectURL(coverBlob) : row.image || "",
+          });
+        }
+        let quotaLine = formatBytes(keep.reduce((n, r) => n + (r.bytes || 0), 0));
+        try {
+          const est = await navigator.storage?.estimate?.();
+          if (est && est.usage != null) {
+            quotaLine =
+              keep.length +
+              (keep.length === 1 ? " song" : " songs") +
+              " · " +
+              formatBytes(est.usage) +
+              (est.quota ? " of about " + formatBytes(est.quota) : "") +
+              " on this device";
+          } else {
+            quotaLine =
+              keep.length +
+              (keep.length === 1 ? " song" : " songs") +
+              " · about " +
+              quotaLine +
+              " on this device";
+          }
+        } catch {
+          quotaLine =
+            keep.length +
+            (keep.length === 1 ? " song" : " songs") +
+            " · about " +
+            quotaLine +
+            " on this device";
+        }
+        storageEl.textContent = keep.length ? quotaLine : "";
+        if (!keep.length) {
+          listEl.innerHTML =
+            '<p class="empty">No songs saved on this device. Open Atman Music while online, tap Save offline on a tablet, then come back.</p>';
+          return;
+        }
+        const ul = document.createElement("ul");
+        for (const row of keep) {
+          const li = document.createElement("li");
+          li.dataset.slug = row.slug;
+          li.innerHTML =
+            '<img class="cover" alt="" width="72" height="72">' +
+            "<div>" +
+            '<p class="title"></p>' +
+            '<p class="meta"></p>' +
+            '<div class="row">' +
+            '<button type="button" class="play" data-act="play">Play</button>' +
+            '<button type="button" data-act="remove">Remove</button>' +
+            "</div>" +
+            '<input class="seek" type="range" min="0" max="0" value="0" step="0.1" aria-label="Seek">' +
+            "</div>";
+          li.querySelector(".title").textContent = row.title || row.slug;
+          li.querySelector(".meta").textContent =
+            formatBytes(row.bytes) + " · listening copy · " + (row.bitrateKbps || 128) + " kbps";
+          const img = li.querySelector(".cover");
+          if (row.coverUrl) img.src = row.coverUrl;
+          ul.appendChild(li);
+        }
+        listEl.replaceChildren(ul);
+        ul.addEventListener("click", async (event) => {
+          const btn = event.target.closest("button");
+          if (!btn) return;
+          const li = btn.closest("li");
+          const slug = li?.dataset.slug;
+          if (!slug) return;
+          if (btn.dataset.act === "remove") {
+            if (active === slug) {
+              player.pause();
+              player.removeAttribute("src");
+              active = null;
+            }
+            const db2 = await openDb();
+            await txDelete(db2, SAVES, slug).catch(() => {});
+            await txDelete(db2, AUDIO, slug).catch(() => {});
+            await txDelete(db2, COVERS, slug).catch(() => {});
+            const u = urls.get(slug);
+            if (u) URL.revokeObjectURL(u);
+            urls.delete(slug);
+            setStatus("Removed from this device.");
+            await load();
+            return;
+          }
+          const src = urls.get(slug);
+          if (!src) {
+            setStatus("This save was cleared from the device.");
+            return;
+          }
+          if (active === slug && !player.paused) {
+            player.pause();
+            btn.textContent = "Play";
+            return;
+          }
+          player.src = src;
+          active = slug;
+          try {
+            await player.play();
+            setStatus("");
+            ul.querySelectorAll("button.play").forEach((b) => (b.textContent = "Play"));
+            btn.textContent = "Pause";
+          } catch {
+            setStatus("Couldn't play this one. Try again.");
+          }
+        });
+        ul.addEventListener("input", (event) => {
+          const input = event.target;
+          if (!(input instanceof HTMLInputElement) || !input.classList.contains("seek")) return;
+          const li = input.closest("li");
+          if (!li || li.dataset.slug !== active) return;
+          try {
+            player.currentTime = Number(input.value) || 0;
+          } catch {
+            /* not seekable yet */
+          }
+        });
+        player.ontimeupdate = () => {
+          const li = ul.querySelector('li[data-slug="' + active + '"]');
+          const input = li?.querySelector(".seek");
+          if (!input) return;
+          if (Number.isFinite(player.duration) && player.duration > 0) {
+            input.max = String(player.duration);
+            input.value = String(player.currentTime || 0);
+          }
+        };
+        player.onended = () => {
+          ul.querySelectorAll("button.play").forEach((b) => (b.textContent = "Play"));
+        };
+      }
+
+      load().catch(() => {
+        listEl.innerHTML = '<p class="empty">Couldn\'t read saves on this device.</p>';
+      });
+    </script>
+  </body>
+</html>

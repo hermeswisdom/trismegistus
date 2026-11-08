@@ -197,6 +197,17 @@ export default defineConfig(({ command, isPreview }) => ({
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
             routeRules: {
+              "/sw.js": {
+                headers: {
+                  "cache-control": "no-cache, no-store, must-revalidate",
+                  "service-worker-allowed": "/",
+                },
+              },
+              "/offline.html": {
+                headers: {
+                  "cache-control": "no-cache",
+                },
+              },
               // Free ebook static files: long cache, exact content types and
               // clean file names (src/lib/ebook.ts).
               ...Object.fromEntries(

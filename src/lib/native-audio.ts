@@ -1,6 +1,7 @@
 /**
  * The native player: one top-level <audio> element for the page life, playing
- * the 128 kbps streams (/api/stream/<slug>). Unlike the cross-origin
+ * the 128 kbps streams (/api/stream/<slug>), or a blob: URL when the visitor
+ * explicitly saved that tablet for offline listening. Unlike the cross-origin
  * SoundCloud iframe, a top-level media element keeps playing when the phone
  * locks, and drives the lock-screen controls through the Media Session API.
  *
@@ -10,6 +11,7 @@
  * the next tablet synchronously inside that event, which iOS allows while
  * locked). A stream that cannot load falls back to SoundCloud ("fallback").
  */
+import { peekOfflineObjectUrl } from "./offline-library.ts";
 import { classifyPlayRejection, streamUrl, type NativePhase } from "./streams.ts";
 import { streamVia } from "./stream-proxy.ts";
 import {
@@ -51,14 +53,29 @@ let primeTimer: ReturnType<typeof setTimeout> | null = null;
 let reloadedFor: string | null = null;
 const failed = new Set<string>();
 
-/** The element's src for a tablet: /api/stream/<slug>, plus ?via=direct for the A/B. */
-function srcFor(slug: string, extra?: Record<string, string>): string | null {
+/** True when this src is a local listening copy (IndexedDB blob URL). */
+function isLocalSrc(url: string | null | undefined): boolean {
+  return Boolean(url && url.startsWith("blob:"));
+}
+
+/** Network URL for a tablet: /api/stream/<slug>, plus ?via=direct for the A/B. */
+function networkSrcFor(slug: string, extra?: Record<string, string>): string | null {
   const base = streamUrl(slug);
   if (!base) return null;
   const q = new URLSearchParams(extra);
   if (typeof window !== "undefined" && streamVia(window.location.search) === "direct") q.set("via", "direct");
   const qs = q.toString();
   return qs ? `${base}?${qs}` : base;
+}
+
+/**
+ * Prefer an explicit local save (blob: URL) so seeking does not need HTTP
+ * Range through the service worker. Fall back to the signed stream route.
+ */
+function srcFor(slug: string, extra?: Record<string, string>): string | null {
+  const local = peekOfflineObjectUrl(slug);
+  if (local) return local;
+  return networkSrcFor(slug, extra);
 }
 /** Last time our code paused the element or swapped its src, and why. */
 let pauseCall: PauseCall | null = null;
@@ -232,11 +249,17 @@ function ensureEl(): HTMLAudioElement | null {
     if (phase === "idle" || phase === "blocked") return;
     const at = a.currentTime;
     if (reloadedFor !== slug) {
-      // Expired signed URL / dropped connection: fetch a fresh redirect once.
       reloadedFor = slug;
-      const url = srcFor(slug, { r: String(Date.now()) });
+      // A local blob that failed: try the network stream once if we are online.
+      // A signed URL that lapsed: fetch a fresh redirect once.
+      const usingLocal = isLocalSrc(a.src);
+      const url = usingLocal
+        ? typeof navigator !== "undefined" && navigator.onLine === false
+          ? null
+          : networkSrcFor(slug, { r: String(Date.now()) })
+        : networkSrcFor(slug, { r: String(Date.now()) });
       if (url) {
-        notePauseCall(`stream reload after load error (${slug})`);
+        notePauseCall(usingLocal ? `offline blob failed, network reload (${slug})` : `stream reload after load error (${slug})`);
         a.src = url;
         try {
           if (at > 0) a.currentTime = at;
@@ -272,7 +295,7 @@ function cue(a: HTMLAudioElement, track: NativeTrack): boolean {
  */
 export function nativePlay(track: NativeTrack): boolean {
   const a = ensureEl();
-  if (!a || !streamUrl(track.slug)) return false;
+  if (!a || !srcFor(track.slug)) return false;
   stopPrime();
   const fresh = cue(a, track);
   const restart = !fresh && primedFor === track.id;
@@ -350,7 +373,7 @@ export function nativeSeek(seconds: number) {
 export function nativePrime(track: NativeTrack): boolean {
   if (unlocked || priming) return false;
   const a = ensureEl();
-  if (!a || !streamUrl(track.slug)) return false;
+  if (!a || !srcFor(track.slug)) return false;
   seq += 1;
   clearConfirm();
   phase = "idle";

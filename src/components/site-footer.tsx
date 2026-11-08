@@ -33,6 +33,12 @@ export function SiteFooter() {
             X · {X_HANDLE}
           </a>
           <a
+            href="#downloads"
+            className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
+          >
+            Downloads
+          </a>
+          <a
             href="/bowls"
             className="text-xs tracking-[0.16em] text-subtle uppercase transition-colors duration-150 hover:text-accent"
           >

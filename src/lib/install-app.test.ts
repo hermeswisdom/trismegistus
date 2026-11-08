@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import {
@@ -404,16 +404,24 @@ describe("web manifest and icons", () => {
     assert.match(injectGrokPwaHead("<html><head></head></html>", { projectId: "", site: {} }), /__grok\/manifest\.webmanifest/);
   });
 
-  it("no service worker and no offline cache", () => {
-    assert.equal(existsSync(join(ROOT, "public/sw.js")), false);
-    assert.equal(existsSync(join(ROOT, "public/service-worker.js")), false);
+  it("scoped offline worker exists; the player still does not register it", () => {
+    assert.equal(existsSync(join(ROOT, "public/sw.js")), true);
+    assert.equal(existsSync(join(ROOT, "public/offline.html")), true);
     assert.equal(manifest.serviceworker, undefined);
-    const walk = (dir: string): string[] =>
-      readdirSync(dir, { withFileTypes: true }).flatMap((d) =>
-        d.isDirectory() ? walk(join(dir, d.name)) : /\.(tsx?|mjs)$/.test(d.name) && !d.name.endsWith(".test.ts") ? [join(dir, d.name)] : [],
-      );
-    for (const file of walk(join(ROOT, "src"))) {
-      assert.doesNotMatch(readFileSync(file, "utf8"), /serviceWorker\s*\.\s*register|caches\s*\.\s*open/, file);
+    const playerFiles = [
+      "src/lib/native-audio.ts",
+      "src/lib/player-store.ts",
+      "src/lib/media-session.ts",
+      "src/lib/sc-widget.ts",
+      "src/lib/automix/engine.ts",
+    ];
+    for (const file of playerFiles) {
+      const src = readFileSync(join(ROOT, file), "utf8");
+      assert.doesNotMatch(src, /serviceWorker\s*\.\s*register/, file);
+      assert.doesNotMatch(src, /caches\s*\.\s*open/, file);
     }
+    const runtime = readFileSync(join(ROOT, "src/lib/offline-runtime.ts"), "utf8");
+    assert.match(runtime, /serviceWorker/);
+    assert.match(runtime, /does not reload|never reloads|Never reloads/i);
   });
 });

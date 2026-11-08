@@ -2,9 +2,11 @@
  * "Install app" for Atman Music, ported from Watchtower (#58 sheet + platform
  * steps, #61 early `beforeinstallprompt` capture + installed label).
  *
- * No service worker and no offline cache: this is only the manifest-driven
- * home-screen install. Pure helpers live here so `node --test` can cover them;
- * the React half is src/components/install-app.tsx.
+ * Home-screen install is still manifest-driven. A scoped service worker now
+ * exists for explicit offline listening (public/sw.js): public shell + static
+ * assets only, never the native player, paid masters, or authenticated HTML.
+ * Pure helpers live here so `node --test` can cover them; the React half is
+ * src/components/install-app.tsx.
  */
 
 /** Chromium `beforeinstallprompt` is not in the standard TypeScript DOM lib. */
