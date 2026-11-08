@@ -51,6 +51,8 @@ let confirmTimer: ReturnType<typeof setTimeout> | null = null;
 let primeTimer: ReturnType<typeof setTimeout> | null = null;
 /** One silent reload per tablet when its signed URL lapses / the network drops. */
 let reloadedFor: string | null = null;
+/** True while we swap src on the same tablet (network → saved blob). */
+let swappingSrc = false;
 const failed = new Set<string>();
 
 /** True when this src is a local listening copy (IndexedDB blob URL). */
@@ -223,8 +225,8 @@ function ensureEl(): HTMLAudioElement | null {
     });
     // Only a pause of real playback (lock screen, headphones out, another
     // app taking audio). Our own pause() already set idle; a src change
-    // during a pending start must not cancel it.
-    if (priming || !activeId || phase !== "playing" || a.ended) return;
+    // during a pending start or a same-track blob adopt must not cancel it.
+    if (swappingSrc || priming || !activeId || phase !== "playing" || a.ended) return;
     phase = "idle";
     emit({ type: "pause", id: activeId });
   });
@@ -276,17 +278,83 @@ function ensureEl(): HTMLAudioElement | null {
   return a;
 }
 
+function cueSrcMatches(current: string, next: string): boolean {
+  if (!current || !next) return false;
+  if (current === next) return true;
+  if (isLocalSrc(current) || isLocalSrc(next)) return current === next;
+  try {
+    const cur = new URL(current, "https://atmanmusic.app");
+    const nxt = new URL(next, "https://atmanmusic.app");
+    return cur.pathname === nxt.pathname;
+  } catch {
+    return false;
+  }
+}
+
+function applySrc(a: HTMLAudioElement, url: string, keepTime: number | null) {
+  notePauseCall(`src change to ${activeSlug || url}`);
+  a.src = url;
+  reloadedFor = null;
+  if (keepTime != null && keepTime > 0) {
+    const restore = () => {
+      try {
+        a.currentTime = keepTime;
+      } catch {
+        /* not seekable yet */
+      }
+    };
+    a.addEventListener("loadedmetadata", restore, { once: true });
+    restore();
+  }
+}
+
 function cue(a: HTMLAudioElement, track: NativeTrack): boolean {
-  // A failed stream is re-cued on a retry, so Try again really refetches it.
-  if (activeId === track.id && a.getAttribute("src") && !failed.has(track.slug)) return false;
   const url = srcFor(track.slug);
   if (!url) return false;
-  notePauseCall(`src change to ${track.slug}`);
-  a.src = url;
+  const current = a.getAttribute("src") || "";
+  const sameId = activeId === track.id && Boolean(current) && !failed.has(track.slug);
+  // Same tablet still needs a cue when a save replaces the network stream
+  // with a blob: URL. Otherwise airplane mode keeps playing /api/stream.
+  if (sameId && cueSrcMatches(current, url)) return false;
+  applySrc(a, url, sameId ? a.currentTime : null);
   activeId = track.id;
   activeSlug = track.slug;
-  reloadedFor = null;
   return true;
+}
+
+/**
+ * After an explicit save of the tablet that is already in the native element,
+ * swap /api/stream for the blob: URL without restarting the track or emitting
+ * pause/pending. Position, play/pause, and the same <audio> (lock-screen)
+ * stay put.
+ */
+export function nativeAdoptLocalSave(slug: string): boolean {
+  const a = el;
+  if (!a || activeSlug !== slug) return false;
+  const local = peekOfflineObjectUrl(slug);
+  if (!local) return false;
+  const current = a.getAttribute("src") || a.src || "";
+  if (isLocalSrc(current) && cueSrcMatches(current, local)) return false;
+  const at = a.currentTime;
+  const shouldPlay = !a.paused || phase === "playing" || phase === "pending";
+  swappingSrc = true;
+  try {
+    applySrc(a, local, at);
+    if (!shouldPlay) return true;
+    a.muted = false;
+    claimPlaybackAudioSession();
+    try {
+      const p = a.play();
+      if (p && typeof p.catch === "function") p.catch(() => fallback(activeId || slug, slug));
+    } catch {
+      fallback(activeId || slug, slug);
+    }
+    return true;
+  } finally {
+    queueMicrotask(() => {
+      swappingSrc = false;
+    });
+  }
 }
 
 /**
@@ -422,6 +490,7 @@ export function resetNativeForTests() {
   seq = 0;
   clearConfirm();
   reloadedFor = null;
+  swappingSrc = false;
   pauseCall = null;
   failed.clear();
   listeners.clear();

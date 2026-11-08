@@ -110,7 +110,39 @@ try {
     throw new Error(`save ended ${saveState}: ${saveError} debug=${JSON.stringify(debug)}`);
   }
   results.steps.push({ name: "save offline reaches Saved", ok: true });
+  const afterSave = await page.evaluate(() => {
+    const el = document.querySelector("audio[data-atman-native-audio]");
+    return { src: el?.src || "", paused: Boolean(el?.paused) };
+  });
+  results.steps.push({
+    name: "saving the currently playing track adopts blob src without changing tablet",
+    ok: /^blob:/.test(afterSave.src) && !/masters/.test(afterSave.src),
+    ...afterSave,
+  });
   await shot(page, "offline-saved");
+
+  // Rivet: airplane mode without switching tracks must keep the blob, not /api/stream.
+  await context.setOffline(true);
+  await page.waitForFunction(() => {
+    const el = document.querySelector("audio[data-atman-native-audio]");
+    return el && !el.paused && /^blob:/.test(el.src);
+  });
+  const mid = await page.evaluate(() => document.querySelector("audio[data-atman-native-audio]").currentTime);
+  await page.evaluate(() => {
+    document.querySelector("audio[data-atman-native-audio]").currentTime = 2;
+  });
+  await page.waitForFunction(() => document.querySelector("audio[data-atman-native-audio]").currentTime >= 1.5);
+  const afterSeekOffline = await page.evaluate(() => {
+    const el = document.querySelector("audio[data-atman-native-audio]");
+    return { src: el.src, time: el.currentTime, paused: el.paused };
+  });
+  results.steps.push({
+    name: "same-track network cut after save still seeks the blob",
+    ok: /^blob:/.test(afterSeekOffline.src) && afterSeekOffline.time >= 1.5 && afterSeekOffline.time !== mid && !afterSeekOffline.paused,
+    mid,
+    ...afterSeekOffline,
+  });
+  await context.setOffline(false);
 
   const forbiddenHit = requested.some((u) => /\/masters\/|\/api\/masters|\/api\/stripe|streams-hq/.test(u));
   results.steps.push({ name: "save never touched masters/stripe/HQ", ok: !forbiddenHit, sample: requested.filter((u) => /stream|master|stripe|hq/i.test(u)).slice(0, 8) });

@@ -19,6 +19,7 @@ import {
   type OfflineTrackInput,
   type SaveErrorKind,
 } from "./offline-library.ts";
+import { nativeAdoptLocalSave } from "./native-audio.ts";
 import { hasStream } from "./streams.ts";
 
 export type OfflineStatusState = "idle" | "saving" | "saved" | "error";
@@ -182,6 +183,7 @@ export const useOfflineSaves = create<OfflineStoreState>((set, get) => ({
       const items = [row, ...get().items.filter((item) => item.slug !== row.slug)];
       const usage = await refreshUsage(items);
       aborts.delete(track.slug);
+      nativeAdoptLocalSave(track.slug);
       set({
         items,
         missing: get().missing.filter((slug) => slug !== track.slug),
