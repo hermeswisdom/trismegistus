@@ -19,6 +19,7 @@ import {
   persistOfflineSave,
   resetOfflineObjectUrlsForTests,
   saveErrorCopy,
+  saveOfflineGate,
   shouldRecordListen,
   peekOfflineObjectUrl,
 } from "./offline-library.ts";
@@ -96,6 +97,17 @@ describe("save errors", () => {
     assert.equal(shouldRecordListen({ online: false, qc: false }), false);
     assert.equal(shouldRecordListen({ online: true, qc: true }), false);
     assert.equal(shouldRecordListen({ online: undefined, qc: false }), true);
+  });
+
+  it("keeps Save offline visible when a tablet has no stream or storage", () => {
+    assert.equal(saveOfflineGate(SLUG, true), "ready");
+    assert.equal(saveOfflineGate("lift-me-up", true), "no-stream");
+    assert.equal(saveOfflineGate(SLUG, false), "unsupported");
+    const button = readFileSync(new URL("../components/save-offline.tsx", import.meta.url), "utf8");
+    assert.doesNotMatch(button, /if\s*\(\s*!hasStream/);
+    const wall = readFileSync(new URL("../components/track-wall.tsx", import.meta.url), "utf8");
+    assert.match(wall, /data-hero-files/);
+    assert.match(wall, /SaveOfflineButton track=\{track\} variant="card"/);
   });
 });
 
