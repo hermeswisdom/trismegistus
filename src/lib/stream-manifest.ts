@@ -81,6 +81,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "saxamoan",
   "saxatone",
   "scratch-on-the-floor",
+  "secret-teachings",
   "shadows-of-the-cross",
   "shamanic-in-the-woods",
   "shamanic-me-up",

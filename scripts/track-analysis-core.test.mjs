@@ -5,6 +5,7 @@ import {
   camelot,
   foldBpm,
   genreFromText,
+  GENRES,
   moodRule,
   normaliser,
   outroPoint,
@@ -82,6 +83,12 @@ test("percentile mood rules", () => {
     secondaryMood: null,
   });
   assert.equal(genreFromText("Moonlit Handpan Groove"), "handpan");
+  assert.equal(genreFromText("hip-hop"), "hip-hop");
+  assert.equal(genreFromText("Secret Teachings (Hip Hop)"), "hip-hop");
+  assert.equal(genreFromText("conscious rap cipher"), "hip-hop");
+  assert.equal(genreFromText("Where Comfort Ends"), null);
+  assert.ok(GENRES.includes("hip-hop"));
+  assert.ok(GENRES.includes("drum-and-bass"));
 });
 
 test("outro sits on the bar grid and leaves 8–16 bars", () => {

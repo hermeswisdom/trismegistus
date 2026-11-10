@@ -139,6 +139,19 @@ export function normaliser(values) {
  * the secret."), so the hint is the override file's `genre`, else a keyword in
  * the title or slug. See moodRule for how a hint is used.
  */
+export const GENRES = /** @type {const} */ ([
+  "ambient",
+  "handpan",
+  "lofi",
+  "funk",
+  "dance",
+  "trap",
+  "cinematic",
+  "drum-and-bass",
+  "hip-hop",
+]);
+/** @typedef {(typeof GENRES)[number]} Genre */
+
 export const GENRE_KEYWORDS = /** @type {const} */ ([
   ["ambient", /\b(bowl|bowls|meditation|ambient|om|singing)\b/],
   ["handpan", /\bhandpan\b/],
@@ -147,8 +160,10 @@ export const GENRE_KEYWORDS = /** @type {const} */ ([
   ["dance", /\b(dancefloor|rave|warehouse|techno|house|trance|pulse)\b/],
   ["trap", /\b(trap|drill)\b/],
   ["cinematic", /\b(armour|epic|anthem|kingdom|lionheart)\b/],
+  ["drum-and-bass", /\b(drum and bass|dnb|d and b)\b/],
+  ["hip-hop", /\b(hip hop|hiphop|rap)\b/],
 ]);
-/** @param {string} text @returns {string | null} */
+/** @param {string} text @returns {Genre | null} */
 export function genreFromText(text) {
   const t = text.toLowerCase().replace(/-/g, " ");
   for (const [genre, re] of GENRE_KEYWORDS) if (re.test(t)) return genre;
