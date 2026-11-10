@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "secret-teachings",
+    title: "Secret Teachings",
+    soundId: "2435735697",
+    slug: "secret-teachings",
+    image: "/images/tracks/secret-teachings.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/secret-teachings",
+    recorded: "November 2026",
+    downloadKey: "masters/secret-teachings.mp3",
+  },
+  {
     id: "where-comfort-ends",
     title: "Where Comfort Ends",
     soundId: "2429738937",

@@ -18,5 +18,11 @@
     "bpm": 174,
     "genre": "drum-and-bass",
     "mood": "hype"
+  },
+  "secret-teachings": {
+    "bpm": 92,
+    "genre": "hip-hop",
+    "mood": "epic",
+    "secondaryMood": "dark"
   }
 }
