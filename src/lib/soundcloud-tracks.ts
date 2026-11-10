@@ -2,7 +2,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "secret-teachings",
     title: "Secret Teachings",
-    soundId: "",
+    soundId: "2435735697",
     slug: "secret-teachings",
     image: "/images/tracks/secret-teachings.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/secret-teachings",
