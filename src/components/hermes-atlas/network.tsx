@@ -238,7 +238,8 @@ export function Network({
         c.arc(pos.x, pos.y, 23, 0, Math.PI * 2);
         c.stroke();
       }
-      if (labels || chosen) {
+      const dense = mode === "Whole atlas" && size.w < 720;
+      if ((labels && !dense) || chosen || (labels && major && dense)) {
         const first = n.id === "idris" ? "IDRIS" : n.name.split(" · ")[0]!.split(" / ")[0]!;
         const words = first.length > 21 ? first.split(" ") : [first];
         const lines =

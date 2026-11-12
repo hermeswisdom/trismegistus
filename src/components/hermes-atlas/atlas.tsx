@@ -122,19 +122,21 @@ function InspectCard({
   linked,
   openFigure,
   compact,
+  showHeading = true,
 }: {
   entry: Entry;
   connections: Edge[];
   linked: (text: string) => ReactNode;
   openFigure: (id: string) => void;
   compact: boolean;
+  showHeading?: boolean;
 }) {
   const relatedIds = Array.from(new Set(connections.map((edge) => otherEnd(edge, entry.id))));
   return (
     <div className="min-w-0">
-      {!compact ? null : (
+      {compact && showHeading ? (
         <h3 className="font-display text-xl text-fg">Inspect · {entry.name}</h3>
-      )}
+      ) : null}
       <Properties
         items={
           compact
@@ -948,6 +950,7 @@ export function HermesAtlas() {
                 linked={linked}
                 openFigure={openFigure}
                 compact
+                showHeading={false}
               />
             </div>
             <div className="mt-4 flex flex-wrap gap-2">

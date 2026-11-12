@@ -295,7 +295,7 @@ export function Toggle({
       role="switch"
       aria-checked={value}
       onClick={() => onChange(!value)}
-      className={cn(chip, "gap-3", value && "border-accent/70")}
+      className={cn(chip, "self-start gap-3", value && "border-accent/70")}
     >
       <span
         className={cn(
