@@ -579,3 +579,23 @@
 html:not([data-sc-tap-ready="wheel"]) [data-sc-tap-target="wheel"] {
   visibility: hidden;
 }
+
+.hermes-atlas {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.hermes-atlas-title {
+  text-shadow: 0 0 18px rgb(214 226 74 / 28%);
+}
+
+.hermes-atlas-canvas {
+  background: var(--color-bg);
+  box-shadow:
+    0 0 0 1px rgb(214 226 74 / 14%),
+    0 0 48px rgb(214 226 74 / 8%);
+}
+
+.hermes-atlas-picture {
+  filter: drop-shadow(0 0 12px rgb(214 226 74 / 18%));
+}

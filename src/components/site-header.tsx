@@ -15,6 +15,7 @@ const LINKS = [
   { href: "#bowls", label: "Bowls" },
   { href: "#board", label: "Board" },
   { href: "#ebook", label: "Ebook" },
+  { href: "/hermes", label: "Hermes" },
   { href: "#office", label: "Office" },
   { href: "#signal", label: "Signal" },
 ];
