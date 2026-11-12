@@ -9,6 +9,7 @@ import {
   EVIDENCE_LAYERS,
   EXTRA_ALIASES,
   GROUPS,
+  HERMES_DESCRIPTION,
   HERMES_PATH,
   IDRIS_ROWS,
   READINGS,
@@ -26,20 +27,23 @@ import {
 } from "./index.ts";
 
 describe("Hermes Atlas catalogue", () => {
-  it("has 158 entries, 329 edges, 17 traditions, 3 evidence layers, 8 tours and 16 readings", () => {
-    assert.equal(ENTRIES.length, 158);
-    assert.equal(new Set(ENTRIES.map((entry) => entry.id)).size, 158);
-    assert.equal(EDGES.length, 329);
-    assert.equal(TRADITION_NAMES.length, 17);
+  it("has 165 entries, 345 edges, 18 traditions, 3 evidence layers, 9 tours and 17 readings", () => {
+    assert.equal(ENTRIES.length, 165);
+    assert.equal(new Set(ENTRIES.map((entry) => entry.id)).size, 165);
+    assert.equal(EDGES.length, 345);
+    assert.equal(TRADITION_NAMES.length, 18);
+    assert.ok(TRADITION_NAMES.includes("Mesopotamian roots"));
     assert.equal(EVIDENCE_LAYERS.length, 3);
     assert.deepEqual([...EVIDENCE_LAYERS], [
       "Attested history",
       "Tradition / identification",
       "Modern interpretation / fringe",
     ]);
-    assert.equal(TOURS.length, 8);
-    assert.equal(Object.keys(READINGS).length, 16);
+    assert.equal(TOURS.length, 9);
+    assert.equal(Object.keys(READINGS).length, 17);
     assert.equal(HERMES_PATH, "/hermes");
+    assert.match(HERMES_DESCRIPTION, /165 figures/);
+    assert.match(HERMES_DESCRIPTION, /345 labelled connections/);
   });
 
   it("resolves every edge endpoint, tour stop, reading, story and source key to an entry or ref", () => {
@@ -83,5 +87,20 @@ describe("Hermes Atlas catalogue", () => {
     for (const key of [...SOURCE_KEYS, ...DEEPER_SOURCE_KEYS]) assert.ok(REFS[key], key);
     assert.equal(SYMBOL_ROWS.length, 16);
     assert.equal(IDRIS_ROWS.length, 6);
+    const meso = ["enki", "nisaba", "nabu", "ningishzida", "adapa", "apkallu", "oannes", "enmeduranki"];
+    for (const id of meso) {
+      assert.ok(ids.has(id), id);
+      assert.ok(traditionsOf(entryById(id)).includes("Mesopotamian roots"), id);
+    }
+    const mesoTour = TOURS.find((tour) => tour.title.startsWith("Mesopotamian roots"));
+    assert.ok(mesoTour);
+    assert.deepEqual([...mesoTour.ids], meso);
+    assert.ok(READINGS.enki);
+    const modern = EDGES.filter(
+      (edge) =>
+        (edge.a === "enki" && edge.b === "hermes") || (edge.a === "apkallu" && edge.b === "trismegistus"),
+    );
+    assert.equal(modern.length, 2);
+    assert.ok(modern.every((edge) => edge.type === "Modern reception"));
   });
 });

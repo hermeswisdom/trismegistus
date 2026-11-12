@@ -172,6 +172,7 @@ export const TRADITION_NAMES = [
   "Norse / Celtic",
   "Comparative",
   "Mesopotamian",
+  "Mesopotamian roots",
   "Yoruba / Afro-Cuban",
   "Bahá'í"
 ] as const;
@@ -255,6 +256,16 @@ export const TOPIC_IDS: Record<string, readonly string[]> = {
     "gnostic-crossovers",
     "ptah-logos",
     "nabu"
+  ],
+  "Mesopotamian roots": [
+    "enki",
+    "nisaba",
+    "nabu",
+    "ningishzida",
+    "adapa",
+    "apkallu",
+    "oannes",
+    "enmeduranki"
   ]
 };
 export const TOURS: Tour[] = [
@@ -368,6 +379,20 @@ export const TOURS: Tour[] = [
       "tacitus",
       "odin",
       "wednesday"
+    ]
+  },
+  {
+    "title": "Mesopotamian roots · scribes, sages and comparisons",
+    "note": "Attested Mesopotamian figures first. Hellenistic and scholarly identifications are labelled as comparisons; modern esoteric equations of Enki or the apkallu with Hermes are later claims.",
+    "ids": [
+      "enki",
+      "nisaba",
+      "nabu",
+      "ningishzida",
+      "adapa",
+      "apkallu",
+      "oannes",
+      "enmeduranki"
     ]
   }
 ];
@@ -1060,6 +1085,49 @@ export const READINGS: Record<string, ReadingPanel> = {
       "maat",
       "anubis"
     ]
+  },
+  "enki": {
+    "heading": "Mesopotamian roots",
+    "intro": "These names belong to Mesopotamian religion, sage lists and Greek report. Hellenistic identifications and modern scholarly comparisons are labelled as such. Modern esoteric equations with Hermes are later claims, not cuneiform evidence.",
+    "columns": [
+      "Thread",
+      "What can be said",
+      "Avoid"
+    ],
+    "rows": [
+      [
+        "Enki / Ea and the sages",
+        "Enki of Eridu is the god of wisdom, crafts and magic; Ea is the Akkadian name. Myths attach Adapa and the apkallu to his teaching.",
+        "Treating a modern Enki = Hermes claim as an ancient equation."
+      ],
+      [
+        "Nisaba and Nabu",
+        "Nisaba is an early scribal goddess; Nabu, son of Marduk and so grandson of Ea, becomes the later scribal god and is tied to the planet Mercury.",
+        "Collapsing Nisaba, Nabu, Thoth and Hermes into one original deity."
+      ],
+      [
+        "Ningishzida's staff",
+        "Gudea's vase shows two entwined snakes for Ningishzida. That motif is compared with the later caduceus as iconography.",
+        "Reading the vase as proof that Hermes's herald staff was a Sumerian cult object."
+      ],
+      [
+        "Adapa, Uanna and Oannes",
+        "Adapa is the Eridu sage of the South Wind myth. Oannes is Berossus's Greek name for the first apkallu, Uanna. Identification of Adapa with Uanna/Oannes is scholarly, not a single recovered biography.",
+        "Forcing the fisherman story and the fish-man teacher into one narrative without remainder."
+      ],
+      [
+        "Enmeduranki and Enoch",
+        "The seventh antediluvian king of Sippar is taught divination in heaven. VanderKam and others argue this as a model for Enoch; Annus (2010) surveys that comparison beside apkallu/Watcher study.",
+        "Presenting Enmeduranki as an ancient name of Enoch, or the comparison as a demonstrated identity."
+      ]
+    ],
+    "refs": [
+      "enki",
+      "nabu-wiki",
+      "apkallu",
+      "caduceus-wiki",
+      "annus"
+    ]
   }
 };
 export const GROUP_PALETTE = [
@@ -1094,6 +1162,7 @@ export const PRIMARY_TRADITION_ORDER = [
   "Gnostic crossovers",
   "Hermetic",
   "Mesopotamian",
+  "Mesopotamian roots",
   "Yoruba / Afro-Cuban",
   "Bahá'í",
   "Comparative",

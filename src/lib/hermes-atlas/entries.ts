@@ -177,8 +177,8 @@ export const ENTRIES: Entry[] = [
     "year": -1800,
     "status": "Scribal and planetary comparison",
     "image": "book",
-    "summary": "Mesopotamian god of scribal knowledge and writing, with a major cult at Borsippa; traditionally the son of Marduk. Nabû was associated with the planet Mercury in Mesopotamian astral learning.",
-    "story": "The scribe's stylus and tablet connect divine authority to written knowledge. A shared planet and scribal role permit comparison with Hermes–Thoth, but do not make Nabû an Egyptian or Greek alias.",
+    "summary": "Mesopotamian god of scribal knowledge and writing, with a major cult at Borsippa; traditionally the son of Marduk, and so grandson of Ea/Enki in Babylonian genealogy. Nabû was associated with the planet Mercury in Mesopotamian astral learning.",
+    "story": "The scribe's stylus and tablet connect divine authority to written knowledge. Hellenistic writers sometimes linked Nabu with Hermes and Mercury as a wisdom god; Seleucid sources also identify him with Apollo. A shared planet and scribal role permit comparison with Hermes–Thoth, but do not make Nabû an Egyptian or Greek alias.",
     "symbols": "Stylus • tablet • Borsippa • planet Mercury",
     "refs": [
       "nabu",
@@ -2580,6 +2580,122 @@ export const ENTRIES: Entry[] = [
       "t",
       "maat",
       "anubis"
+    ]
+  },
+  {
+    "id": "enki",
+    "name": "Enki / Ea",
+    "group": "Mesopotamian",
+    "era": "Sumerian cult at Eridu; already major in the earliest written sources of the 3rd millennium BCE",
+    "year": -2500,
+    "status": "Ancient religion; later Babylonian genealogy",
+    "image": "staff",
+    "summary": "Mesopotamian god of wisdom, crafts, magic and incantations, and of the subterranean fresh waters (the Abzu). Enki is the Sumerian name; Ea is the Akkadian name, already syncretised with Enki in parts of Babylonia in the later third millennium BCE.",
+    "story": "His main cult centre is Eridu. Myths present him as a crafty counsellor who fashions humankind from clay and who teaches the apkallu sages. In Babylonian tradition Marduk is his son, which makes Nabu his grandson. A modern esoteric equation of Enki with Hermes is recorded separately as a later claim, not an ancient identification.",
+    "symbols": "Abzu • flowing water • Eridu • crafts • incantations • seven sages",
+    "refs": [
+      "enki",
+      "etcsl-enki"
+    ]
+  },
+  {
+    "id": "ningishzida",
+    "name": "Ningishzida / Ninĝišzida",
+    "group": "Mesopotamian",
+    "era": "Attested Early Dynastic III; Gudea's personal god at Lagash, c. 2100 BCE",
+    "year": -2100,
+    "status": "Ancient religion; later iconographic comparison",
+    "image": "snake",
+    "summary": "Mesopotamian god of vegetation, the underworld and snakes. Gudea's libation vase from Lagash shows a staff with two intertwined snakes, often compared with the later Greek caduceus. The comparison is iconographic, not proof that Hermes's staff descends from this cult.",
+    "story": "Snakes can emanate from his shoulders in relief. In the Adapa myth he and Dumuzi keep the gates of Anu's heaven. The vase symbol is read as representing the god himself; similar-looking later staffs do not by themselves establish a continuous Hermes cult.",
+    "symbols": "Twin serpents on a staff • mushussu • Gudea's vase • underworld vegetation",
+    "refs": [
+      "ningishzida",
+      "caduceus-wiki"
+    ]
+  },
+  {
+    "id": "nisaba",
+    "name": "Nisaba",
+    "group": "Mesopotamian",
+    "era": "One of the oldest Sumerian deities in writing; prominent through the Old Babylonian period",
+    "year": -2500,
+    "status": "Ancient religion; scribal patronage later shared with Nabu",
+    "image": "tablet",
+    "summary": "Mesopotamian goddess of writing, accounting, surveying and grain. Scribes commonly close Sumerian compositions with 'praise to Nisaba'. After the Old Babylonian period Nabu gradually takes over her scribal role, though she does not vanish.",
+    "story": "Her cult centre is Eresh, later Nippur. She belongs mainly to Enlil's circle; parentage traditions vary. A functional comparison with Thoth or Nabu as patrons of writing is not an ancient identification of one goddess with those gods.",
+    "symbols": "Lapis tablet • golden stylus • grain • Eresh • praise to Nisaba",
+    "refs": [
+      "nisaba",
+      "nabu-wiki"
+    ]
+  },
+  {
+    "id": "adapa",
+    "name": "Adapa",
+    "group": "Mesopotamian",
+    "era": "Sumerian Me-Turan versions c. 19th–16th centuries BCE; well-known Amarna tablets, 14th century BCE",
+    "year": -1400,
+    "status": "Ancient myth; later sage lists",
+    "image": "tablet",
+    "summary": "A sage and priest of Ea at Eridu who breaks the South Wind's wing, is summoned to heaven, and refuses the food and water of life on Ea's advice, remaining mortal. Some texts append 'adapa' to the first apkallu Uanna; scholars debate identity versus the epithet 'wise'.",
+    "story": "Ea grants him vast wisdom but not eternal life. In heaven Dumuzi and Ningishzida keep Anu's gates. Identification with Oannes/Uanna is a scholarly and later interpretive link between related sage traditions, not a single recovered biography.",
+    "symbols": "South Wind • Eridu • food of life refused • sage of Ea",
+    "refs": [
+      "adapa",
+      "apkallu"
+    ]
+  },
+  {
+    "id": "apkallu",
+    "name": "Seven Apkallu / Seven Sages",
+    "group": "Mesopotamian",
+    "era": "Antediluvian sages in first-millennium lists; Bit meseri; Uruk List of Kings and Sages, 165 BCE",
+    "year": -700,
+    "status": "Ancient sage lists and ritual figurines",
+    "image": "stars",
+    "summary": "Seven antediluvian sages (apkallu, Sumerian abgal), often fish-cloaked, associated with human wisdom and with Enki/Ea. The first is Uanna; the seventh, Utuabzu, 'who ascended to heaven', is listed as Enmeduranki's sage. A modern esoteric equation of these sages with Hermes Trismegistus is a later claim.",
+    "story": "Bit meseri and the Uruk list name the seven in order and pair several with primeval kings. After the flood later sages are sometimes distinguished as human ummanu. Fish-man figurines were used in apotropaic house rituals. These lists are Mesopotamian evidence, not a Hermetic authorship record.",
+    "symbols": "Fish-cloak • seven sages • Eridu • Uanna • Utuabzu",
+    "refs": [
+      "apkallu",
+      "oannes",
+      "annus"
+    ]
+  },
+  {
+    "id": "oannes",
+    "name": "Oannes / Uanna",
+    "group": "Mesopotamian",
+    "era": "Berossus, Babyloniaca, early 3rd century BCE; Greek form of Uanna",
+    "year": -280,
+    "status": "Ancient Greek report of a Babylonian sage",
+    "image": "staff",
+    "summary": "The Greek name, reported by Berossus, for the first apkallu Uanna: a fish-garbed being who came from the sea by day to teach humankind the arts of civilisation. He is identified with Uanna/Adapa in modern discussion; the fisherman of the Adapa myth and the fish-man teacher remain different narratives.",
+    "story": "Berossus wrote in the early Seleucid period. Surviving quotations describe Oannes teaching writing, law and the creation story. An older conjecture that Oannes was simply Ea is no longer the usual reading; the name is treated as Greek Uanna. The identification with Adapa is scholarly, not a Berossan caption 'Adapa'.",
+    "symbols": "Fish-cloak • sea by day • arts of civilisation • Berossus",
+    "refs": [
+      "oannes",
+      "berossus",
+      "apkallu"
+    ]
+  },
+  {
+    "id": "enmeduranki",
+    "name": "Enmeduranki / En-men-dur-ana",
+    "group": "Mesopotamian",
+    "era": "Seventh antediluvian king of Sippar in the Sumerian King List (copies c. 2000 BCE); Akkadian divination myth",
+    "year": -2000,
+    "status": "King-list figure; scholarly comparison with Enoch",
+    "image": "planet",
+    "summary": "Antediluvian king of Sippar, city of the sun-god Utu/Shamash. An Akkadian tradition has Shamash and Adad take him to heaven and teach oil-and-water and liver divination. Scholars have widely argued that this figure is a model for biblical and Enochic Enoch; that is a modern comparison, not an ancient identification of the two names.",
+    "story": "The King List gives him an enormous legendary reign. In the Uruk List of Kings and Sages his sage is Utuabzu, the apkallu who ascended to heaven. James C. VanderKam and others develop the Enoch comparison from the seventh place, solar associations and revealed knowledge; Amar Annus (2010) surveys that consensus while studying apkallu and Watchers.",
+    "symbols": "Sippar • Shamash • divination • seventh antediluvian king • heavenly instruction",
+    "refs": [
+      "enmeduranki",
+      "skl",
+      "annus",
+      "lambert-enmed"
     ]
   }
 ];

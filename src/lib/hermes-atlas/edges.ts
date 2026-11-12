@@ -1974,5 +1974,101 @@ export const EDGES: Edge[] = [
     "b": "psychopomp",
     "type": "Parallel only",
     "note": "Related funerary concerns, but recording judgement and guiding souls are different functions."
+  },
+  {
+    "a": "enki",
+    "b": "nabu",
+    "type": "Myth & ritual",
+    "note": "Babylonian genealogy: Nabu is son of Marduk, and Marduk is son of Ea/Enki. A lineage in myth, not a shared identity."
+  },
+  {
+    "a": "enki",
+    "b": "adapa",
+    "type": "Myth & ritual",
+    "note": "Adapa is priest and sage of Ea at Eridu; Ea grants him wisdom, withholds immortality, and advises him in the South Wind myth."
+  },
+  {
+    "a": "enki",
+    "b": "apkallu",
+    "type": "Myth & ritual",
+    "note": "The seven sages belong to Enki/Ea's circle as antediluvian teachers; Bit meseri says Ea endowed later human sages with understanding."
+  },
+  {
+    "a": "nisaba",
+    "b": "nabu",
+    "type": "Myth & ritual",
+    "note": "Nabu gradually takes over Nisaba's scribal patronage after the Old Babylonian period; some Late Bronze colophons still name both."
+  },
+  {
+    "a": "nisaba",
+    "b": "thoth",
+    "type": "Parallel only",
+    "note": "Both are patrons of writing; a functional comparison, not an ancient identification of Nisaba with Thoth."
+  },
+  {
+    "a": "ningishzida",
+    "b": "caduceus",
+    "type": "Ancient comparison",
+    "note": "Gudea's libation vase (c. 2100 BCE) shows two snakes entwined on a staff for Ningishzida. Art historians compare this with the later Greek caduceus: resemblance of motif, not a documented cult descent."
+  },
+  {
+    "a": "ningishzida",
+    "b": "adapa",
+    "type": "Myth & ritual",
+    "note": "In the Adapa myth Ningishzida and Dumuzi keep the gates of Anu's heaven."
+  },
+  {
+    "a": "adapa",
+    "b": "apkallu",
+    "type": "Ancient comparison",
+    "note": "Some texts append 'adapa' to the first apkallu Uanna. Scholars debate whether this is the same figure as the Eridu fisherman or the epithet 'wise'."
+  },
+  {
+    "a": "adapa",
+    "b": "oannes",
+    "type": "Ancient comparison",
+    "note": "Oannes is the Greek form of Uanna; Adapa is often identified with that first sage. The Adapa fisherman story and Berossus's fish-man teacher remain different narratives."
+  },
+  {
+    "a": "apkallu",
+    "b": "oannes",
+    "type": "Text & transmission",
+    "note": "Berossus's Oannes is the first apkallu (Uanna), a fish-garbed teacher of civilisation reported in Greek."
+  },
+  {
+    "a": "apkallu",
+    "b": "enmeduranki",
+    "type": "Myth & ritual",
+    "note": "The Uruk List of Kings and Sages pairs Enmeduranki with Utuabzu, the seventh apkallu 'who ascended to heaven'."
+  },
+  {
+    "a": "nabu",
+    "b": "hermes",
+    "type": "Ancient comparison",
+    "note": "Hellenistic and later writers link Nabu with Hermes as a wisdom and messenger god; Seleucid evidence more securely identifies Nabu with Apollo. Shared planet and scribal role, not one original god."
+  },
+  {
+    "a": "nabu",
+    "b": "mercury",
+    "type": "Ancient comparison",
+    "note": "The same interpretive chain equates Nabu with Roman Mercury. Distinct from the already recorded planetary association of Nabû with Mercury the star."
+  },
+  {
+    "a": "enmeduranki",
+    "b": "enoch",
+    "type": "Ancient comparison",
+    "note": "A widely argued scholarly comparison: seventh antediluvian king of Sippar, taught divination in heaven, versus seventh patriarch Enoch with solar years and revealed knowledge. Proposed by modern scholars (VanderKam and others; surveyed in Annus 2010), not an ancient name-equation."
+  },
+  {
+    "a": "enki",
+    "b": "hermes",
+    "type": "Modern reception",
+    "note": "A modern esoteric claim that Enki is Hermes. Not an ancient Mesopotamian or Greek equation; kept on the later/esoteric layer."
+  },
+  {
+    "a": "apkallu",
+    "b": "trismegistus",
+    "type": "Modern reception",
+    "note": "A modern esoteric claim that the apkallu or primordial sages are Hermes Trismegistus. Not a cuneiform identification and not a statement of the Hermetic texts."
   }
 ];

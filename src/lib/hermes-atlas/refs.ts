@@ -408,5 +408,61 @@ export const REFS: Record<string, SourceRef> = {
   "spell125": {
     "title": "Book of the Dead: judgement, Spell 125 and manuscript variation",
     "href": "https://en.wikipedia.org/wiki/Book_of_the_Dead"
+  },
+  "enki": {
+    "title": "Enki / Ea: wisdom, crafts, magic and the Abzu",
+    "href": "https://en.wikipedia.org/wiki/Enki"
+  },
+  "etcsl-enki": {
+    "title": "ETCSL: Enki and Ninhursaga (composite translation)",
+    "href": "https://etcsl.orinst.ox.ac.uk/section1/tr113.htm"
+  },
+  "ningishzida": {
+    "title": "Ningishzida: vegetation, snakes and Gudea's vase",
+    "href": "https://en.wikipedia.org/wiki/Ningishzida"
+  },
+  "caduceus-wiki": {
+    "title": "Caduceus: herald's staff and Near Eastern comparisons",
+    "href": "https://en.wikipedia.org/wiki/Caduceus"
+  },
+  "nisaba": {
+    "title": "Nisaba: writing, grain and scribal praise",
+    "href": "https://en.wikipedia.org/wiki/Nisaba"
+  },
+  "nabu-wiki": {
+    "title": "Nabu: scribal god, Mercury and Hellenistic comparisons",
+    "href": "https://en.wikipedia.org/wiki/Nabu"
+  },
+  "adapa": {
+    "title": "Adapa: sage of Eridu and the South Wind myth",
+    "href": "https://en.wikipedia.org/wiki/Adapa"
+  },
+  "apkallu": {
+    "title": "Apkallu: seven sages, Uanna and Utuabzu",
+    "href": "https://en.wikipedia.org/wiki/Apkallu"
+  },
+  "oannes": {
+    "title": "Oannes: Berossus's Greek name for Uanna",
+    "href": "https://en.wikipedia.org/wiki/Oannes_(mythology)"
+  },
+  "berossus": {
+    "title": "Berossus: Babyloniaca and Hellenistic Babylonian learning",
+    "href": "https://en.wikipedia.org/wiki/Berossus"
+  },
+  "enmeduranki": {
+    "title": "Enmeduranki: seventh antediluvian king of Sippar",
+    "href": "https://en.wikipedia.org/wiki/Enmeduranki"
+  },
+  "skl": {
+    "title": "ETCSL: Sumerian King List (composite translation)",
+    "href": "https://etcsl.orinst.ox.ac.uk/section2/tr211.htm"
+  },
+  "annus": {
+    "title": "Amar Annus, On the Origin of Watchers, JSP 19.4 (2010)",
+    "href": "https://doi.org/10.1177/0951820710373978"
+  },
+  "lambert-enmed": {
+    "title": "W. G. Lambert, Enmeduranki and Related Material, JCS 21 (1967)",
+    "href": "https://www.jstor.org/stable/1359360"
   }
 };
