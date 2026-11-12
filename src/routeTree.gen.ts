@@ -16,6 +16,8 @@ import { Route as DownloadRouteImport } from './routes/download'
 import { Route as EbookRouteImport } from './routes/ebook'
 import { Route as HermesRouteImport } from './routes/hermes'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ApiOgRouteImport } from './routes/api/og'
+import { Route as TSlugRouteImport } from './routes/t/$slug'
 import { Route as ApiAdminBlobUploadRouteImport } from './routes/api/admin/blob-upload'
 import { Route as ApiAdminQueueRouteImport } from './routes/api/admin/queue'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
@@ -23,8 +25,6 @@ import { Route as ApiEbookHitRouteImport } from './routes/api/ebook/hit'
 import { Route as ApiMastersDownloadRouteImport } from './routes/api/masters/download'
 import { Route as ApiStreamSlugRouteImport } from './routes/api/stream/$slug'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
-import { Route as ApiOgRouteImport } from './routes/api/og'
-import { Route as TSlugRouteImport } from './routes/t/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -59,6 +59,16 @@ const HermesRoute = HermesRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiOgRoute = ApiOgRouteImport.update({
+  id: '/api/og',
+  path: '/api/og',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TSlugRoute = TSlugRouteImport.update({
+  id: '/t/$slug',
+  path: '/t/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAdminBlobUploadRoute = ApiAdminBlobUploadRouteImport.update({
@@ -96,16 +106,6 @@ const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
   path: '/api/stripe/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiOgRoute = ApiOgRouteImport.update({
-  id: '/api/og',
-  path: '/api/og',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TSlugRoute = TSlugRouteImport.update({
-  id: '/t/$slug',
-  path: '/t/$slug',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -115,6 +115,8 @@ export interface FileRoutesByFullPath {
   '/ebook': typeof EbookRoute
   '/hermes': typeof HermesRoute
   '/login': typeof LoginRoute
+  '/api/og': typeof ApiOgRoute
+  '/t/$slug': typeof TSlugRoute
   '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
   '/api/admin/queue': typeof ApiAdminQueueRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -122,8 +124,6 @@ export interface FileRoutesByFullPath {
   '/api/masters/download': typeof ApiMastersDownloadRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/api/og': typeof ApiOgRoute
-  '/t/$slug': typeof TSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -133,6 +133,8 @@ export interface FileRoutesByTo {
   '/ebook': typeof EbookRoute
   '/hermes': typeof HermesRoute
   '/login': typeof LoginRoute
+  '/api/og': typeof ApiOgRoute
+  '/t/$slug': typeof TSlugRoute
   '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
   '/api/admin/queue': typeof ApiAdminQueueRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -140,8 +142,6 @@ export interface FileRoutesByTo {
   '/api/masters/download': typeof ApiMastersDownloadRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/api/og': typeof ApiOgRoute
-  '/t/$slug': typeof TSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -152,6 +152,8 @@ export interface FileRoutesById {
   '/ebook': typeof EbookRoute
   '/hermes': typeof HermesRoute
   '/login': typeof LoginRoute
+  '/api/og': typeof ApiOgRoute
+  '/t/$slug': typeof TSlugRoute
   '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
   '/api/admin/queue': typeof ApiAdminQueueRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -159,8 +161,6 @@ export interface FileRoutesById {
   '/api/masters/download': typeof ApiMastersDownloadRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
-  '/api/og': typeof ApiOgRoute
-  '/t/$slug': typeof TSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -172,6 +172,8 @@ export interface FileRouteTypes {
     | '/ebook'
     | '/hermes'
     | '/login'
+    | '/api/og'
+    | '/t/$slug'
     | '/api/admin/blob-upload'
     | '/api/admin/queue'
     | '/api/auth/$'
@@ -179,8 +181,6 @@ export interface FileRouteTypes {
     | '/api/masters/download'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
-    | '/api/og'
-    | '/t/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -190,6 +190,8 @@ export interface FileRouteTypes {
     | '/ebook'
     | '/hermes'
     | '/login'
+    | '/api/og'
+    | '/t/$slug'
     | '/api/admin/blob-upload'
     | '/api/admin/queue'
     | '/api/auth/$'
@@ -197,8 +199,6 @@ export interface FileRouteTypes {
     | '/api/masters/download'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
-    | '/api/og'
-    | '/t/$slug'
   id:
     | '__root__'
     | '/'
@@ -208,6 +208,8 @@ export interface FileRouteTypes {
     | '/ebook'
     | '/hermes'
     | '/login'
+    | '/api/og'
+    | '/t/$slug'
     | '/api/admin/blob-upload'
     | '/api/admin/queue'
     | '/api/auth/$'
@@ -215,8 +217,6 @@ export interface FileRouteTypes {
     | '/api/masters/download'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
-    | '/api/og'
-    | '/t/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -227,6 +227,8 @@ export interface RootRouteChildren {
   EbookRoute: typeof EbookRoute
   HermesRoute: typeof HermesRoute
   LoginRoute: typeof LoginRoute
+  ApiOgRoute: typeof ApiOgRoute
+  TSlugRoute: typeof TSlugRoute
   ApiAdminBlobUploadRoute: typeof ApiAdminBlobUploadRoute
   ApiAdminQueueRoute: typeof ApiAdminQueueRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -234,8 +236,6 @@ export interface RootRouteChildren {
   ApiMastersDownloadRoute: typeof ApiMastersDownloadRoute
   ApiStreamSlugRoute: typeof ApiStreamSlugRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
-  ApiOgRoute: typeof ApiOgRoute
-  TSlugRoute: typeof TSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -289,6 +289,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/og': {
+      id: '/api/og'
+      path: '/api/og'
+      fullPath: '/api/og'
+      preLoaderRoute: typeof ApiOgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/t/$slug': {
+      id: '/t/$slug'
+      path: '/t/$slug'
+      fullPath: '/t/$slug'
+      preLoaderRoute: typeof TSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/blob-upload': {
       id: '/api/admin/blob-upload'
       path: '/api/admin/blob-upload'
@@ -338,20 +352,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/og': {
-      id: '/api/og'
-      path: '/api/og'
-      fullPath: '/api/og'
-      preLoaderRoute: typeof ApiOgRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/t/$slug': {
-      id: '/t/$slug'
-      path: '/t/$slug'
-      fullPath: '/t/$slug'
-      preLoaderRoute: typeof TSlugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -363,6 +363,8 @@ const rootRouteChildren: RootRouteChildren = {
   EbookRoute: EbookRoute,
   HermesRoute: HermesRoute,
   LoginRoute: LoginRoute,
+  ApiOgRoute: ApiOgRoute,
+  TSlugRoute: TSlugRoute,
   ApiAdminBlobUploadRoute: ApiAdminBlobUploadRoute,
   ApiAdminQueueRoute: ApiAdminQueueRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
@@ -370,8 +372,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMastersDownloadRoute: ApiMastersDownloadRoute,
   ApiStreamSlugRoute: ApiStreamSlugRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
-  ApiOgRoute: ApiOgRoute,
-  TSlugRoute: TSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
