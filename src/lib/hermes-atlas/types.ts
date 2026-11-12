@@ -64,4 +64,4 @@ export type DeeperRoute = {
 export const HERMES_PATH = "/hermes";
 export const HERMES_TITLE = "Hermes · Atlas of Names, Wisdom & Worlds";
 export const HERMES_DESCRIPTION =
-  "An explorable constellation of 158 figures, texts, symbols and traditions, with 329 labelled connections. Follow Hermes into Egypt, Rome, Islamic learning and later wisdom traditions—without confusing historical contact, religious identification and resemblance.";
+  "An explorable constellation of 165 figures, texts, symbols and traditions, with 345 labelled connections. Follow Hermes into Egypt, Mesopotamia, Rome, Islamic learning and later wisdom traditions—without confusing historical contact, religious identification and resemblance.";

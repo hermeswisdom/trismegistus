@@ -148,6 +148,30 @@ export const EXTRA_ALIASES: readonly [string, string][] = [
   [
     "Santos Bonacci",
     "bonacci"
+  ],
+  [
+    "Ea",
+    "enki"
+  ],
+  [
+    "Ningišzida",
+    "ningishzida"
+  ],
+  [
+    "Uanna",
+    "oannes"
+  ],
+  [
+    "Seven Sages",
+    "apkallu"
+  ],
+  [
+    "Enmenduranki",
+    "enmeduranki"
+  ],
+  [
+    "En-men-dur-ana",
+    "enmeduranki"
   ]
 ];
 
@@ -182,6 +206,7 @@ export const WISDOM_THEMES: WisdomTheme[] = [
     "ids": [
       "thoth",
       "seshat",
+      "nisaba",
       "nabu",
       "plato"
     ]
