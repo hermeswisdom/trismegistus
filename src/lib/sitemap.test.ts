@@ -27,8 +27,9 @@ describe("public/sitemap.xml", () => {
     assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/<\/loc>/);
     assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/ebook<\/loc>/);
     assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/bowls<\/loc>/);
+    assert.match(xml, /<loc>https:\/\/atmanmusic\.app\/hermes<\/loc>/);
     assert.match(xml, new RegExp(`/\\?tablet=${SOUNDCLOUD_TRACKS[0]!.id}<`));
-    assert.equal(locs(xml).length, SOUNDCLOUD_TRACKS.length + 3);
+    assert.equal(locs(xml).length, SOUNDCLOUD_TRACKS.length + 4);
   });
 
   it("has no unwanted URLs: no noindex utility pages, api, qc/utm or daily params", () => {
@@ -48,6 +49,7 @@ describe("public/sitemap.xml", () => {
     assert.ok(all.has(pageCanonical("/")));
     assert.ok(all.has(pageCanonical("/ebook")));
     assert.ok(all.has(pageCanonical("/bowls")));
+    assert.ok(all.has(pageCanonical("/hermes")));
     for (const track of SOUNDCLOUD_TRACKS) {
       assert.ok(all.has(homeCanonical({ source: "tablet", slug: track.slug })), track.slug);
     }

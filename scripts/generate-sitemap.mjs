@@ -2,7 +2,7 @@
 // Writes public/sitemap.xml from the track catalogue (src/lib/soundcloud-tracks.ts).
 // Runs before `vite build`; `--check` exits 1 if the committed file is stale.
 //
-// Only indexable, canonical URLs: the home page, /ebook, /bowls and one
+// Only indexable, canonical URLs: the home page, /ebook, /bowls, /hermes and one
 // /?tablet=<id> per track (each tablet page canonicalises to itself).
 // /download (receipt redemption) and /login are noindex, so they stay out.
 //
@@ -21,13 +21,14 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 export const SITE_ORIGIN = "https://atmanmusic.app";
-export const STATIC_ROUTES = ["/", "/ebook", "/bowls"];
+export const STATIC_ROUTES = ["/", "/ebook", "/bowls", "/hermes"];
 const CATALOGUE = "src/lib/soundcloud-tracks.ts";
 const MEANINGS = "src/lib/meanings.ts";
 const SITEMAP = "public/sitemap.xml";
 const PAGE_SOURCES = {
   "/ebook": ["src/lib/ebook.ts", "public/ebook"],
   "/bowls": ["src/lib/bowls.ts"],
+  "/hermes": ["src/lib/hermes-atlas"],
 };
 
 /** @param {string} source @returns {string[]} */

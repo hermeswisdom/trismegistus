@@ -14,6 +14,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as BowlsRouteImport } from './routes/bowls'
 import { Route as DownloadRouteImport } from './routes/download'
 import { Route as EbookRouteImport } from './routes/ebook'
+import { Route as HermesRouteImport } from './routes/hermes'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ApiAdminBlobUploadRouteImport } from './routes/api/admin/blob-upload'
 import { Route as ApiAdminQueueRouteImport } from './routes/api/admin/queue'
@@ -48,6 +49,11 @@ const DownloadRoute = DownloadRouteImport.update({
 const EbookRoute = EbookRouteImport.update({
   id: '/ebook',
   path: '/ebook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HermesRoute = HermesRouteImport.update({
+  id: '/hermes',
+  path: '/hermes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
+  '/hermes': typeof HermesRoute
   '/login': typeof LoginRoute
   '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
   '/api/admin/queue': typeof ApiAdminQueueRoute
@@ -124,6 +131,7 @@ export interface FileRoutesByTo {
   '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
+  '/hermes': typeof HermesRoute
   '/login': typeof LoginRoute
   '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
   '/api/admin/queue': typeof ApiAdminQueueRoute
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/bowls': typeof BowlsRoute
   '/download': typeof DownloadRoute
   '/ebook': typeof EbookRoute
+  '/hermes': typeof HermesRoute
   '/login': typeof LoginRoute
   '/api/admin/blob-upload': typeof ApiAdminBlobUploadRoute
   '/api/admin/queue': typeof ApiAdminQueueRoute
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/bowls'
     | '/download'
     | '/ebook'
+    | '/hermes'
     | '/login'
     | '/api/admin/blob-upload'
     | '/api/admin/queue'
@@ -178,6 +188,7 @@ export interface FileRouteTypes {
     | '/bowls'
     | '/download'
     | '/ebook'
+    | '/hermes'
     | '/login'
     | '/api/admin/blob-upload'
     | '/api/admin/queue'
@@ -195,6 +206,7 @@ export interface FileRouteTypes {
     | '/bowls'
     | '/download'
     | '/ebook'
+    | '/hermes'
     | '/login'
     | '/api/admin/blob-upload'
     | '/api/admin/queue'
@@ -213,6 +225,7 @@ export interface RootRouteChildren {
   BowlsRoute: typeof BowlsRoute
   DownloadRoute: typeof DownloadRoute
   EbookRoute: typeof EbookRoute
+  HermesRoute: typeof HermesRoute
   LoginRoute: typeof LoginRoute
   ApiAdminBlobUploadRoute: typeof ApiAdminBlobUploadRoute
   ApiAdminQueueRoute: typeof ApiAdminQueueRoute
@@ -260,6 +273,13 @@ declare module '@tanstack/react-router' {
       path: '/ebook'
       fullPath: '/ebook'
       preLoaderRoute: typeof EbookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hermes': {
+      id: '/hermes'
+      path: '/hermes'
+      fullPath: '/hermes'
+      preLoaderRoute: typeof HermesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -341,6 +361,7 @@ const rootRouteChildren: RootRouteChildren = {
   BowlsRoute: BowlsRoute,
   DownloadRoute: DownloadRoute,
   EbookRoute: EbookRoute,
+  HermesRoute: HermesRoute,
   LoginRoute: LoginRoute,
   ApiAdminBlobUploadRoute: ApiAdminBlobUploadRoute,
   ApiAdminQueueRoute: ApiAdminQueueRoute,

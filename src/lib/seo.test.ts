@@ -298,6 +298,12 @@ describe("JSON-LD", () => {
     assertValidNode(doc["@graph"], "bowls");
     assert.equal((doc["@graph"][0] as any).itemListElement[1].item, "https://atmanmusic.app/bowls");
   });
+
+  it("/hermes: breadcrumb", () => {
+    const doc = renderAndParse(pageBreadcrumbJsonLd("Hermes Atlas", "/hermes"));
+    assertValidNode(doc["@graph"], "hermes");
+    assert.equal((doc["@graph"][0] as any).itemListElement[1].item, "https://atmanmusic.app/hermes");
+  });
 });
 
 describe("home description and verification", () => {
