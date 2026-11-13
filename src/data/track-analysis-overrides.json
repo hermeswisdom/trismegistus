@@ -24,5 +24,17 @@
     "genre": "hip-hop",
     "mood": "epic",
     "secondaryMood": "dark"
+  },
+  "imagination-is-the-new-currency": {
+    "bpm": 170,
+    "genre": "drum-and-bass"
+  },
+  "the-flow-must-go-on": {
+    "bpm": 172,
+    "genre": "drum-and-bass"
+  },
+  "restless-transit": {
+    "bpm": 172,
+    "genre": "drum-and-bass"
   }
 }
