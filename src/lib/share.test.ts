@@ -103,7 +103,7 @@ describe("homeOgCard", () => {
     assert.equal(card.title, "Atman Music");
     assert.equal(card.siteName, "Atman Music");
     assert.equal(card.url, "https://atmanmusic.app/");
-    assert.equal(card.image, "https://atmanmusic.app/api/og");
+    assert.equal(card.image, "https://atmanmusic.app/brand/og-image.png");
     assert.equal(card.imageAlt, "Atman Music");
     assert.equal(card.url.includes("atmanmusic.com"), false);
   });

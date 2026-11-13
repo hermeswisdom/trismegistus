@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { HermesAtlas } from "@/components/hermes-atlas";
-import { HermesNote } from "@/components/hermes-note";
+import { SiteMark } from "@/components/site-mark";
 import { HERMES_DESCRIPTION, HERMES_PATH, HERMES_TITLE } from "@/lib/hermes-atlas";
 import { jsonLdMeta, pageBreadcrumbJsonLd } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/tablet-link";
@@ -32,13 +32,13 @@ function HermesPage() {
   return (
     <>
       <div className="grain" aria-hidden="true" />
-      <main className="min-h-dvh min-w-0 overflow-x-clip bg-bg pb-[max(3rem,env(safe-area-inset-bottom))]">
+      <main className="min-h-dvh min-w-0 overflow-x-clip pb-[max(3rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-6xl px-5 pt-[max(2rem,env(safe-area-inset-top))] sm:px-8">
           <Link
             to="/"
             className="inline-flex min-h-11 items-center gap-2 font-display text-sm tracking-[0.16em] text-fg uppercase"
           >
-            <HermesNote size="mark" />
+            <SiteMark />
             Atman Music
           </Link>
         </div>

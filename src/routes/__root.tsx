@@ -4,6 +4,7 @@ import { InstallAppProvider } from "@/components/install-app";
 import { OfflineRuntime } from "@/components/offline-runtime";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { INSTALL_CAPTURE_SCRIPT } from "@/lib/install-app";
+import { SiteBackdrop } from "@/components/site-backdrop";
 import { ViewportLock } from "@/components/viewport-lock";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
 import { siteVerificationMeta } from "@/lib/seo";
@@ -37,7 +38,9 @@ export const Route = createRootRoute({
       ...siteVerificationMeta(GOOGLE_SITE_VERIFICATION),
     ],
     links: [
-      { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "icon", href: "/brand/favicon.ico", sizes: "48x48" },
+      { rel: "icon", type: "image/png", sizes: "32x32", href: "/brand/mark-32.png" },
+      { rel: "icon", type: "image/png", sizes: "16x16", href: "/brand/mark-16.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
@@ -63,14 +66,17 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body className="bg-bg text-fg font-sans">
-        <ViewportLock />
-        <PreviewHostBridge />
-        <AuthProvider>
-          <InstallAppProvider>
-            <OfflineRuntime />
-            <Outlet />
-          </InstallAppProvider>
-        </AuthProvider>
+        <SiteBackdrop />
+        <div className="relative z-10">
+          <ViewportLock />
+          <PreviewHostBridge />
+          <AuthProvider>
+            <InstallAppProvider>
+              <OfflineRuntime />
+              <Outlet />
+            </InstallAppProvider>
+          </AuthProvider>
+        </div>
         <Scripts />
       </body>
     </html>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { AccountLink } from "@/components/account-menu";
-import { HermesNote } from "@/components/hermes-note";
+import { SiteMark } from "@/components/site-mark";
 import { InstallAppButton } from "@/components/install-app";
 import { VisitorBadge } from "@/components/visitor-badge";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,7 @@ export function SiteHeader() {
           href="#top"
           className="flex min-h-11 items-center gap-2 font-display text-sm tracking-[0.14em] text-fg uppercase sm:text-lg sm:tracking-[0.16em]"
         >
-          <HermesNote size="mark" />
+          <SiteMark />
           Atman Music
         </a>
         <nav className="hidden items-center gap-5 lg:flex xl:gap-8" aria-label="Primary">

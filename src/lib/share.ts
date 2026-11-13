@@ -100,7 +100,7 @@ function originFrom(origin?: string): string {
   return (origin ?? SITE_ORIGIN).replace(/\/$/, "");
 }
 
-/** Brand `/api/og` on unmarked home; track card (`?slug=`) on tablet / daily. */
+/** Brand `/brand/og-image.png` on unmarked home; track card (`?slug=`) on tablet / daily. */
 export function homeOgImage(input: {
   source: "daily" | "tablet" | "none";
   slug: string;
@@ -109,7 +109,7 @@ export function homeOgImage(input: {
   mix?: string;
 }): string {
   if (input.mix) return ogCardUrl({ mix: input.mix, origin: input.origin });
-  if (input.source === "none") return ogCardUrl({ origin: input.origin });
+  if (input.source === "none") return `${originFrom(input.origin)}/brand/og-image.png`;
   return ogCardUrl({ slug: input.slug, origin: input.origin });
 }
 

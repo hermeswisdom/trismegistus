@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { HermesNote } from "@/components/hermes-note";
+import { SiteMark } from "@/components/site-mark";
 import { displayMasterPricePence, trackIsForSale } from "@/lib/masters";
 import { publicOrigin, shareMetaTags, shareTabletUrl } from "@/lib/og-card";
 import { getMeaning, getTrackBySlug } from "@/lib/rooms";
@@ -71,9 +71,9 @@ function ShareTabletPage() {
   }, [href]);
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center bg-bg px-6 text-center text-fg">
+    <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center text-fg">
       <a href={href} className="inline-flex items-center gap-2 font-display text-sm tracking-[0.16em] uppercase">
-        <HermesNote size="mark" />
+        <SiteMark />
         Atman Music
       </a>
       <h1 className="mt-6 font-display text-3xl tracking-tight">
