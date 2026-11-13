@@ -234,7 +234,7 @@ export function InstallPrompt({ className }: { className?: string }) {
       aria-label={`Install ${APP_NAME}`}
       className={cn("flex items-start gap-3 border border-border bg-surface/70 py-3 pr-1 pl-3", className)}
     >
-      <img src="/icons/icon-192.png" alt="" width={40} height={40} className="mt-0.5 size-10 shrink-0" />
+      <img src="/brand/mark-192.png" alt="" width={40} height={40} className="mt-0.5 size-10 shrink-0" />
       <div className="min-w-0 flex-1">
         <p className="text-xs leading-relaxed text-muted">{installPromptBody({ ios, canPrompt })}</p>
         <button
@@ -356,7 +356,7 @@ function InstallSheet({
       >
         <div className="flex items-start justify-between gap-3 px-5 pt-5">
           <div className="flex min-w-0 items-center gap-3">
-            <img src="/icons/icon-192.png" alt="" width={44} height={44} className="size-11 shrink-0" />
+            <img src="/brand/mark-192.png" alt="" width={44} height={44} className="size-11 shrink-0" />
             <div className="min-w-0">
               <p className="text-[0.65rem] tracking-[0.28em] text-accent uppercase">
                 {guide.kind === "installed" ? "Installed" : "Install the app"}

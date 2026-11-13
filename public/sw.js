@@ -12,15 +12,15 @@
  *
  * Keep bypass prefixes in sync with src/lib/offline-sw.ts.
  */
-const STATIC_CACHE = "atman-offline-static-v1";
-const SHELL_CACHE = "atman-offline-shell-v1";
+const STATIC_CACHE = "atman-offline-static-v2";
+const SHELL_CACHE = "atman-offline-shell-v2";
 const SHELL_URL = "/offline.html";
 const PRECACHE = [
   SHELL_URL,
   "/manifest.webmanifest",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/favicon.svg",
+  "/brand/mark-192.png",
+  "/brand/mark-512.png",
+  "/brand/favicon.ico",
   "/apple-touch-icon.png",
 ];
 const BYPASS_PREFIXES = [

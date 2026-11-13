@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { HermesNote } from "@/components/hermes-note";
+import { SiteMark } from "@/components/site-mark";
 import { parseDownloadSearch } from "@/lib/download-search";
 import { MASTER_LICENSE_LINE } from "@/lib/masters";
 import { redeemMasterPurchase } from "@/lib/master-checkout";
@@ -54,13 +54,13 @@ function DownloadPage() {
       : undefined;
 
   return (
-    <main className="min-h-dvh bg-bg px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8">
+    <main className="min-h-dvh px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(2rem,env(safe-area-inset-bottom))] sm:px-8">
       <div className="mx-auto flex min-h-dvh max-w-6xl flex-col justify-center py-12">
         <Link
           to="/"
           className="inline-flex items-center gap-2 font-display text-sm tracking-[0.16em] text-fg uppercase"
         >
-          <HermesNote size="mark" />
+          <SiteMark />
           Atman Music
         </Link>
         {data.kind === "cancelled" ? (

@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { HealingSounds } from "@/components/healing-sounds";
-import { HermesNote } from "@/components/hermes-note";
+import { SiteMark } from "@/components/site-mark";
 import { BOWLS, BOWLS_DISCLAIMER, BOWLS_PATH } from "@/lib/bowls";
 import { jsonLdMeta, pageBreadcrumbJsonLd } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/tablet-link";
@@ -33,13 +33,13 @@ function BowlsPage() {
   return (
     <>
       <div className="grain" aria-hidden="true" />
-      <main className="min-h-dvh bg-bg pb-[calc(7rem+env(safe-area-inset-bottom))]">
+      <main className="min-h-dvh pb-[calc(7rem+env(safe-area-inset-bottom))]">
         <div className="mx-auto max-w-6xl px-5 pt-[max(2rem,env(safe-area-inset-top))] sm:px-8">
           <Link
             to="/"
             className="inline-flex min-h-11 items-center gap-2 font-display text-sm tracking-[0.16em] text-fg uppercase"
           >
-            <HermesNote size="mark" />
+            <SiteMark />
             Atman Music
           </Link>
         </div>

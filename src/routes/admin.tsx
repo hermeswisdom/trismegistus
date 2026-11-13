@@ -40,7 +40,7 @@ export const Route = createFileRoute("/admin")({
 function AdminPage() {
   const { items } = Route.useLoaderData();
   return (
-    <main className="min-h-dvh bg-bg px-5 py-10 sm:px-8">
+    <main className="min-h-dvh px-5 py-10 sm:px-8">
       <div className="mx-auto max-w-3xl">
         <p className="text-xs font-medium tracking-[0.32em] text-accent uppercase">Admin</p>
         <h1 className="mt-3 font-display text-section text-fg">Upload queue</h1>

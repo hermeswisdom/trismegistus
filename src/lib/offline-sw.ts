@@ -9,17 +9,17 @@
  * Keep the prefix lists in sync with public/sw.js (tests check both).
  */
 
-export const SW_STATIC_CACHE = "atman-offline-static-v1";
-export const SW_SHELL_CACHE = "atman-offline-shell-v1";
+export const SW_STATIC_CACHE = "atman-offline-static-v2";
+export const SW_SHELL_CACHE = "atman-offline-shell-v2";
 export const SW_SHELL_URL = "/offline.html";
 export const SW_SCRIPT_URL = "/sw.js";
 
 export const SW_PRECACHE = [
   SW_SHELL_URL,
   "/manifest.webmanifest",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/favicon.svg",
+  "/brand/mark-192.png",
+  "/brand/mark-512.png",
+  "/brand/favicon.ico",
   "/apple-touch-icon.png",
 ] as const;
 

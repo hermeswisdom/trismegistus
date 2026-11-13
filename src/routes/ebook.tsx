@@ -1,6 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { EbookPageBody } from "@/components/free-ebook";
-import { HermesNote } from "@/components/hermes-note";
+import { SiteMark } from "@/components/site-mark";
 import { EBOOK_COVER, EBOOK_DESCRIPTION, EBOOK_PAGE_PATH, EBOOK_TITLE } from "@/lib/ebook";
 import { ebookJsonLd, jsonLdMeta } from "@/lib/seo";
 import { SITE_ORIGIN } from "@/lib/tablet-link";
@@ -34,13 +34,13 @@ export const Route = createFileRoute("/ebook")({
 
 function EbookPage() {
   return (
-    <main className="min-h-dvh bg-bg px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-8">
+    <main className="min-h-dvh px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(3rem,env(safe-area-inset-bottom))] sm:px-8">
       <div className="mx-auto max-w-5xl py-8 sm:py-14">
         <Link
           to="/"
           className="inline-flex min-h-11 items-center gap-2 font-display text-sm tracking-[0.16em] text-fg uppercase"
         >
-          <HermesNote size="mark" />
+          <SiteMark />
           Atman Music
         </Link>
         <div className="mt-10 sm:mt-14">

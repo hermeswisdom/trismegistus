@@ -381,6 +381,17 @@ describe("web manifest and icons", () => {
     assert.ok(info.colorType === 2 || info.colorType === 3, "RGB or palette, no alpha channel");
   });
 
+  it("brand share image is 1200×630 and the root head ships ico + 32/16 png favicons", () => {
+    const og = pngInfo(join(ROOT, "public/brand/og-image.png"));
+    assert.deepEqual([og.width, og.height], [1200, 630]);
+    assert.equal(existsSync(join(ROOT, "public/brand/favicon.ico")), true);
+    const root = readFileSync(join(ROOT, "src/routes/__root.tsx"), "utf8");
+    assert.match(root, /href: "\/brand\/favicon\.ico"/);
+    assert.match(root, /sizes: "32x32", href: "\/brand\/mark-32\.png"/);
+    assert.match(root, /sizes: "16x16", href: "\/brand\/mark-16\.png"/);
+    assert.doesNotMatch(root, /favicon\.svg/);
+  });
+
   it("root head links our manifest, icon and apple-mobile-web-app metas, not the Grok placeholder", () => {
     const root = readFileSync(join(ROOT, "src/routes/__root.tsx"), "utf8");
     assert.match(root, /rel: "manifest", href: "\/manifest\.webmanifest"/);
