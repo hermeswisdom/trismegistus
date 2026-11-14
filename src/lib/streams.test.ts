@@ -288,6 +288,30 @@ describe("a tablet SoundCloud has not published yet (no sound id)", () => {
     const unpublished = SOUNDCLOUD_TRACKS.filter((t) => !canUseSoundCloud(t));
     for (const t of unpublished) assert.equal(hasStream(t.slug), true, t.id);
   });
+  it("Imagination Is The New Currency now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
+    const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "imagination-is-the-new-currency")!;
+    assert.equal(t.soundId, "2438057532");
+    assert.equal(t.permalink, "https://soundcloud.com/esoteric_vibrations/imagination-is-the-new-currency");
+    assert.equal(streamFailureAction(t), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, failed: new Set([t.slug]), soundCloud: canUseSoundCloud(t) }), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, soundCloud: canUseSoundCloud(t) }), "native");
+  });
+  it("The Flow Must Go On now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
+    const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "the-flow-must-go-on")!;
+    assert.equal(t.soundId, "2438057826");
+    assert.equal(t.permalink, "https://soundcloud.com/esoteric_vibrations/the-flow-must-go-on");
+    assert.equal(streamFailureAction(t), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, failed: new Set([t.slug]), soundCloud: canUseSoundCloud(t) }), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, soundCloud: canUseSoundCloud(t) }), "native");
+  });
+  it("Restless Transit now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
+    const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "restless-transit")!;
+    assert.equal(t.soundId, "2438058006");
+    assert.equal(t.permalink, "https://soundcloud.com/esoteric_vibrations/restless-transit");
+    assert.equal(streamFailureAction(t), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, failed: new Set([t.slug]), soundCloud: canUseSoundCloud(t) }), "sc");
+    assert.equal(pickBackend({ slug: t.slug, allowNative: true, soundCloud: canUseSoundCloud(t) }), "native");
+  });
   it("Where Comfort Ends now has its SoundCloud sound, so a failed stream falls back to SoundCloud", () => {
     const t = SOUNDCLOUD_TRACKS.find((x) => x.id === "where-comfort-ends")!;
     assert.equal(t.soundId, "2429738937");
