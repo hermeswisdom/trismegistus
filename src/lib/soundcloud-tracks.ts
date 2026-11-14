@@ -2,7 +2,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "imagination-is-the-new-currency",
     title: "Imagination Is The New Currency",
-    soundId: "",
+    soundId: "2438057532",
     slug: "imagination-is-the-new-currency",
     image: "/images/tracks/imagination-is-the-new-currency.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/imagination-is-the-new-currency",
@@ -12,7 +12,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "the-flow-must-go-on",
     title: "The Flow Must Go On",
-    soundId: "",
+    soundId: "2438057826",
     slug: "the-flow-must-go-on",
     image: "/images/tracks/the-flow-must-go-on.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/the-flow-must-go-on",
@@ -22,7 +22,7 @@ export const SOUNDCLOUD_TRACKS = [
   {
     id: "restless-transit",
     title: "Restless Transit",
-    soundId: "",
+    soundId: "2438058006",
     slug: "restless-transit",
     image: "/images/tracks/restless-transit.jpg",
     permalink: "https://soundcloud.com/esoteric_vibrations/restless-transit",
