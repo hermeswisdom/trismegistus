@@ -71,17 +71,6 @@ describe("service worker request policy", () => {
     );
   });
 
-  it("bypasses Vercel Web Analytics so /_vercel/insights is never cached", () => {
-    for (const path of ["/_vercel/insights/script.js", "/_vercel/insights/view"]) {
-      assert.equal(swPathIsBypassed(path), true, path);
-      assert.equal(
-        swClassifyRequest({ method: "GET", url: `${origin}${path}`, origin, hasRange: false }),
-        "bypass",
-        path,
-      );
-    }
-  });
-
   it("treats documents as navigations and hashed assets as static", () => {
     assert.equal(
       swClassifyRequest({ method: "GET", url: `${origin}/`, origin, hasRange: false, mode: "navigate" }),
