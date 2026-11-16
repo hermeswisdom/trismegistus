@@ -66,6 +66,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "neon-pulse",
   "nine-completes",
   "nobody-can-stop-it",
+  "nobody-cares",
   "now-i-see-you-blossom",
   "old-mens-game",
   "paper-crown",
