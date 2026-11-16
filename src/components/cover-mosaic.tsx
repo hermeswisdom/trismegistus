@@ -14,6 +14,7 @@ export function CoverMosaic({ className }: { className?: string }) {
           key={track.id}
           src={track.image}
           alt=""
+          fetchPriority="low"
           className="size-full min-h-0 object-cover outline-none"
         />
       ))}

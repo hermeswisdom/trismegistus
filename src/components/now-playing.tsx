@@ -336,6 +336,7 @@ export function NowPlaying() {
         <img
           src={current.image}
           alt=""
+          fetchPriority="low"
           className="size-11 shrink-0 object-cover sm:size-14"
         />
         <div className="min-w-0 flex-1">

@@ -72,6 +72,7 @@ export function TrackWall({ focusId }: { focusId?: string } = {}) {
           <img
             src={current.image}
             alt=""
+            fetchPriority="low"
             className="absolute inset-0 size-full object-cover outline-none brightness-110"
           />
         ) : null}

@@ -91,6 +91,7 @@ export function DailyRite() {
           <img
             src={daily.image}
             alt=""
+            fetchPriority="low"
             className="size-28 object-cover sm:size-32"
           />
           <span className="absolute top-2 left-2 bg-accent px-2 py-1 text-[0.62rem] font-medium tracking-[0.18em] text-bg uppercase">

@@ -27,19 +27,26 @@ describe("self-hosted site fonts", () => {
 });
 
 describe("homepage styling is not render-blocking", () => {
-  it("inlines the app CSS and preloads self-hosted fonts from the root head", () => {
+  it("hoists the app stylesheet and preloads self-hosted fonts ahead of cover images", () => {
     const root = read("src/routes/__root.tsx");
-    assert.match(root, /from "\.\.\/styles\.css\?inline"/);
-    assert.doesNotMatch(root, /styles\.css\?url/);
+    assert.match(root, /from "\.\.\/styles\.css\?url"/);
+    assert.doesNotMatch(root, /styles\.css\?inline/);
     assert.doesNotMatch(root, /fonts\.googleapis\.com/);
     assert.doesNotMatch(root, /fonts\.gstatic\.com/);
-    assert.match(root, /dangerouslySetInnerHTML=\{\{ __html: appCss \}\}/);
+    assert.match(root, /rel: "stylesheet"/);
+    assert.match(root, /precedence: "high"/);
+    assert.match(root, /from "react-dom"/);
+    assert.match(root, /preload\(href, \{ as: "font"/);
     assert.match(root, /SITE_FONT_PRELOADS/);
-    assert.match(root, /rel="preload"/);
-    assert.match(root, /as="font"/);
-    assert.match(root, /crossOrigin="anonymous"/);
-    // Stylesheet links would race image preloads and block first paint.
-    assert.doesNotMatch(root, /rel: "stylesheet"/);
+  });
+
+  it("keeps eager homepage covers from promoting ahead of CSS", () => {
+    const mosaic = read("src/components/cover-mosaic.tsx");
+    const mark = read("src/components/site-mark.tsx");
+    const wall = read("src/components/track-wall.tsx");
+    assert.match(mosaic, /fetchPriority="low"/);
+    assert.match(mark, /fetchPriority="low"/);
+    assert.match(wall, /fetchPriority="low"/);
   });
 
   it("declares Outfit and Syne with font-display:swap against the local files", () => {

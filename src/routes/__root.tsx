@@ -1,4 +1,5 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { preload } from "react-dom";
 import { AuthProvider } from "@/lib/auth/provider";
 import { InstallAppProvider } from "@/components/install-app";
 import { OfflineRuntime } from "@/components/offline-runtime";
@@ -9,7 +10,7 @@ import { SiteBackdrop } from "@/components/site-backdrop";
 import { ViewportLock } from "@/components/viewport-lock";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
 import { siteVerificationMeta } from "@/lib/seo";
-import appCss from "../styles.css?inline";
+import appCss from "../styles.css?url";
 
 const APP_NAME = "Atman Music";
 
@@ -39,6 +40,10 @@ export const Route = createRootRoute({
       ...siteVerificationMeta(GOOGLE_SITE_VERIFICATION),
     ],
     links: [
+      // precedence=high: React 19 flushes this in the preamble. Combined with
+      // fetchPriority=low on eager homepage images, it is not stuck behind
+      // cover preloads (the actual first-paint stall).
+      { rel: "stylesheet", href: appCss, precedence: "high" },
       { rel: "icon", href: "/brand/favicon.ico", sizes: "48x48" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/brand/mark-32.png" },
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/brand/mark-16.png" },
@@ -46,15 +51,18 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
     ],
   }),
-  component: () => (
+  component: RootDocument,
+});
+
+function RootDocument() {
+  for (const href of SITE_FONT_PRELOADS) {
+    preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  }
+  return (
     <html lang="en" className="antialiased" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content={DEFAULT_VIEWPORT} />
-        <style dangerouslySetInnerHTML={{ __html: appCss }} />
-        {SITE_FONT_PRELOADS.map((href) => (
-          <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossOrigin="anonymous" />
-        ))}
         <script dangerouslySetInnerHTML={{ __html: PHONE_VIEWPORT_BOOT }} />
         {/* Before hydration: keep an early beforeinstallprompt for "Install app". */}
         <script dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE_SCRIPT }} />
@@ -78,5 +86,5 @@ export const Route = createRootRoute({
         <Scripts />
       </body>
     </html>
-  ),
-});
+  );
+}
