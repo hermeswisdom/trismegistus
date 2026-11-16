@@ -1,9 +1,11 @@
 /**
  * The native player: one top-level <audio> element for the page life, playing
  * the 128 kbps streams (/api/stream/<slug>), or a blob: URL when the visitor
- * explicitly saved that tablet for offline listening. Unlike the cross-origin
- * SoundCloud iframe, a top-level media element keeps playing when the phone
- * locks, and drives the lock-screen controls through the Media Session API.
+ * explicitly saved that tablet for offline listening. The element stays in
+ * the document (never AudioContext-only) so lock-screen / background
+ * playback keeps going. Unlike the cross-origin SoundCloud iframe, a
+ * top-level media element keeps playing when the phone locks, and drives the
+ * lock-screen controls through the Media Session API.
  *
  * Same honest-UI contract as sc-widget.ts: "pending" until audio really
  * flows, "play" on the element's first real progress, "blocked" (Tap to
@@ -71,8 +73,9 @@ function networkSrcFor(slug: string, extra?: Record<string, string>): string | n
 }
 
 /**
- * Prefer an explicit local save (blob: URL) so seeking does not need HTTP
- * Range through the service worker. Fall back to the signed stream route.
+ * Prefer an explicit local save (blob: URL from a copied buffer). Fall back
+ * to `/api/stream/<slug>`, which the service worker can answer with Range
+ * 206 from Cache Storage when the copy was saved.
  */
 function srcFor(slug: string, extra?: Record<string, string>): string | null {
   const local = peekOfflineObjectUrl(slug);
@@ -252,14 +255,15 @@ function ensureEl(): HTMLAudioElement | null {
     const at = a.currentTime;
     if (reloadedFor !== slug) {
       reloadedFor = slug;
-      // A local blob that failed: try the network stream once if we are online.
-      // A signed URL that lapsed: fetch a fresh redirect once.
+      // A local blob that failed: try `/api/stream` once (SW Cache Storage
+      // can answer Range 206 offline). A signed URL that lapsed: fetch a
+      // fresh redirect once.
       const usingLocal = isLocalSrc(a.src);
-      const url = usingLocal
-        ? typeof navigator !== "undefined" && navigator.onLine === false
-          ? null
-          : networkSrcFor(slug, { r: String(Date.now()) })
-        : networkSrcFor(slug, { r: String(Date.now()) });
+      // Blob URLs can die on iOS after eviction or a detached IDB blob. Try
+      // `/api/stream/<slug>` once: the SW answers Range 206 from Cache Storage
+      // even while airplane mode is on. Live (unsaved) streams still need a
+      // network round-trip, which fails offline and falls back below.
+      const url = networkSrcFor(slug, { r: String(Date.now()) });
       if (url) {
         notePauseCall(usingLocal ? `offline blob failed, network reload (${slug})` : `stream reload after load error (${slug})`);
         a.src = url;

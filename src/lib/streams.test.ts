@@ -132,6 +132,7 @@ describe("media artwork", () => {
   it("makes cover paths absolute", () => {
     assert.equal(mediaArtwork("/images/tracks/awake.jpg", "https://atmanmusic.app/")[0].src, "https://atmanmusic.app/images/tracks/awake.jpg");
     assert.equal(mediaArtwork("https://cdn.x/a.jpg", "https://atmanmusic.app")[0].src, "https://cdn.x/a.jpg");
+    assert.equal(mediaArtwork("blob:https://atmanmusic.app/cover", "https://atmanmusic.app")[0].src, "blob:https://atmanmusic.app/cover");
   });
 });
 

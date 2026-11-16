@@ -27,4 +27,15 @@ describe("offline worker registration", () => {
     const root = readFileSync(join(ROOT, "src/routes/__root.tsx"), "utf8");
     assert.match(root, /<OfflineRuntime/);
   });
+
+  it("re-reads saves on pageshow without touching the audio element's freeze path", () => {
+    const runtime = readFileSync(join(ROOT, "src/components/offline-runtime.tsx"), "utf8");
+    assert.match(runtime, /pageshow/);
+    assert.match(runtime, /requestPersistentStorage/);
+    assert.match(runtime, /hydrate\(\{\s*force:\s*true\s*\}\)/);
+    assert.match(runtime, /registerMediaSessionActions/);
+    assert.match(runtime, /claimPlaybackAudioSession/);
+    assert.doesNotMatch(runtime, /location\.reload/);
+    assert.doesNotMatch(runtime, /visibilitychange|"freeze"|pagehide/);
+  });
 });

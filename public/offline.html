@@ -114,6 +114,7 @@
       const SAVES = "saves";
       const AUDIO = "audio";
       const COVERS = "covers";
+      const AUDIO_CACHE = "atman-offline-audio-v1";
       const player = document.getElementById("player");
       const listEl = document.getElementById("list");
       const statusEl = document.getElementById("status");
@@ -190,7 +191,47 @@
         statusEl.textContent = text || "";
       }
 
+      async function matchCachedAudio(slug, type) {
+        if (!("caches" in window)) return null;
+        try {
+          const cache = await caches.open(AUDIO_CACHE);
+          const hit = await cache.match(new URL("/api/stream/" + slug, location.origin).href);
+          if (!hit || hit.type === "opaque" || hit.type === "opaqueredirect" || !hit.ok) return null;
+          const buf = await hit.arrayBuffer();
+          if (!buf.byteLength) return null;
+          return new Blob([buf], { type: hit.headers.get("content-type") || type || "audio/mpeg" });
+        } catch {
+          return null;
+        }
+      }
+
+      async function copyBlob(blob, type) {
+        if (!blob || !blob.size) return null;
+        try {
+          const buf = await blob.arrayBuffer();
+          if (!buf.byteLength) return null;
+          return new Blob([buf], { type: blob.type || type || "audio/mpeg" });
+        } catch {
+          return null;
+        }
+      }
+
+      async function dropCachedAudio(slug) {
+        if (!("caches" in window)) return;
+        try {
+          const cache = await caches.open(AUDIO_CACHE);
+          await cache.delete(new URL("/api/stream/" + slug, location.origin).href);
+        } catch {
+          /* ignore */
+        }
+      }
+
       async function load() {
+        try {
+          await navigator.storage?.persist?.();
+        } catch {
+          /* in-tab Safari often denies; home-screen PWAs may grant it */
+        }
         let db;
         try {
           db = await openDb();
@@ -202,11 +243,14 @@
         const keep = [];
         for (const row of rows) {
           const raw = await txGet(db, AUDIO, row.slug);
-          const blob = asAudioBlob(raw, row.contentType);
+          let blob = asAudioBlob(raw, row.contentType);
+          if (!blob || !blob.size) blob = await matchCachedAudio(row.slug, row.contentType);
+          blob = blob ? await copyBlob(blob, row.contentType) : null;
           if (!blob || !blob.size) {
             await txDelete(db, SAVES, row.slug).catch(() => {});
             await txDelete(db, AUDIO, row.slug).catch(() => {});
             await txDelete(db, COVERS, row.slug).catch(() => {});
+            await dropCachedAudio(row.slug);
             continue;
           }
           const prev = urls.get(row.slug);
@@ -291,6 +335,7 @@
             await txDelete(db2, SAVES, slug).catch(() => {});
             await txDelete(db2, AUDIO, slug).catch(() => {});
             await txDelete(db2, COVERS, slug).catch(() => {});
+            await dropCachedAudio(slug);
             const u = urls.get(slug);
             if (u) URL.revokeObjectURL(u);
             urls.delete(slug);

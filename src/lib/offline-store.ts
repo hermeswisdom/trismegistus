@@ -1,9 +1,11 @@
 /**
- * Client store for explicit offline saves. IndexedDB is the source of truth;
- * object URLs are held in memory for the native <audio> element.
+ * Client store for explicit offline saves. IndexedDB + Cache Storage are the
+ * source of truth; object URLs are held in memory for the native <audio>
+ * element. Safari 7-day eviction is detected on hydrate/pageshow.
  */
 import { create } from "zustand";
 import {
+  browserAudioCache,
   classifySaveError,
   downloadListeningAudio,
   dropOfflineSave,
@@ -13,13 +15,17 @@ import {
   indexedDbAvailable,
   openOfflineDb,
   persistOfflineSave,
+  peekOfflineCoverObjectUrl,
+  requestPersistentStorage,
   saveErrorCopy,
+  withSavedAudioCache,
   type OfflineBackend,
   type OfflineSave,
   type OfflineTrackInput,
   type SaveErrorKind,
 } from "./offline-library.ts";
 import { nativeAdoptLocalSave } from "./native-audio.ts";
+import { setMediaSessionTrack } from "./media-session.ts";
 import { hasStream } from "./streams.ts";
 
 export type OfflineStatusState = "idle" | "saving" | "saved" | "error";
@@ -39,7 +45,7 @@ type OfflineStoreState = {
   missing: string[];
   statusBySlug: Record<string, OfflineStatus>;
   usage: { used: number; quota: number | null };
-  hydrate: () => Promise<void>;
+  hydrate: (opts?: { force?: boolean }) => Promise<void>;
   save: (track: OfflineTrackInput) => Promise<void>;
   cancel: (slug: string) => void;
   remove: (slug: string) => Promise<void>;
@@ -54,7 +60,11 @@ async function getBackend(): Promise<OfflineBackend> {
     throw Object.assign(new Error("indexedDB is not supported"), { kind: "unsupported" as const });
   }
   backendPromise ??= openOfflineDb()
-    .then(idbOfflineBackend)
+    .then((db) => {
+      const inner = idbOfflineBackend(db);
+      const cache = browserAudioCache();
+      return cache ? withSavedAudioCache(inner, cache) : inner;
+    })
     .catch((err) => {
       backendPromise = null;
       throw err;
@@ -63,7 +73,14 @@ async function getBackend(): Promise<OfflineBackend> {
 }
 
 function statusMap(items: OfflineSave[], extra: Record<string, OfflineStatus> = {}): Record<string, OfflineStatus> {
-  const next: Record<string, OfflineStatus> = { ...extra };
+  const live = new Set(items.map((row) => row.slug));
+  const next: Record<string, OfflineStatus> = {};
+  for (const [slug, status] of Object.entries(extra)) {
+    // Evicted saves must look not-saved, not "Saved" or a silent error.
+    if (live.has(slug) || status.state === "saving" || status.state === "error") {
+      next[slug] = status;
+    }
+  }
   for (const row of items) {
     if (!next[row.slug] || next[row.slug]?.state !== "saving") {
       next[row.slug] = { state: "saved" };
@@ -81,7 +98,7 @@ async function fetchCover(image: string, signal: AbortSignal): Promise<Blob | nu
   if (!image || image.startsWith("blob:") || image.startsWith("data:")) return null;
   try {
     const res = await fetch(image, { signal, cache: "force-cache", credentials: "same-origin" });
-    if (!res.ok) return null;
+    if (!res.ok || res.type === "opaque" || res.type === "opaqueredirect") return null;
     const blob = await res.blob();
     if (!blob.type.startsWith("image/") && blob.size === 0) return null;
     return blob;
@@ -98,15 +115,16 @@ export const useOfflineSaves = create<OfflineStoreState>((set, get) => ({
   statusBySlug: {},
   usage: { used: 0, quota: null },
 
-  hydrate: async () => {
+  hydrate: async (opts) => {
     if (typeof window === "undefined") return;
-    if (hydrated && get().ready) return;
+    if (!opts?.force && hydrated && get().ready) return;
     if (!indexedDbAvailable()) {
       hydrated = true;
       set({ ready: true, supported: false });
       return;
     }
     try {
+      void requestPersistentStorage();
       const backend = await getBackend();
       const { items, missing } = await hydrateOfflineSaves(backend);
       const usage = await refreshUsage(items);
@@ -159,6 +177,8 @@ export const useOfflineSaves = create<OfflineStoreState>((set, get) => ({
     });
 
     try {
+      // persist() is more likely to be granted inside the Save tap (iOS).
+      void requestPersistentStorage();
       const audio = await downloadListeningAudio({
         slug: track.slug,
         fetch: (input, init) => fetch(input, init),
@@ -184,6 +204,10 @@ export const useOfflineSaves = create<OfflineStoreState>((set, get) => ({
       const usage = await refreshUsage(items);
       aborts.delete(track.slug);
       nativeAdoptLocalSave(track.slug);
+      setMediaSessionTrack({
+        title: track.title,
+        image: peekOfflineCoverObjectUrl(track.slug) || track.image,
+      });
       set({
         items,
         missing: get().missing.filter((slug) => slug !== track.slug),

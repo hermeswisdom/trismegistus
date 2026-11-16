@@ -3,8 +3,9 @@
  * steps, #61 early `beforeinstallprompt` capture + installed label).
  *
  * Home-screen install is still manifest-driven. A scoped service worker now
- * exists for explicit offline listening (public/sw.js): public shell + static
- * assets only, never the native player, paid masters, or authenticated HTML.
+ * exists for explicit offline listening (public/sw.js): public shell, static
+ * assets, and Range 206 for saved `/api/stream/<slug>` copies. Never the
+ * native player registration, paid masters, or authenticated HTML.
  * Pure helpers live here so `node --test` can cover them; the React half is
  * src/components/install-app.tsx.
  */

@@ -1,14 +1,17 @@
 /**
  * Explicit offline listening copies. Visitors tap Save offline on one tablet
- * at a time; the 128 kbps wall stream is stored in IndexedDB on this device
- * and this browser. Paid masters (masters/, /api/masters, /download) are
- * never fetched or stored. Auto Mix HQ (streams-hq/) is not saved either.
+ * at a time; the 128 kbps wall stream is stored on this device and this
+ * browser (IndexedDB as ArrayBuffer + Cache Storage). Paid masters
+ * (masters/, /api/masters, /download) are never fetched or stored. Auto Mix
+ * HQ (streams-hq/) is not saved either.
  *
- * Playback uses blob: URLs so seeking is handled by the media element, not
- * by a service worker Range implementation. The SW (public/sw.js) only
- * serves a public offline shell plus static assets — never these blobs.
+ * Playback prefers blob: URLs from a copied buffer so iOS cannot lose a
+ * detached IDB Blob. The service worker also serves the Cache Storage copy
+ * at `/api/stream/<slug>` with Range 206, which is how iOS <audio> seeks
+ * when the blob URL is gone. Opaque responses are never stored.
  */
 import { STREAM_BITRATE_KBPS } from "./stream-manifest.ts";
+import { isOpaqueResponse, savedAudioCacheKey, SW_AUDIO_CACHE } from "./offline-sw.ts";
 import { hasStream, streamUrl } from "./streams.ts";
 
 export const OFFLINE_DB_NAME = "atman-offline";
@@ -49,9 +52,14 @@ export type OfflineTrackInput = {
 };
 
 const objectUrls = new Map<string, string>();
+const coverUrls = new Map<string, string>();
 
 export function peekOfflineObjectUrl(slug: string): string | null {
   return objectUrls.get(slug) ?? null;
+}
+
+export function peekOfflineCoverObjectUrl(slug: string): string | null {
+  return coverUrls.get(slug) ?? null;
 }
 
 export function rememberOfflineObjectUrl(slug: string, blob: Blob): string {
@@ -62,15 +70,40 @@ export function rememberOfflineObjectUrl(slug: string, blob: Blob): string {
   return url;
 }
 
+export function rememberOfflineCoverObjectUrl(slug: string, blob: Blob): string {
+  const prev = coverUrls.get(slug);
+  if (prev) URL.revokeObjectURL(prev);
+  const url = URL.createObjectURL(blob);
+  coverUrls.set(slug, url);
+  return url;
+}
+
 export function forgetOfflineObjectUrl(slug: string): void {
   const prev = objectUrls.get(slug);
   if (prev) URL.revokeObjectURL(prev);
   objectUrls.delete(slug);
+  const cover = coverUrls.get(slug);
+  if (cover) URL.revokeObjectURL(cover);
+  coverUrls.delete(slug);
 }
 
 export function resetOfflineObjectUrlsForTests(): void {
   for (const url of objectUrls.values()) URL.revokeObjectURL(url);
   objectUrls.clear();
+  for (const url of coverUrls.values()) URL.revokeObjectURL(url);
+  coverUrls.clear();
+}
+
+/** Fresh Blob from a copied buffer so iOS cannot hand back a detached IDB blob. */
+export async function copyAudioBlob(blob: Blob, contentType = "audio/mpeg"): Promise<Blob | undefined> {
+  if (!blob || blob.size <= 0) return undefined;
+  try {
+    const buf = await blob.arrayBuffer();
+    if (!buf.byteLength) return undefined;
+    return new Blob([buf], { type: blob.type || contentType });
+  } catch {
+    return undefined;
+  }
 }
 
 export function indexedDbAvailable(
@@ -98,8 +131,9 @@ export function classifySaveError(err: unknown): SaveErrorKind {
   if (name === "UnsupportedError" || /indexedDB|not supported/i.test(message)) return "unsupported";
   if (name === "TypeError" && /failed to fetch|networkerror|load failed/i.test(message)) return "network";
   if (/stream unavailable|failed to fetch/i.test(message)) return "network";
-  if (/forbidden|master/i.test(message)) return "forbidden";
+  if (/forbidden|master|opaque/i.test(message)) return "forbidden";
   if (/no stream/i.test(message)) return "no-stream";
+  if (/evict/i.test(message)) return "evicted";
   return "unknown";
 }
 
@@ -110,7 +144,7 @@ export function saveErrorCopy(kind: SaveErrorKind): string {
     case "no-stream":
       return "This tablet has no listening stream to save.";
     case "quota":
-      return "Not enough space on this device.";
+      return "Not enough space on this device. Remove a save and try again.";
     case "network":
       return "Couldn't save. Go online and try again.";
     case "interrupted":
@@ -232,6 +266,9 @@ export async function downloadListeningAudio(opts: {
   }
 
   const finalUrl = res.url || path;
+  if (isOpaqueResponse(res)) {
+    throw taggedError("forbidden", "opaque response");
+  }
   if (isForbiddenOfflineSource(finalUrl) || !isAllowedOfflineSource(finalUrl)) {
     throw taggedError("forbidden", "forbidden source");
   }
@@ -424,9 +461,12 @@ export function idbOfflineBackend(db: IDBDatabase): OfflineBackend {
       return coerceAudioBlob(raw);
     },
     async putAudio(slug, blob) {
+      // iOS Safari can lose IDB Blob file backing. Store an ArrayBuffer copy.
+      const buf = await blob.arrayBuffer();
+      if (!buf.byteLength) throw taggedError("network", "stream unavailable (empty body)");
       const tx = rw(OFFLINE_AUDIO_STORE);
       const done = idbTxDone(tx);
-      const req = tx.objectStore(OFFLINE_AUDIO_STORE).put(blob, slug);
+      const req = tx.objectStore(OFFLINE_AUDIO_STORE).put(buf, slug);
       await idbRequest(req);
       await done;
     },
@@ -437,13 +477,15 @@ export function idbOfflineBackend(db: IDBDatabase): OfflineBackend {
     },
     async getCover(slug) {
       const tx = ro(OFFLINE_COVERS_STORE);
-      const blob = await idbRequest(tx.objectStore(OFFLINE_COVERS_STORE).get(slug));
+      const raw = await idbRequest(tx.objectStore(OFFLINE_COVERS_STORE).get(slug));
       await idbTxDone(tx).catch(() => undefined);
-      return blob instanceof Blob ? blob : undefined;
+      return coerceAudioBlob(raw, "image/jpeg");
     },
     async putCover(slug, blob) {
+      const buf = await blob.arrayBuffer();
+      if (!buf.byteLength) return;
       const tx = rw(OFFLINE_COVERS_STORE);
-      tx.objectStore(OFFLINE_COVERS_STORE).put(blob, slug);
+      tx.objectStore(OFFLINE_COVERS_STORE).put(buf, slug);
       await idbTxDone(tx);
     },
     async deleteCover(slug) {
@@ -452,6 +494,165 @@ export function idbOfflineBackend(db: IDBDatabase): OfflineBackend {
       await idbTxDone(tx);
     },
   };
+}
+
+export type OfflineAudioCache = {
+  match(slug: string): Promise<Blob | undefined>;
+  put(slug: string, blob: Blob, contentType: string): Promise<void>;
+  delete(slug: string): Promise<void>;
+};
+
+export function memoryAudioCache(): OfflineAudioCache & { blobs: Map<string, Blob> } {
+  const blobs = new Map<string, Blob>();
+  return {
+    blobs,
+    async match(slug) {
+      const blob = blobs.get(slug);
+      return blob && blob.size > 0 ? blob : undefined;
+    },
+    async put(slug, blob) {
+      if (!blob.size) throw taggedError("network", "stream unavailable (empty body)");
+      blobs.set(slug, blob);
+    },
+    async delete(slug) {
+      blobs.delete(slug);
+    },
+  };
+}
+
+function cachePutHeaders(blob: Blob, contentType: string, byteLength: number): HeadersInit {
+  return {
+    "Content-Type": contentType || blob.type || "audio/mpeg",
+    "Content-Length": String(byteLength),
+    "Accept-Ranges": "bytes",
+    "Cache-Control": "public, max-age=31536000, immutable",
+  };
+}
+
+/**
+ * Cache Storage adapter the page and the service worker share. Keys are
+ * same-origin `/api/stream/<slug>` so the SW can answer Range 206.
+ */
+export function browserAudioCache(
+  cacheStorage: CacheStorage | undefined = typeof caches === "undefined" ? undefined : caches,
+  origin: string = typeof location === "undefined" ? "https://atmanmusic.app" : location.origin,
+): OfflineAudioCache | null {
+  if (!cacheStorage?.open) return null;
+  let opened: Promise<Cache> | null = null;
+  const open = () => {
+    opened ??= cacheStorage.open(SW_AUDIO_CACHE);
+    return opened;
+  };
+  return {
+    async match(slug) {
+      try {
+        const cache = await open();
+        const hit = await cache.match(savedAudioCacheKey(slug, origin));
+        if (!hit || isOpaqueResponse(hit) || !hit.ok) return undefined;
+        const buf = await hit.arrayBuffer();
+        if (!buf.byteLength) return undefined;
+        return new Blob([buf], { type: hit.headers.get("content-type") || "audio/mpeg" });
+      } catch {
+        return undefined;
+      }
+    },
+    async put(slug, blob, contentType) {
+      const buf = await blob.arrayBuffer();
+      if (!buf.byteLength) throw taggedError("network", "stream unavailable (empty body)");
+      const res = new Response(buf, {
+        status: 200,
+        headers: cachePutHeaders(blob, contentType, buf.byteLength),
+      });
+      if (isOpaqueResponse(res)) throw taggedError("forbidden", "opaque response");
+      const cache = await open();
+      await cache.put(savedAudioCacheKey(slug, origin), res);
+    },
+    async delete(slug) {
+      try {
+        const cache = await open();
+        await cache.delete(savedAudioCacheKey(slug, origin));
+      } catch {
+        /* missing cache is fine */
+      }
+    },
+  };
+}
+
+/**
+ * Dual-write IDB + Cache Storage. iOS can drop IDB blobs; Cache Storage is
+ * the recovery path (and the SW Range 206 source). A meta row with neither
+ * is eviction.
+ */
+export function withSavedAudioCache(backend: OfflineBackend, cache: OfflineAudioCache): OfflineBackend {
+  return {
+    getMeta: (slug) => backend.getMeta(slug),
+    listMeta: () => backend.listMeta(),
+    putMeta: (row) => backend.putMeta(row),
+    deleteMeta: (slug) => backend.deleteMeta(slug),
+    async getAudio(slug) {
+      const idb = await backend.getAudio(slug);
+      if (idb && idb.size > 0) return idb;
+      const cached = await cache.match(slug);
+      if (cached && cached.size > 0) {
+        await backend.putAudio(slug, cached).catch(() => undefined);
+        return cached;
+      }
+      return undefined;
+    },
+    async putAudio(slug, blob) {
+      let idbErr: unknown;
+      let cacheErr: unknown;
+      try {
+        await backend.putAudio(slug, blob);
+      } catch (err) {
+        idbErr = err;
+      }
+      try {
+        await cache.put(slug, blob, blob.type || "audio/mpeg");
+      } catch (err) {
+        cacheErr = err;
+      }
+      if (idbErr && cacheErr) throw idbErr;
+    },
+    async deleteAudio(slug) {
+      await Promise.all([backend.deleteAudio(slug).catch(() => undefined), cache.delete(slug).catch(() => undefined)]);
+    },
+    getCover: (slug) => backend.getCover(slug),
+    putCover: (slug, blob) => backend.putCover(slug, blob),
+    deleteCover: (slug) => backend.deleteCover(slug),
+  };
+}
+
+export type PersistStorageLike = {
+  persist?: () => Promise<boolean>;
+  persisted?: () => Promise<boolean>;
+  estimate?: () => Promise<{ usage?: number; quota?: number } | undefined>;
+};
+
+/**
+ * Ask the browser to keep this origin's data (IndexedDB + Cache Storage)
+ * past Safari's 7-day ITP cap. Home-screen PWAs often grant it; in-tab
+ * Safari often returns false. Never throws; a denial is not a save failure.
+ */
+export async function requestPersistentStorage(
+  storage: PersistStorageLike | null | undefined = typeof navigator === "undefined" ? undefined : navigator.storage,
+): Promise<{ persisted: boolean; asked: boolean }> {
+  if (!storage) return { persisted: false, asked: false };
+  try {
+    if (typeof storage.persisted === "function") {
+      const already = await storage.persisted();
+      if (already) return { persisted: true, asked: false };
+    }
+  } catch {
+    /* ignore */
+  }
+  if (typeof storage.persist !== "function") return { persisted: false, asked: false };
+  try {
+    const granted = await storage.persist();
+    return { persisted: Boolean(granted), asked: true };
+  } catch {
+    return { persisted: false, asked: true };
+  }
 }
 
 export async function persistOfflineSave(
@@ -487,6 +688,7 @@ export async function persistOfflineSave(
     throw err;
   }
   rememberOfflineObjectUrl(track.slug, audio.blob);
+  if (cover && cover.size > 0) rememberOfflineCoverObjectUrl(track.slug, cover);
   return row;
 }
 
@@ -505,21 +707,28 @@ export type HydratedOffline = {
 };
 
 /**
- * Rebuild object URLs from IDB. A meta row without audio is treated as
- * browser eviction: drop it and report the slug so the UI can tell the truth.
+ * Rebuild object URLs from IDB / Cache Storage. A meta row without audio in
+ * either store is treated as browser eviction (7-day ITP, quota, or iOS
+ * dropping an IDB blob): drop it and report the slug so the UI shows not saved.
  */
 export async function hydrateOfflineSaves(backend: OfflineBackend): Promise<HydratedOffline> {
   const listed = await backend.listMeta();
   const items: OfflineSave[] = [];
   const missing: string[] = [];
   for (const row of listed) {
-    const blob = await backend.getAudio(row.slug);
+    const raw = await backend.getAudio(row.slug);
+    const blob = raw ? await copyAudioBlob(raw, row.contentType) : undefined;
     if (!blob || blob.size === 0) {
       missing.push(row.slug);
       await dropOfflineSave(backend, row.slug);
       continue;
     }
     rememberOfflineObjectUrl(row.slug, blob);
+    const cover = await backend.getCover(row.slug).catch(() => undefined);
+    if (cover && cover.size > 0) {
+      const coverCopy = await copyAudioBlob(cover, "image/jpeg");
+      if (coverCopy) rememberOfflineCoverObjectUrl(row.slug, coverCopy);
+    }
     items.push({ ...row, bytes: blob.size });
   }
   return { items, missing };
@@ -548,4 +757,4 @@ export function shouldRecordListen(opts: { online: boolean | undefined; qc: bool
 }
 
 export const OFFLINE_DEVICE_NOTE =
-  "Saves live on this device and this browser only. They are a listening copy (128 kbps), not the £0.99 master, and the browser may clear them.";
+  "Saves live on this device and this browser only. They are a listening copy (128 kbps), not the £0.99 master. Safari may clear them after about a week unless Atman is on the home screen.";

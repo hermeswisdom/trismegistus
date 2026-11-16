@@ -187,7 +187,9 @@ export function classifyPlayRejection(name: string | null | undefined): "blocked
 
 /** Media Session artwork for a tablet cover (absolute URL; covers are 500×500 JPEG). */
 export function mediaArtwork(image: string, origin: string) {
-  const src = /^https?:\/\//.test(image) ? image : `${origin.replace(/\/$/, "")}${image.startsWith("/") ? "" : "/"}${image}`;
+  const src = /^(https?:|blob:|data:)/i.test(image)
+    ? image
+    : `${origin.replace(/\/$/, "")}${image.startsWith("/") ? "" : "/"}${image}`;
   return [
     { src, sizes: "500x500", type: "image/jpeg" },
     { src, sizes: "512x512", type: "image/jpeg" },
