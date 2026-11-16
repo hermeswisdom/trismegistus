@@ -230,6 +230,21 @@ describe("native player", () => {
     assert.equal(nativePrime(A), false);
   });
 
+  it("a dead offline blob retries /api/stream so the SW can answer Range 206", () => {
+    rememberOfflineObjectUrl(A.slug, new Blob([new Uint8Array(8)], { type: "audio/mpeg" }));
+    Object.defineProperty(globalThis.navigator, "onLine", { configurable: true, value: false });
+    try {
+      nativePlay(A);
+      audio.fire("playing");
+      audio.currentTime = 9;
+      audio.fire("error");
+      assert.match(audio.src, new RegExp(`^/api/stream/${A.slug}\\?r=\\d+$`));
+      assert.doesNotMatch(audio.src, /masters/);
+    } finally {
+      Object.defineProperty(globalThis.navigator, "onLine", { configurable: true, value: true });
+    }
+  });
+
   it("a load error reloads a fresh signed URL once, then falls back", async () => {
     nativePlay(A);
     audio.fire("playing");

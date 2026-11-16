@@ -6,7 +6,7 @@ import { usePlayBoard } from "@/lib/play-board";
 import { recordPlay } from "@/lib/plays";
 import { isQcBrowser } from "@/lib/qc-client";
 import { PLAY_BLOCKED_COPY, PLAY_FAILED_COPY, PLAY_OFFLINE_COPY, resolvePlayTap } from "@/lib/playback";
-import { peekOfflineObjectUrl, shouldRecordListen } from "@/lib/offline-library";
+import { peekOfflineCoverObjectUrl, peekOfflineObjectUrl, shouldRecordListen } from "@/lib/offline-library";
 import {
   applyPlayback,
   getAttemptPhase,
@@ -421,7 +421,10 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     const wasPlaying = get().playing;
     const reset = nextId !== prevId;
     // Lock-screen metadata first, so iOS has it when playback starts.
-    setMediaSessionTrack(track);
+    setMediaSessionTrack({
+      title: track.title,
+      image: peekOfflineCoverObjectUrl(track.slug) || track.image,
+    });
     // The start (native play() or the widget's skip + play postMessage)
     // leaves first, before any state update or re-render, so it rides the
     // tap's user activation.

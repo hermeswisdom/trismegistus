@@ -17,11 +17,14 @@ import {
   looksLikeAudio,
   memoryOfflineBackend,
   persistOfflineSave,
+  requestPersistentStorage,
   resetOfflineObjectUrlsForTests,
   saveErrorCopy,
   saveOfflineGate,
   shouldRecordListen,
   peekOfflineObjectUrl,
+  memoryAudioCache,
+  withSavedAudioCache,
 } from "./offline-library.ts";
 
 const SLUG = STREAM_SLUGS[0]!;
@@ -87,7 +90,7 @@ describe("save errors", () => {
     assert.equal(classifySaveError({ name: "TypeError", message: "Failed to fetch" }), "network");
     assert.equal(classifySaveError({ name: "TypeError", message: "Cannot read properties of null" }), "unknown");
     assert.equal(classifySaveError({ name: "UnsupportedError" }), "unsupported");
-    assert.equal(saveErrorCopy("quota"), "Not enough space on this device.");
+    assert.equal(saveErrorCopy("quota"), "Not enough space on this device. Remove a save and try again.");
     assert.equal(saveErrorCopy("interrupted"), "Save interrupted. Try again.");
     assert.equal(saveErrorCopy("evicted"), "This save was cleared from the device. Save it again while you're online.");
   });
@@ -160,6 +163,25 @@ describe("downloadListeningAudio", () => {
     );
   });
 
+  it("refuses opaque responses so they are never stored", async () => {
+    await assert.rejects(
+      () =>
+        downloadListeningAudio({
+          slug: SLUG,
+          fetch: async () => {
+            const res = new Response(new Uint8Array([1, 2, 3]), {
+              status: 200,
+              headers: { "content-type": "audio/mpeg" },
+            });
+            Object.defineProperty(res, "type", { value: "opaque" });
+            Object.defineProperty(res, "url", { value: `https://atmanmusic.app/api/stream/${SLUG}` });
+            return res;
+          },
+        }),
+      (err: unknown) => classifySaveError(err) === "forbidden",
+    );
+  });
+
   it("refuses tablets with no listening stream", async () => {
     await assert.rejects(
       () => downloadListeningAudio({ slug: "lift-me-up", fetch: async () => new Response(null) }),
@@ -226,6 +248,48 @@ describe("IndexedDB-shaped backend", () => {
     assert.equal(backend.meta.has(SLUG), false);
   });
 
+  it("recovers an iOS-evicted IDB blob from Cache Storage instead of dropping the save", async () => {
+    resetOfflineObjectUrlsForTests();
+    const backend = memoryOfflineBackend();
+    const cache = memoryAudioCache();
+    const wrapped = withSavedAudioCache(backend, cache);
+    await persistOfflineSave(
+      wrapped,
+      { id: SLUG, slug: SLUG, title: "Test", image: "/x.jpg" },
+      { blob: audioBlob(80), bytes: 80, contentType: "audio/mpeg" },
+    );
+    assert.equal(cache.blobs.has(SLUG), true);
+    backend.audio.delete(SLUG);
+    resetOfflineObjectUrlsForTests();
+    const recovered = await hydrateOfflineSaves(wrapped);
+    assert.equal(recovered.items.length, 1);
+    assert.equal(recovered.missing.length, 0);
+    assert.ok(peekOfflineObjectUrl(SLUG)?.startsWith("blob:"));
+  });
+
+  it("asks for persistent storage and treats a denial as non-fatal", async () => {
+    const granted = await requestPersistentStorage({
+      persist: async () => true,
+      persisted: async () => false,
+    });
+    assert.equal(granted.persisted, true);
+    assert.equal(granted.asked, true);
+    const denied = await requestPersistentStorage({
+      persist: async () => false,
+      persisted: async () => false,
+    });
+    assert.equal(denied.persisted, false);
+    assert.equal(denied.asked, true);
+    const already = await requestPersistentStorage({
+      persist: async () => {
+        throw new Error("should not ask");
+      },
+      persisted: async () => true,
+    });
+    assert.equal(already.persisted, true);
+    assert.equal(already.asked, false);
+  });
+
   it("remove drops audio and the object URL", async () => {
     resetOfflineObjectUrlsForTests();
     const backend = memoryOfflineBackend();
@@ -264,6 +328,8 @@ describe("offline shell keeps the same IndexedDB names", () => {
     assert.match(html, /listening copy/);
     assert.match(html, /not the £0\.99 master/i);
     assert.match(html, /function asAudioBlob/);
+    assert.match(html, /atman-offline-audio-v1/);
+    assert.match(html, /navigator\.storage\?\.persist/);
     assert.doesNotMatch(html, /\/api\/masters|streams-hq/);
   });
 });
