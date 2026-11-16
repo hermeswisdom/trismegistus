@@ -4,11 +4,12 @@ import { InstallAppProvider } from "@/components/install-app";
 import { OfflineRuntime } from "@/components/offline-runtime";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { INSTALL_CAPTURE_SCRIPT } from "@/lib/install-app";
+import { SITE_FONT_PRELOADS } from "@/lib/site-fonts";
 import { SiteBackdrop } from "@/components/site-backdrop";
 import { ViewportLock } from "@/components/viewport-lock";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
 import { siteVerificationMeta } from "@/lib/seo";
-import appCss from "../styles.css?url";
+import appCss from "../styles.css?inline";
 
 const APP_NAME = "Atman Music";
 
@@ -41,15 +42,8 @@ export const Route = createRootRoute({
       { rel: "icon", href: "/brand/favicon.ico", sizes: "48x48" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/brand/mark-32.png" },
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/brand/mark-16.png" },
-      { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syne:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap",
-      },
     ],
   }),
   component: () => (
@@ -57,6 +51,10 @@ export const Route = createRootRoute({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content={DEFAULT_VIEWPORT} />
+        <style dangerouslySetInnerHTML={{ __html: appCss }} />
+        {SITE_FONT_PRELOADS.map((href) => (
+          <link key={href} rel="preload" as="font" type="font/woff2" href={href} crossOrigin="anonymous" />
+        ))}
         <script dangerouslySetInnerHTML={{ __html: PHONE_VIEWPORT_BOOT }} />
         {/* Before hydration: keep an early beforeinstallprompt for "Install app". */}
         <script dangerouslySetInnerHTML={{ __html: INSTALL_CAPTURE_SCRIPT }} />
