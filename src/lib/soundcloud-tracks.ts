@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "nobody-cares",
+    title: "Nobody Cares",
+    soundId: "2439052248",
+    slug: "nobody-cares",
+    image: "/images/tracks/nobody-cares.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/nobody-cares",
+    recorded: "November 2026",
+    downloadKey: "masters/nobody-cares.mp3",
+  },
+  {
     id: "imagination-is-the-new-currency",
     title: "Imagination Is The New Currency",
     soundId: "2438057532",
