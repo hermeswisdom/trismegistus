@@ -23,6 +23,7 @@ import { Route as ApiAdminQueueRouteImport } from './routes/api/admin/queue'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiEbookHitRouteImport } from './routes/api/ebook/hit'
 import { Route as ApiMastersDownloadRouteImport } from './routes/api/masters/download'
+import { Route as ApiStatsWeeklyRouteImport } from './routes/api/stats/weekly'
 import { Route as ApiStreamSlugRouteImport } from './routes/api/stream/$slug'
 import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe/webhook'
 
@@ -96,6 +97,11 @@ const ApiMastersDownloadRoute = ApiMastersDownloadRouteImport.update({
   path: '/api/masters/download',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiStatsWeeklyRoute = ApiStatsWeeklyRouteImport.update({
+  id: '/api/stats/weekly',
+  path: '/api/stats/weekly',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiStreamSlugRoute = ApiStreamSlugRouteImport.update({
   id: '/api/stream/$slug',
   path: '/api/stream/$slug',
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
+  '/api/stats/weekly': typeof ApiStatsWeeklyRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
+  '/api/stats/weekly': typeof ApiStatsWeeklyRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/ebook/hit': typeof ApiEbookHitRoute
   '/api/masters/download': typeof ApiMastersDownloadRoute
+  '/api/stats/weekly': typeof ApiStatsWeeklyRoute
   '/api/stream/$slug': typeof ApiStreamSlugRoute
   '/api/stripe/webhook': typeof ApiStripeWebhookRoute
 }
@@ -179,6 +188,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/ebook/hit'
     | '/api/masters/download'
+    | '/api/stats/weekly'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -197,6 +207,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/ebook/hit'
     | '/api/masters/download'
+    | '/api/stats/weekly'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
   id:
@@ -215,6 +226,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/ebook/hit'
     | '/api/masters/download'
+    | '/api/stats/weekly'
     | '/api/stream/$slug'
     | '/api/stripe/webhook'
   fileRoutesById: FileRoutesById
@@ -234,6 +246,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiEbookHitRoute: typeof ApiEbookHitRoute
   ApiMastersDownloadRoute: typeof ApiMastersDownloadRoute
+  ApiStatsWeeklyRoute: typeof ApiStatsWeeklyRoute
   ApiStreamSlugRoute: typeof ApiStreamSlugRoute
   ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
 }
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMastersDownloadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/stats/weekly': {
+      id: '/api/stats/weekly'
+      path: '/api/stats/weekly'
+      fullPath: '/api/stats/weekly'
+      preLoaderRoute: typeof ApiStatsWeeklyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/stream/$slug': {
       id: '/api/stream/$slug'
       path: '/api/stream/$slug'
@@ -370,6 +390,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiEbookHitRoute: ApiEbookHitRoute,
   ApiMastersDownloadRoute: ApiMastersDownloadRoute,
+  ApiStatsWeeklyRoute: ApiStatsWeeklyRoute,
   ApiStreamSlugRoute: ApiStreamSlugRoute,
   ApiStripeWebhookRoute: ApiStripeWebhookRoute,
 }
