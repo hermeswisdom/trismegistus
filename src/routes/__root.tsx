@@ -1,9 +1,11 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { preload } from "react-dom";
 import { AuthProvider } from "@/lib/auth/provider";
 import { InstallAppProvider } from "@/components/install-app";
 import { OfflineRuntime } from "@/components/offline-runtime";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { INSTALL_CAPTURE_SCRIPT } from "@/lib/install-app";
+import { SITE_FONT_PRELOADS } from "@/lib/site-fonts";
 import { SiteBackdrop } from "@/components/site-backdrop";
 import { ViewportLock } from "@/components/viewport-lock";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
@@ -38,21 +40,25 @@ export const Route = createRootRoute({
       ...siteVerificationMeta(GOOGLE_SITE_VERIFICATION),
     ],
     links: [
+      // precedence=high: React 19 flushes this in the preamble. Combined with
+      // fetchPriority=low on eager homepage images, it is not stuck behind
+      // cover preloads (the actual first-paint stall).
+      { rel: "stylesheet", href: appCss, precedence: "high" },
       { rel: "icon", href: "/brand/favicon.ico", sizes: "48x48" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/brand/mark-32.png" },
       { rel: "icon", type: "image/png", sizes: "16x16", href: "/brand/mark-16.png" },
-      { rel: "stylesheet", href: appCss },
       { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Syne:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&display=swap",
-      },
     ],
   }),
-  component: () => (
+  component: RootDocument,
+});
+
+function RootDocument() {
+  for (const href of SITE_FONT_PRELOADS) {
+    preload(href, { as: "font", type: "font/woff2", crossOrigin: "anonymous" });
+  }
+  return (
     <html lang="en" className="antialiased" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
@@ -80,5 +86,5 @@ export const Route = createRootRoute({
         <Scripts />
       </body>
     </html>
-  ),
-});
+  );
+}

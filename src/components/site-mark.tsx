@@ -9,6 +9,7 @@ export function SiteMark({ className }: { className?: string }) {
       width={32}
       height={32}
       className={cn("site-mark size-7 sm:size-8", className)}
+      fetchPriority="low"
       decoding="async"
     />
   );

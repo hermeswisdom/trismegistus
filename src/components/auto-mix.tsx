@@ -266,6 +266,7 @@ function AutoMixPanel() {
             <img
               src={nowTrack.image}
               alt=""
+              fetchPriority="low"
               className="size-11 shrink-0 object-cover sm:size-12"
             />
           ) : (

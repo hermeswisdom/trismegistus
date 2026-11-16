@@ -76,6 +76,7 @@ export function Leaderboard() {
                     <img
                       src={track.image}
                       alt=""
+                      fetchPriority="low"
                       className={cn(
                         "size-14 shrink-0 object-cover sm:size-16",
                         active && "ring-2 ring-accent ring-offset-2 ring-offset-bg",

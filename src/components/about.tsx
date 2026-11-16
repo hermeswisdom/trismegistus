@@ -45,17 +45,20 @@ export function About() {
           <img
             src="/images/tracks/now-i-see-you-blossom.jpg"
             alt="Sleeve for Now I See You Blossom"
+            fetchPriority="low"
             className="col-span-1 h-full min-h-72 w-full object-cover sm:min-h-96"
           />
           <div className="flex flex-col gap-3">
             <img
               src="/images/tracks/dont-look-up.jpg"
               alt="Sleeve for Don't Look Up"
+              fetchPriority="low"
               className="h-44 w-full object-cover sm:h-56"
             />
             <img
               src="/images/tracks/the-endless-mirror.jpg"
               alt="Sleeve for The Endless Mirror"
+              fetchPriority="low"
               className="min-h-0 flex-1 w-full object-cover"
             />
           </div>
