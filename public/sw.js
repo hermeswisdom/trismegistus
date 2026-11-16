@@ -32,7 +32,6 @@ const BYPASS_PREFIXES = [
   "/media/streams/",
   "/media/streams-hq/",
   "/masters/",
-  "/_vercel/insights",
 ];
 const STATIC_EXT = /\.(?:js|css|png|svg|jpe?g|webp|woff2?|webmanifest|ico)$/i;
 

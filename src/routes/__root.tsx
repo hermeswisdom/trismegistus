@@ -1,5 +1,4 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
-import { Analytics } from "@vercel/analytics/react";
 import { AuthProvider } from "@/lib/auth/provider";
 import { InstallAppProvider } from "@/components/install-app";
 import { OfflineRuntime } from "@/components/offline-runtime";
@@ -78,8 +77,6 @@ export const Route = createRootRoute({
             </InstallAppProvider>
           </AuthProvider>
         </div>
-        {/* Client-only: inject() runs in useEffect and returns null. */}
-        <Analytics />
         <Scripts />
       </body>
     </html>
