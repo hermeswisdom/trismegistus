@@ -108,6 +108,7 @@ export const STREAM_SLUGS: readonly string[] = [
   "the-shadow-learned-my-name",
   "the-sleepers-waking",
   "the-worst-kind-of-heartache",
+  "three-masks-one-face",
   "throat-sing",
   "through-the-cracks",
   "tracy-chapman-tape",
