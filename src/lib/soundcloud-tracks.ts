@@ -1,5 +1,15 @@
 export const SOUNDCLOUD_TRACKS = [
   {
+    id: "three-masks-one-face",
+    title: "Three Masks, One Face",
+    soundId: "2440571706",
+    slug: "three-masks-one-face",
+    image: "/images/tracks/three-masks-one-face.jpg",
+    permalink: "https://soundcloud.com/esoteric_vibrations/three-masks-one-face",
+    recorded: "November 2026",
+    downloadKey: "masters/three-masks-one-face.mp3",
+  },
+  {
     id: "nobody-cares",
     title: "Nobody Cares",
     soundId: "2439052248",
