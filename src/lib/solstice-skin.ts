@@ -14,7 +14,7 @@ export const SOLSTICE_SKIN = {
   onValue: "solstice",
   offValue: "off",
   /** Browser chrome while the skin is on. Matches the indigo `--color-bg`. */
-  themeColor: "#07061a",
+  themeColor: "#040218",
   /** Resting theme-color from `src/routes/__root.tsx`. */
   restThemeColor: "#09080e",
   /** Inclusive civil start: 1 Dec 00:00 Europe/London, every year. */

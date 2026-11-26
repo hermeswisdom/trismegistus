@@ -268,11 +268,18 @@ describe("solstice skin wiring", () => {
   it("CSS is gated on html[data-skin=solstice] and respects reduced motion", () => {
     const css = read("src/styles.css");
     assert.match(css, /html\[data-skin="solstice"\]/);
-    assert.match(css, /@keyframes solstice-drift/);
+    assert.match(css, /--solstice-sky/);
     assert.match(css, /--solstice-gold/);
+    assert.match(css, /Winter Solstice/);
+    assert.match(css, /\.site-backdrop \{\s*display: none;/);
+    assert.match(css, /@keyframes solstice-drift/);
+    assert.match(css, /@keyframes solstice-twinkle/);
+    assert.match(css, /@keyframes solstice-shoot/);
+    assert.match(css, /@keyframes solstice-fall/);
     const reduce = css.split("@media (prefers-reduced-motion: reduce)");
     assert.match(reduce.at(-1)!, /data-skin="solstice"/);
     assert.match(reduce.at(-1)!, /animation:\s*none/);
+    assert.match(reduce.at(-1)!, /body::after \{\s*display: none;/);
   });
 
   it("does not touch stream, master, stripe or env paths", () => {
