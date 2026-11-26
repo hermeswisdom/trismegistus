@@ -63,4 +63,14 @@ describe("parseHomeSearch", () => {
     assert.deepEqual(parseHomeSearch({ daily: "0" }), {});
     assert.deepEqual(parseHomeSearch({}), {});
   });
+
+  it("keeps the solstice QC override on the URL without affecting tablet links", () => {
+    assert.deepEqual(parseHomeSearch({ skin: "solstice" }), { skin: "solstice" });
+    assert.deepEqual(parseHomeSearch({ skin: "off", daily: "1" }), {
+      daily: 1,
+      skin: "off",
+    });
+    assert.deepEqual(parseHomeSearch({ skin: "winter" }), {});
+    assert.equal(tabletPagePath({ daily: true }), "/?daily=1");
+  });
 });

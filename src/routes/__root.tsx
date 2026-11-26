@@ -7,7 +7,9 @@ import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { INSTALL_CAPTURE_SCRIPT } from "@/lib/install-app";
 import { SITE_FONT_PRELOADS } from "@/lib/site-fonts";
 import { SiteBackdrop } from "@/components/site-backdrop";
+import { SolsticeSkin } from "@/components/solstice-skin";
 import { ViewportLock } from "@/components/viewport-lock";
+import { SOLSTICE_SKIN_BOOT } from "@/lib/solstice-skin";
 import { DEFAULT_VIEWPORT, PHONE_VIEWPORT_BOOT } from "@/lib/viewport-lock";
 import { siteVerificationMeta } from "@/lib/seo";
 import appCss from "../styles.css?url";
@@ -70,8 +72,11 @@ function RootDocument() {
             player iframe posts READY (see now-playing.tsx). */}
         <script async src="https://w.soundcloud.com/player/api.js" />
         <HeadContent />
+        {/* Before body paint: date-gated seasonal skin, or ?skin=solstice / ?skin=off. */}
+        <script dangerouslySetInnerHTML={{ __html: SOLSTICE_SKIN_BOOT }} />
       </head>
       <body className="bg-bg text-fg font-sans">
+        <SolsticeSkin />
         <SiteBackdrop />
         <div className="relative z-10">
           <ViewportLock />
