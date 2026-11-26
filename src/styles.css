@@ -681,3 +681,166 @@ html:not([data-sc-tap-ready="wheel"]) [data-sc-tap-target="wheel"] {
 .hermes-atlas-picture {
   filter: drop-shadow(0 0 12px rgb(214 226 74 / 18%));
 }
+
+/* Solstice night. Gated by html[data-skin="solstice"] (src/lib/solstice-skin.ts).
+   Selectors never match outside the window, so there is no leftover paint cost. */
+html[data-skin="solstice"] {
+  --solstice-gold: #e2c27a;
+  --solstice-gold-soft: rgb(226 194 122 / 28%);
+  --color-bg: #07061a;
+  --color-surface: #12102c;
+  --color-elevated: #1b1835;
+  --color-fg: #f6f1e4;
+  --color-muted: #c9c0ae;
+  --color-subtle: #8f8778;
+  --color-accent: #e2c27a;
+  --color-border: rgb(226 194 122 / 16%);
+  --color-ring: rgb(226 194 122 / 55%);
+  --shadow-border: 0 0 0 1px rgb(226 194 122 / 16%);
+  --shadow-border-hover: 0 0 0 1px rgb(226 194 122 / 50%);
+  --solstice-stars-far: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='380' height='380'><circle cx='18' cy='26' r='.8' fill='%23f7f2e8' opacity='.7'/><circle cx='72' cy='94' r='1' fill='%23f7f2e8' opacity='.4'/><circle cx='128' cy='42' r='.7' fill='%23f7f2e8' opacity='.55'/><circle cx='176' cy='158' r='1.1' fill='%23f7f2e8' opacity='.32'/><circle cx='232' cy='68' r='.6' fill='%23f7f2e8' opacity='.65'/><circle cx='286' cy='132' r='.9' fill='%23f7f2e8' opacity='.45'/><circle cx='338' cy='38' r='1' fill='%23f7f2e8' opacity='.5'/><circle cx='354' cy='188' r='.7' fill='%23f7f2e8' opacity='.58'/><circle cx='44' cy='214' r='.8' fill='%23f7f2e8' opacity='.38'/><circle cx='96' cy='268' r='1.2' fill='%23f7f2e8' opacity='.28'/><circle cx='154' cy='236' r='.6' fill='%23f7f2e8' opacity='.52'/><circle cx='210' cy='312' r='.9' fill='%23f7f2e8' opacity='.42'/><circle cx='268' cy='254' r='.7' fill='%23f7f2e8' opacity='.48'/><circle cx='324' cy='300' r='1' fill='%23f7f2e8' opacity='.33'/><circle cx='58' cy='338' r='.8' fill='%23f7f2e8' opacity='.4'/><circle cx='360' cy='86' r='.6' fill='%23f7f2e8' opacity='.6'/><circle cx='198' cy='110' r='.5' fill='%23f7f2e8' opacity='.7'/><circle cx='300' cy='210' r='.8' fill='%23f7f2e8' opacity='.36'/><circle cx='12' cy='148' r='.7' fill='%23f7f2e8' opacity='.5'/><circle cx='370' cy='270' r='.9' fill='%23f7f2e8' opacity='.4'/><circle cx='140' cy='350' r='.6' fill='%23e2c27a' opacity='.45'/><circle cx='250' cy='18' r='.8' fill='%23e2c27a' opacity='.35'/></svg>");
+  --solstice-stars-near: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='540' height='540'><circle cx='48' cy='72' r='1.3' fill='%23f0dd9a' opacity='.42'/><circle cx='190' cy='46' r='1.1' fill='%23f7f2e8' opacity='.38'/><circle cx='320' cy='160' r='1.5' fill='%23e2c27a' opacity='.3'/><circle cx='110' cy='240' r='1.2' fill='%23f0dd9a' opacity='.36'/><circle cx='260' cy='300' r='1.4' fill='%23f7f2e8' opacity='.28'/><circle cx='410' cy='90' r='1.1' fill='%23e2c27a' opacity='.4'/><circle cx='36' cy='380' r='1.3' fill='%23f0dd9a' opacity='.32'/><circle cx='470' cy='420' r='1.2' fill='%23f7f2e8' opacity='.34'/><circle cx='200' cy='480' r='1' fill='%23e2c27a' opacity='.3'/><circle cx='500' cy='250' r='1.4' fill='%23f0dd9a' opacity='.28'/></svg>");
+}
+
+html[data-skin="solstice"]::before,
+html[data-skin="solstice"] [data-enter-gate]::before {
+  content: "";
+  pointer-events: none;
+  background-image: var(--solstice-stars-far), var(--solstice-stars-near);
+  background-size: 380px 380px, 540px 540px;
+  animation: solstice-drift 180s linear infinite;
+}
+
+html[data-skin="solstice"]::before {
+  position: fixed;
+  inset: -12%;
+  z-index: 1;
+  opacity: 0.85;
+}
+
+html[data-skin="solstice"] [data-enter-gate]::before {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.7;
+  mix-blend-mode: screen;
+}
+
+html[data-skin="solstice"]::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: auto 0 0;
+  height: min(48vh, 28rem);
+  z-index: 1;
+  background: radial-gradient(
+    ellipse 90% 80% at 50% 120%,
+    rgb(226 194 122 / 22%) 0%,
+    rgb(180 120 50 / 8%) 42%,
+    transparent 72%
+  );
+}
+
+html[data-skin="solstice"] .site-backdrop-overlay {
+  background: linear-gradient(
+    to bottom,
+    rgb(8 6 32 / 70%),
+    rgb(6 4 24 / 78%) 45%,
+    rgb(4 3 18 / 88%)
+  );
+}
+
+html[data-skin="solstice"] img {
+  outline-color: rgb(226 194 122 / 20%);
+}
+
+html[data-skin="solstice"] #work li > button {
+  box-shadow:
+    inset 0 0 0 1px rgb(226 194 122 / 32%),
+    inset 0 0 32px rgb(226 194 122 / 10%);
+}
+
+html[data-skin="solstice"] .bg-accent {
+  box-shadow:
+    0 0 0 1px rgb(255 236 190 / 22%),
+    0 0 22px rgb(226 194 122 / 30%);
+}
+
+html[data-skin="solstice"] header.bg-bg\/80 {
+  box-shadow: 0 1px 0 0 rgb(226 194 122 / 22%);
+}
+
+html[data-skin="solstice"] .atman-music {
+  text-shadow: 0 0 18px rgb(226 194 122 / 40%);
+}
+
+html[data-skin="solstice"] .visitor-dot {
+  animation: none;
+  box-shadow: 0 0 8px rgb(226 194 122 / 85%);
+}
+
+html[data-skin="solstice"] .atman-core {
+  background-image:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='g'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.95  0 0 0 0 0.9  0 0 0 0 0.55  0 0 0 0.85 0'/></filter><rect width='100%25' height='100%25' filter='url(%23g)'/></svg>"),
+    linear-gradient(
+      188deg,
+      #fffdf0 0%,
+      #f3e0a8 18%,
+      #f4efe4 40%,
+      #e2c27a 64%,
+      #8a6a28 100%
+    );
+  -webkit-text-stroke: 0.6px rgb(226 194 122 / 40%);
+  filter:
+    drop-shadow(0 0 4px rgb(255 248 220 / 70%))
+    drop-shadow(0 0 14px rgb(226 194 122 / 75%))
+    drop-shadow(0 0 38px rgb(226 194 122 / 42%));
+}
+
+html[data-skin="solstice"] .atman-core::before {
+  background: radial-gradient(
+    ellipse at 50% 55%,
+    rgb(226 194 122 / 55%) 0%,
+    rgb(226 194 122 / 18%) 42%,
+    transparent 72%
+  );
+}
+
+html[data-skin="solstice"] .hermes-atlas-title {
+  text-shadow: 0 0 18px rgb(226 194 122 / 28%);
+}
+
+html[data-skin="solstice"] .hermes-atlas-canvas {
+  box-shadow:
+    0 0 0 1px rgb(226 194 122 / 18%),
+    0 0 48px rgb(226 194 122 / 8%);
+}
+
+html[data-skin="solstice"] .hermes-atlas-picture {
+  filter: drop-shadow(0 0 12px rgb(226 194 122 / 18%));
+}
+
+@keyframes solstice-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-3.5%, -5%, 0);
+  }
+}
+
+@media (max-width: 768px) {
+  html[data-skin="solstice"]::before,
+  html[data-skin="solstice"] [data-enter-gate]::before {
+    background-image: var(--solstice-stars-far);
+    background-size: 320px 320px;
+    animation-duration: 240s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-skin="solstice"]::before,
+  html[data-skin="solstice"] [data-enter-gate]::before {
+    animation: none;
+  }
+}

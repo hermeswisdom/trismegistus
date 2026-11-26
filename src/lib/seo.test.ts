@@ -112,6 +112,11 @@ describe("canonicals", () => {
       "https://atmanmusic.app/?tablet=djinn",
     );
     assert.equal(canonicalForQuery("qc=1&utm_source=x"), HOME_URL);
+    assert.equal(canonicalForQuery("skin=solstice"), HOME_URL);
+    assert.equal(
+      canonicalForQuery("tablet=djinn&skin=off"),
+      "https://atmanmusic.app/?tablet=djinn",
+    );
     assert.equal(canonicalForQuery(""), HOME_URL);
     assert.equal(canonicalForQuery("tablet=%20djinn%20"), "https://atmanmusic.app/?tablet=djinn");
   });
